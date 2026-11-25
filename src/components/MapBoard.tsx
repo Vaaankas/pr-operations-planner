@@ -803,6 +803,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 listening={false}
               />
             )}
+            {selected && <Circle radius={r + 2 * iconScale} stroke="#fbbf24" strokeWidth={2 * iconScale} listening={false} />}
           </Group>
         )
       }
@@ -1037,11 +1038,14 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         const index = plan.roster.squads.findIndex((s) => s.id === squadId)
         const squad = plan.roster.squads[index]
         if (!st || !squad) return
-        const rect = st.container().getBoundingClientRect()
-        const x = ((e.clientX - rect.left) / rect.width) * st.width()
-        const y = ((e.clientY - rect.top) / rect.height) * st.height()
-        const norm = toNorm({ x: (x - view.x) / view.scale, y: (y - view.y) / view.scale })
-        planner.addElement({
+        st.setPointersPositions(e.nativeEvent)
+        const pointer = st.getPointerPosition()
+        if (!pointer) return
+        const norm = toNorm({
+          x: (pointer.x - view.x) / view.scale,
+          y: (pointer.y - view.y) / view.scale,
+        })
+        const el = {
           ...base(),
           type: 'squad',
           at: norm,
@@ -1049,7 +1053,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           squadNumber: index + 1,
           squadColor: squad.color,
           size: 0.012,
-        } as DrawElement)
+        } as DrawElement
+        planner.addElement(el)
+        useUI.getState().setSelected(el.id, 'element')
       }}
     >
       <Stage
