@@ -4,6 +4,7 @@ import type { LayerData, MapMeta, Plan } from '../types'
 import { useUI } from '../store'
 import { buildPdf, buildPngZip, buildPptx, type ExportFormat, type ExportOptions } from '../lib/export'
 import { downloadBlob, safeName } from '../lib/utils'
+import { useAssets } from '../lib/assets'
 
 interface Props {
   plan: Plan
@@ -13,6 +14,7 @@ interface Props {
 
 export function ExportDialog({ plan, map, layer }: Props) {
   const ui = useUI()
+  const assets = useAssets()
   const [format, setFormat] = useState<ExportFormat>('pptx')
   const [resolution, setResolution] = useState<2048 | 3072>(2048)
   const [stages, setStages] = useState<'all' | 'active'>('all')
@@ -26,8 +28,16 @@ export function ExportDialog({ plan, map, layer }: Props) {
     setError(null)
     setProgress({ done: 0, total: plan.stages.length, label: 'Preparing' })
     try {
-      const opts: ExportOptions = { format, resolution, stages, includeRoster, download: true }
-      const src = { plan, map, layer }
+      const opts: ExportOptions = {
+        format,
+        resolution,
+        stages,
+        includeRoster,
+        download: true,
+        routeId: ui.routeId,
+        showAllRoutes: ui.showAllRoutes,
+      }
+      const src = { plan, map, layer, assets }
       const onProgress = (done: number, total: number, label: string) => setProgress({ done, total, label })
       const base = safeName(plan.operation)
       if (format === 'pptx') {

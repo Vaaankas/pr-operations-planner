@@ -31,12 +31,27 @@ OUT_DIR = PROJECT / "public" / "data"
 MAPS_DIR = OUT_DIR / "maps"
 THUMBS_DIR = OUT_DIR / "thumbs"
 LAYERS_DIR = OUT_DIR / "layers"
+ROUTES_DIR = OUT_DIR / "routes"
+ICONS_DIR = OUT_DIR / "icons"
+FLAGS_DIR = OUT_DIR / "flags"
 
 PvP_MODES = {
     "gpm_cq": "AAS",
     "gpm_insurgency": "Insurgency",
-    "gpm_cnc": "CNC",
+    "gpm_skirmish": "Skirmish",
 }
+
+LAYER_NAMES = {
+    "aasinfantry": "AAS Infantry",
+    "aasalternative": "AAS Alternative",
+    "aasfullassets": "AAS Standard",
+    "aaslarge": "AAS Large",
+    "aasstandard": "AAS Standard",
+    "insurgency": "Insurgency",
+    "skirmish": "Skirmish",
+}
+
+ROUTE_COLORS = ["#38bdf8", "#fb923c", "#a78bfa", "#34d399"]
 
 FACTIONS = {
     "us": ("United States", "US"),
@@ -99,6 +114,46 @@ def clean_faction(key: str) -> tuple[str, str]:
     return FACTIONS.get(key, (key.upper(), key.upper()))
 
 
+def size_km(world: int) -> int:
+    return max(1, round(world / 1000))
+
+
+def layer_display_name(mode: str, raw_type: str | None, players: int | None = None) -> str:
+    raw = (raw_type or "").strip().lower()
+    if raw == "aasfullassets" and players == 128:
+        return "AAS Large"
+    if raw in LAYER_NAMES:
+        return LAYER_NAMES[raw]
+    if mode == "gpm_insurgency":
+        return "Insurgency"
+    if mode == "gpm_skirmish":
+        return "Skirmish"
+    return PvP_MODES.get(mode, mode)
+
+
+def load_flag_names() -> dict[str, str]:
+    """English display names for control points, from PR's prmaps.utxt."""
+    path = PR_ROOT / "localization" / "english" / "prmaps.utxt"
+    if not path.exists():
+        return {}
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-16")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+    names: dict[str, str] = {}
+    for line in text.splitlines():
+        m = re.match(r"^(cpname_\S+)\s+(.+?)\s*$", line)
+        if not m:
+            continue
+        value = m.group(2).replace("\x1b", "")
+        value = re.sub(r"[\x00-\x1f]", "", value)
+        value = re.sub(r"\s+", " ", value).strip()
+        value = re.sub(r"\s+\d+m$", "", value)
+        names[m.group(1)] = value
+    return names
+
+
 def classify(template: str) -> str:
     t = template.lower()
     for cat, pats in CATEGORY_RULES:
@@ -111,6 +166,21 @@ def classify(template: str) -> str:
 
 def is_vehicle_category(cat: str) -> bool:
     return cat not in {"crate", "other"}
+
+
+def vehicle_icon_key(cat: str, template: str) -> str:
+    t = template.lower()
+    if cat == "aa":
+        if "jep" in t or "avenger" in t or "linebacker" in t:
+            return "aa"
+        return "aa_static"
+    if cat == "emplacement":
+        if "mortar" in t:
+            return "emplacement_mortar"
+        if "mg" in t or "hmg" in t:
+            return "emplacement_mg"
+        return "emplacement"
+    return cat
 
 
 TOKEN_NAMES = {
@@ -212,14 +282,7 @@ def parse_desc(level_dir: Path) -> dict:
 
 
 def layer_type_label(raw: str) -> str:
-    if not raw:
-        return ""
-    fixes = {"aas": "AAS", "cnc": "CNC", "insurgency": "Insurgency", "coop": "COOP", "skirmish": "Skirmish"}
-    words = re.findall(r"aas|cnc|insurgency|coop|skirmish|[a-z]+", raw)
-    out = []
-    for w in words:
-        out.append(fixes.get(w, w.capitalize()))
-    return " ".join(out)
+    return layer_display_name("", raw)
 
 
 def world_size(server: zipfile.ZipFile) -> int:
@@ -290,6 +353,18 @@ def parse_gpo(text: str) -> dict:
             mm = re.match(r"ObjectTemplate\.setControlPointName\s+(\S+)", s)
             if mm:
                 control_template[current]["name"] = mm.group(1)
+            mm = re.match(r"ObjectTemplate\.supplyGroupId\s+(-?\d+)", s)
+            if mm:
+                control_template[current]["sgid"] = int(mm.group(1))
+            mm = re.match(r"ObjectTemplate\.controlPointId\s+(\d+)", s)
+            if mm:
+                control_template[current]["cpId"] = int(mm.group(1))
+            mm = re.match(r"ObjectTemplate\.team\s+(\d+)", s)
+            if mm:
+                control_template[current]["team"] = int(mm.group(1))
+            mm = re.match(r"ObjectTemplate\.radius\s+([\d.]+)", s)
+            if mm:
+                control_template[current]["radius"] = float(mm.group(1))
 
     instances = []
     for m in INSTANCE_CREATE.finditer(text):
@@ -319,7 +394,18 @@ def pretty_cp_name(raw: str, level: str, mode: str, players: int) -> str:
     return pretty_label(name) if name else raw
 
 
-def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None) -> dict | None:
+def sgid_parts(sgid: int) -> tuple[int, int, int | None]:
+    """AASv4 SupplyGroupId -> (order A, pick count B, route C)."""
+    if sgid < 0:
+        return 999, 0, None
+    if sgid < 10:
+        return sgid, 0, None
+    if sgid < 100:
+        return sgid // 10, sgid % 10, None
+    return sgid // 100, (sgid // 10) % 10, sgid % 10
+
+
+def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None, flag_names: dict[str, str]) -> dict | None:
     layer_id = f"{level}__{mode.replace('gpm_', '')}__{players}"
     server_path = level_dir / "server.zip"
     gpo_name = f"gamemodes/{mode}/{players}/gameplayobjects.con"
@@ -355,6 +441,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             "template": obj,
             "label": prettify_template(obj),
             "category": cat,
+            "icon": vehicle_icon_key(cat, obj),
             "team": team,
             "x": round(inst["pos"][0], 2),
             "z": round(inst["pos"][2], 2),
@@ -368,13 +455,41 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
     for inst in parsed["instances"]:
         if inst["type"] != "ControlPoint" or not inst["pos"]:
             continue
+        tpl = parsed["controlTemplates"].get(inst["name"], {})
+        sgid = int(tpl.get("sgid", -1))
+        order, pick, route = sgid_parts(sgid)
+        localized = flag_names.get(inst["name"]) or flag_names.get(f"{inst['name']}_noAiAreaAttack")
         cps.append({
             "id": len(cps) + 1,
+            "cpId": int(tpl.get("cpId", len(cps) + 1)),
             "raw": inst["name"],
-            "name": pretty_cp_name(inst["name"], level, mode, players),
+            "name": localized or pretty_cp_name(inst["name"], level, mode, players),
             "x": round(inst["pos"][0], 2),
             "z": round(inst["pos"][2], 2),
+            "team": int(tpl.get("team", 0)),
+            "radius": round(float(tpl.get("radius", 0)), 1),
+            "sgid": sgid,
+            "order": order,
+            "pick": pick,
+            "route": route,
         })
+
+    route_numbers = sorted({cp["route"] for cp in cps if cp["route"] is not None})
+    if not route_numbers:
+        route_numbers = []
+    if route_numbers:
+        routes = []
+        for number in route_numbers:
+            members = [cp for cp in cps if cp["route"] is None or cp["route"] == number]
+            members.sort(key=lambda c: (c["order"], c["pick"], c["name"]))
+            routes.append({
+                "id": str(number),
+                "label": f"Route {number}",
+                "cps": [cp["id"] for cp in members],
+            })
+    else:
+        members = sorted(cps, key=lambda c: (c["order"], c["pick"], c["name"]))
+        routes = [{"id": "default", "label": "Capture order", "cps": [cp["id"] for cp in members]}] if members else []
 
     # Some custom levels ship no heightdata.con. Infer their world size from
     # the spread of placed objects (BF2 worlds are 1, 2 or 4 km).
@@ -387,18 +502,23 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             world = 2048
 
     counts = Counter(v["category"] for v in vehicles)
+    raw_type = (maptype or {}).get("type", "")
+    display = layer_display_name(mode, raw_type, players)
     return {
         "id": layer_id,
         "levelId": level,
         "mode": mode,
         "modeLabel": PvP_MODES[mode],
         "players": players,
-        "layerType": (maptype or {}).get("type", ""),
-        "layerTypeLabel": layer_type_label((maptype or {}).get("type", "")),
-        "name": f"{PvP_MODES[mode]} {players}",
+        "layerType": raw_type,
+        "layerTypeLabel": display,
+        "displayName": display,
+        "name": display,
+        "sizeKm": size_km(world),
         "world": world,
         "factions": {str(k): v for k, v in factions.items()},
         "controlPoints": cps,
+        "routes": routes,
         "vehicles": vehicles,
         "vehicleAtStart": sum(1 for v in vehicles if v["atStart"]),
         "counts": dict(counts),
@@ -456,6 +576,147 @@ def extract_minimap(level: str, level_dir: Path, world: int) -> dict | None:
     return {"image": webp.name, "thumb": thumb.name, "width": img.width, "height": img.height}
 
 
+VEHICLE_ICON_DIR = "hud/texture/ingame/vehicles/icons/minimap/"
+VEHICLE_ICONS = {
+    "mbt": VEHICLE_ICON_DIR + "mini_tank_heavy.tga",
+    "ifv": VEHICLE_ICON_DIR + "mini_ifv_heavy.tga",
+    "apc": VEHICLE_ICON_DIR + "mini_apc_medium.tga",
+    "jeep": VEHICLE_ICON_DIR + "mini_jep_light.tga",
+    "logistics": VEHICLE_ICON_DIR + "mini_trk_logi.tga",
+    "aa": VEHICLE_ICON_DIR + "mini_jep_aa.tga",
+    "aa_static": VEHICLE_ICON_DIR + "mini_stw_aa_medium.tga",
+    "artillery": VEHICLE_ICON_DIR + "mini_stw_artillery.tga",
+    "emplacement": VEHICLE_ICON_DIR + "mini_stw_atgm.tga",
+    "emplacement_mg": VEHICLE_ICON_DIR + "mini_stw_mg.tga",
+    "emplacement_mortar": VEHICLE_ICON_DIR + "mini_stw_mortar.tga",
+    "asset": VEHICLE_ICON_DIR + "firebase_mini_white.tga",
+    "crate": VEHICLE_ICON_DIR + "mini_box_unarmed.tga",
+    "recon": VEHICLE_ICON_DIR + "mini_rec_light.tga",
+    "transport_heli": VEHICLE_ICON_DIR + "mini_the_medium.tga",
+    "attack_heli": VEHICLE_ICON_DIR + "mini_ahe_heavy.tga",
+    "jet": VEHICLE_ICON_DIR + "mini_jet_asf.tga",
+    "bomber": VEHICLE_ICON_DIR + "mini_jet_figherbomber.tga",
+    "boat": VEHICLE_ICON_DIR + "mini_rib.tga",
+    "carrier": VEHICLE_ICON_DIR + "mini_shp_ssac.tga",
+    "other": VEHICLE_ICON_DIR + "mini_misc_prbot.tga",
+}
+
+MARKER_ICONS = {
+    "objective": "hud/texture/ingame/flags/icons/minimap/aas/minimap_objectiveattack.dds",
+    "attack": "hud/texture/ingame/flags/icons/minimap/aas/minimap_attack.dds",
+    "defend": "hud/texture/ingame/flags/icons/minimap/aas/minimap_defend.dds",
+    "observe": "hud/texture/ingame/minimap/icons/unitspotted.dds",
+    "lz": "hud/texture/ingame/minimap/icons/icon_lz.tga",
+    "mine": "hud/texture/ingame/minimap/icons/icon_mine.tga",
+    "repair": "hud/texture/ingame/minimap/icons/icon_repair.tga",
+    "supply": "hud/texture/ingame/minimap/icons/icon_supply.tga",
+    "mortar": "hud/texture/ingame/minimap/icons/icon_mortar.tga",
+    "tow": "hud/texture/ingame/minimap/spotted/icon_atgmspotted.tga",
+    "aa": "hud/texture/ingame/minimap/spotted/icon_antiairmissilespotted.tga",
+    "fob": "hud/texture/ingame/minimap/spotted/icon_firebasespotted.tga",
+    "rally": "hud/texture/ingame/minimap/spotted/icon_rallyspotted.tga",
+    "cache": "hud/texture/ingame/minimap/icons/supplycrate.tga",
+    "phase": "hud/texture/ingame/minimap/icons/icon_move.tga",
+    "waypoint": "hud/texture/ingame/minimap/icons/icon_target.tga",
+    "star": "hud/texture/ingame/minimap/icons/icon_reinforcements.tga",
+}
+
+ORDER_NAMES = ["move", "attack", "defend", "repair", "build", "observe"]
+
+UNIT_ICONS = {
+    "inf": "hud/texture/ingame/minimap/icons/unitspotted.dds",
+    "armor": "hud/texture/ingame/minimap/spotted/icon_tankspotted.tga",
+    "recon": "hud/texture/ingame/minimap/spotted/icon_sniperspotted.tga",
+    "air": "hud/texture/ingame/minimap/icons/icon_cas.tga",
+    "hq": "hud/texture/ingame/minimap/spotted/icon_firebasespotted.tga",
+    "mech": "hud/texture/ingame/minimap/spotted/icon_ifvspotted.tga",
+    "support": "hud/texture/ingame/minimap/spotted/icon_supplyspotted.tga",
+    "artillery": "hud/texture/ingame/minimap/icons/icon_artillery.tga",
+}
+
+
+def _save_asset(im: Image.Image, path: Path, size: int = 64, color_key: bool = True) -> None:
+    im = im.convert("RGBA")
+    if color_key and im.getchannel("A").getextrema() == (255, 255):
+        # A few old TGA glyphs use an opaque black background instead of alpha.
+        pixels = im.load()
+        for y in range(im.height):
+            for x in range(im.width):
+                r, g, b, a = pixels[x, y]
+                if r + g + b < 12:
+                    pixels[x, y] = (0, 0, 0, 0)
+    if im.size != (size, size):
+        im = im.resize((size, size), Image.NEAREST)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    im.save(path, "WEBP", lossless=True, quality=100)
+
+
+def extract_assets() -> dict:
+    """Copy PR's HUD flags and minimap glyphs into the static dataset."""
+    archive = PR_ROOT / "content" / "menu_client.zip"
+    manifest: dict = {"factionFlags": {}, "cpFlags": {}, "vehicles": {}, "markers": {}}
+    FLAGS_DIR.mkdir(parents=True, exist_ok=True)
+    if not archive.exists():
+        return manifest
+    with zipfile.ZipFile(archive) as z:
+        names = set(z.namelist())
+
+        for name in names:
+            m = re.match(r"External/flashmenu/images/joingame/flag_(\w+)\.png$", name)
+            if m:
+                key = m.group(1)
+                im = Image.open(io.BytesIO(z.read(name)))
+                out = FLAGS_DIR / f"{key}.webp"
+                im.convert("RGBA").save(out, "WEBP", lossless=True, quality=100)
+                manifest["factionFlags"][key] = f"flags/{out.name}"
+
+        for name in names:
+            m = re.match(r"hud/texture/ingame/flags/icons/minimap/([^/]+)/minimap_flag\.dds$", name)
+            if m and m.group(1) not in {"aas", "supplyline"}:
+                key = m.group(1)
+                im = Image.open(io.BytesIO(z.read(name)))
+                out = FLAGS_DIR / f"cp_{key}.webp"
+                _save_asset(im, out)
+                manifest["cpFlags"][key] = f"flags/{out.name}"
+
+        neutral_name = "hud/texture/ingame/flags/icons/minimap/neutral/minimap_cp.tga"
+        if neutral_name in names:
+            _save_asset(Image.open(io.BytesIO(z.read(neutral_name))), FLAGS_DIR / "cp_neutral.webp")
+            manifest["cpFlags"]["neutral"] = "flags/cp_neutral.webp"
+
+        for category, name in VEHICLE_ICONS.items():
+            if name not in names:
+                continue
+            out = ICONS_DIR / "vehicles" / f"{category}.webp"
+            _save_asset(Image.open(io.BytesIO(z.read(name))), out)
+            manifest["vehicles"][category] = f"icons/vehicles/{out.name}"
+
+        for category, name in MARKER_ICONS.items():
+            if name not in names:
+                continue
+            out = ICONS_DIR / "markers" / f"{category}.webp"
+            _save_asset(Image.open(io.BytesIO(z.read(name))), out)
+            manifest["markers"][category] = f"icons/markers/{out.name}"
+
+        orders_name = "nametag/commanderorders.dds"
+        manifest["orders"] = {}
+        if orders_name in names:
+            atlas = Image.open(io.BytesIO(z.read(orders_name))).convert("RGBA")
+            frames = []
+            for i in range(atlas.width // 32):
+                frame = atlas.crop((i * 32, 0, (i + 1) * 32, 32))
+                if frame.getchannel("A").getbbox():
+                    frames.append(frame)
+            for i, frame in enumerate(frames[: len(ORDER_NAMES)]):
+                key = ORDER_NAMES[i]
+                out = ICONS_DIR / "orders" / f"{key}.webp"
+                _save_asset(frame, out)
+                manifest["orders"][key] = f"icons/orders/{out.name}"
+
+    (OUT_DIR / "assets.json").write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
+    return manifest
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
@@ -466,6 +727,14 @@ def main() -> None:
     only = {s.strip() for s in args.only.split(",") if s.strip()}
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     LAYERS_DIR.mkdir(parents=True, exist_ok=True)
+    flag_names = load_flag_names()
+    print(f"Localized flag names: {len(flag_names)}", flush=True)
+    assets = extract_assets()
+    print(
+        f"Assets: {len(assets['vehicles'])} vehicles, {len(assets['markers'])} markers, "
+        f"{len(assets['cpFlags'])} flags",
+        flush=True,
+    )
 
     level_dirs = sorted([d for d in LEVELS_DIR.iterdir() if d.is_dir()])
     if only:
@@ -473,7 +742,6 @@ def main() -> None:
 
     index = []
     all_templates = Counter()
-    report = []
     for i, level_dir in enumerate(level_dirs, 1):
         level = level_dir.name
         desc = parse_desc(level_dir)
@@ -492,12 +760,15 @@ def main() -> None:
                 layers_meta.append({
                     "id": f"{level}__{mode.replace('gpm_', '')}__{players}",
                     "mode": mode, "modeLabel": PvP_MODES[mode], "players": players,
-                    "name": f"{PvP_MODES[mode]} {players}", "layerType": (maptype or {}).get("type", ""),
-                    "layerTypeLabel": layer_type_label((maptype or {}).get("type", "")),
+                    "name": layer_display_name(mode, (maptype or {}).get("type", ""), players),
+                    "displayName": layer_display_name(mode, (maptype or {}).get("type", ""), players),
+                    "layerType": (maptype or {}).get("type", ""),
+                    "layerTypeLabel": layer_display_name(mode, (maptype or {}).get("type", ""), players),
+                    "sizeKm": size_km(world),
                     "file": None, "vehicles": 0, "vehiclesAtStart": 0, "controlPoints": 0,
                 })
                 continue
-            layer = build_layer(level, level_dir, mode, players, maptype)
+            layer = build_layer(level, level_dir, mode, players, maptype, flag_names)
             if not layer:
                 continue
             path = LAYERS_DIR / f"{layer['id']}.json"
@@ -506,14 +777,15 @@ def main() -> None:
                 all_templates[v["template"]] += 1
             layers_meta.append({
                 "id": layer["id"], "mode": mode, "modeLabel": layer["modeLabel"],
-                "players": players, "name": layer["name"], "layerType": layer["layerType"],
-                "layerTypeLabel": layer["layerTypeLabel"],
+                "players": players, "name": layer["displayName"], "displayName": layer["displayName"],
+                "layerType": layer["layerType"], "layerTypeLabel": layer["layerTypeLabel"],
+                "sizeKm": layer["sizeKm"],
                 "file": path.name, "vehicles": len(layer["vehicles"]),
                 "vehiclesAtStart": layer["vehicleAtStart"],
                 "controlPoints": len(layer["controlPoints"]),
+                "routes": len(layer["routes"]),
                 "world": layer["world"],
             })
-            report.append((layer["id"], len(layer["vehicles"]), layer["vehicleAtStart"], len(layer["controlPoints"])))
 
         if not layers_meta:
             continue
@@ -523,6 +795,7 @@ def main() -> None:
             "id": level,
             "name": desc["name"],
             "world": map_world,
+            "sizeKm": size_km(map_world),
             "factions": {str(k): v for k, v in factions.items()},
             "images": images,
             "layers": layers_meta,

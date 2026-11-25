@@ -13,8 +13,8 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400/90">Workflow</h3>
             <ol className="list-decimal space-y-1 pl-5 text-slate-400">
-              <li>Pick a map and layer. Every PvP layer keeps its own vehicle manifest and control points.</li>
-              <li>Fill the roster: 50 players, commander, up to nine squads of eight. Drag names between squads.</li>
+              <li>Pick a map and route. Every PvP layer keeps its own vehicle manifest, control points and SGID attack routes.</li>
+              <li>Fill the roster: 50-player target, commander, up to ten squads. Drag names between squads and drag squad headers to reorder.</li>
               <li>Place or move vehicles, claim them for squads, then draw the scheme of manoeuvre.</li>
               <li>Add stages with mission-clock times and notes. Each stage carries its own drawings and vehicle moves.</li>
               <li>Export a PowerPoint, PDF, or stage JPEGs. Everything autosaves in this browser.</li>
@@ -24,9 +24,10 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400/90"><MousePointer2 className="h-3 w-3" /> Controls</h3>
             <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-[11px] text-slate-400">
-              <span>Wheel</span><span>Zoom to cursor</span>
-              <span>Space + drag</span><span>Pan map</span>
-              <span>V / H / P / L / A</span><span>Select, pan, pen, line, arrow</span>
+              <span>Wheel</span><span>Zoom to cursor (20×)</span>
+              <span>Drag empty map</span><span>Pan (Select tool)</span>
+              <span>Click / drag</span><span>Draw lines, arrows and areas</span>
+              <span>V / P / L / A / D</span><span>Select, pen, line, arrow, dashed</span>
               <span>R / O / G / T / M / U</span><span>Rect, ellipse, zone, text, marker, unit</span>
               <span>Ctrl+Z / Ctrl+Y</span><span>Undo / redo</span>
               <span>Delete</span><span>Remove selection</span>
@@ -38,9 +39,10 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400/90"><Pencil className="h-3 w-3" /> Map symbology</h3>
             <p className="text-slate-400">
-              Friendly assets use the planning side's blue (or their claiming squad's colour); enemy assets are red.
-              Delayed spawns are dimmed and carry their respawn timer. A moved vehicle leaves a dashed return line to its spawn.
-              The map's baked A–M / 1–13 grid is the same one used in-game.
+              Asset glyphs are the in-game vehicle silhouettes, tinted by team or claiming squad. Flags use the in-game minimap flag textures and real capture radii.
+              Attack lanes follow the layer's AASv4 SupplyGroupId order; switch routes in the Routes tab or overlay all lanes.
+              Delayed spawns are dimmed with their timer, and a moved vehicle leaves a dashed return line to its spawn.
+              Player status cycles blank → amber ? (unconfirmed) → green ✓ (confirmed).
             </p>
           </section>
 

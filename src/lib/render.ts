@@ -1,6 +1,8 @@
-import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Stage, VehicleSpawn } from '../types'
+import type { AssetManifest, ControlPoint, DrawElement, LayerData, MapMeta, Plan, Stage, VehicleSpawn } from '../types'
 import { affiliationColor, dataUrl, formatTime } from './utils'
 import { iconImage, glyphFor } from '../icons'
+import { cpFlag } from './assets'
+import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
   return [p.x * size, p.y * size]
@@ -37,6 +39,15 @@ export interface RenderOptions {
   showAssets: boolean
   showLabels: boolean
   showSpawnMarks: boolean
+  assets: AssetManifest
+  routeId: string | null
+  showAllRoutes: boolean
+}
+
+const LANE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
+
+function laneColor(index: number): string {
+  return LANE_COLORS[index % LANE_COLORS.length]
 }
 
 export async function loadImage(src: string): Promise<HTMLImageElement> {
@@ -62,7 +73,7 @@ function drawArrowHead(ctx: CanvasRenderingContext2D, x: number, y: number, angl
   ctx.restore()
 }
 
-export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number): void {
+export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number, assets?: AssetManifest): void {
   const lw = Math.max(1, (el.width * size) / 1000)
   ctx.save()
   ctx.globalAlpha = el.opacity
@@ -104,7 +115,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       const [x1, y1] = normPoint(el.a, size)
       const [x2, y2] = normPoint(el.b, size)
       if (el.fill) {
-        ctx.globalAlpha = el.opacity * 0.16
+        ctx.globalAlpha = el.fillOpacity ?? 0.18
         ctx.fillRect(x1, y1, x2 - x1, y2 - y1)
         ctx.globalAlpha = el.opacity
       }
@@ -117,7 +128,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       ctx.beginPath()
       ctx.ellipse((x1 + x2) / 2, (y1 + y2) / 2, Math.abs(x2 - x1) / 2, Math.abs(y2 - y1) / 2, 0, 0, Math.PI * 2)
       if (el.fill) {
-        ctx.globalAlpha = el.opacity * 0.16
+        ctx.globalAlpha = el.fillOpacity ?? 0.18
         ctx.fill()
         ctx.globalAlpha = el.opacity
       }
@@ -135,7 +146,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       }
       ctx.closePath()
       if (el.fill) {
-        ctx.globalAlpha = el.opacity * 0.16
+        ctx.globalAlpha = el.fillOpacity ?? 0.18
         ctx.fill()
         ctx.globalAlpha = el.opacity
       }
@@ -158,7 +169,8 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     case 'icon': {
       const [x, y] = normPoint(el.at, size)
       const s = Math.max(10, el.size * size)
-      const img = iconImage(glyphFor('marker', el.icon), el.color)
+      const path = el.icon.startsWith('order_') ? assets?.orders[el.icon.slice(6)] : assets?.markers[el.icon]
+      const img = path ? assetImage(path) : iconImage(glyphFor('marker', el.icon), el.color)
       ctx.translate(x, y)
       ctx.rotate((el.rotation * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
@@ -198,13 +210,47 @@ function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number
   ctx.restore()
 }
 
-function drawFlag(ctx: CanvasRenderingContext2D, cp: ControlPoint, world: number, size: number, showLabel: boolean) {
+function drawFlag(
+  ctx: CanvasRenderingContext2D,
+  cp: ControlPoint,
+  layer: LayerData,
+  size: number,
+  showLabel: boolean,
+  assets: AssetManifest,
+  color: string,
+) {
+  const world = layer.world
   const x = ((cp.x + world / 2) / world) * size
   const y = ((cp.z + world / 2) / world) * size
-  const s = size * 0.019
-  const img = iconImage('flag', '#fbbf24')
-  if (img.complete) ctx.drawImage(img, x - s / 2, y - s / 2, s, s)
-  if (showLabel) label(ctx, cp.name.toUpperCase(), x, y + s * 0.62, size * 0.0125, '#fde68a')
+  const s = size * 0.032
+  const radius = (cp.radius / world) * size
+  const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
+  const flagPath = cpFlag(assets, key)
+  if (radius > 0) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(x, y, radius, 0, Math.PI * 2)
+    ctx.fillStyle = `${color}1a`
+    ctx.fill()
+    ctx.strokeStyle = `${color}80`
+    ctx.lineWidth = size * 0.0012
+    ctx.stroke()
+    ctx.restore()
+  }
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(x, y, s * 0.62, 0, Math.PI * 2)
+  ctx.fillStyle = 'rgba(5,9,7,0.65)'
+  ctx.fill()
+  ctx.strokeStyle = `${color}cc`
+  ctx.lineWidth = size * 0.001
+  ctx.stroke()
+  ctx.restore()
+  if (flagPath) {
+    const img = assetImage(flagPath)
+    if (img.complete) ctx.drawImage(img, x - s / 2, y - s / 2, s, s)
+  }
+  if (showLabel) label(ctx, cp.name, x, y + s * 0.62, size * 0.015, '#f8fafc')
 }
 
 export async function renderStageCanvas(
@@ -224,28 +270,39 @@ export async function renderStageCanvas(
   ctx.fillStyle = '#0a0f0c'
   ctx.fillRect(0, 0, size, size)
 
-  // Make sure every glyph drawn below has finished decoding before the
-  // synchronous canvas pass; otherwise early exports can miss icons.
-  const glyphs: { name: string; color: string }[] = [{ name: 'flag', color: '#fbbf24' }]
+  const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
+  const jobs: Promise<void>[] = []
+  for (const cp of layer.controlPoints) {
+    const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
+    const path = cpFlag(opts.assets, key)
+    if (path) jobs.push(preloadAsset(path))
+  }
   for (const v of layer.vehicles) {
-    const color = vehicleColor(v, plan, plan.roster.squads.map((s) => ({ id: s.id, color: s.color })))
-    glyphs.push({ name: glyphFor('vehicle', v.category), color })
+    const path = opts.assets.vehicles[v.icon] ?? opts.assets.vehicles[v.category] ?? opts.assets.vehicles.other
+    if (!path) continue
+    jobs.push(preloadAsset(path))
+    jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
   }
+  for (const path of Object.values(opts.assets.markers)) jobs.push(preloadAsset(path))
+  for (const path of Object.values(opts.assets.orders)) jobs.push(preloadAsset(path))
   for (const el of stage.elements) {
-    if (el.type === 'icon') glyphs.push({ name: glyphFor('marker', el.icon), color: el.color })
-    if (el.type === 'unit') glyphs.push({ name: glyphFor('marker', el.unit), color: affiliationColor(el.affiliation) })
+    if (el.type === 'icon') {
+      const path = el.icon.startsWith('order_') ? opts.assets.orders[el.icon.slice(6)] : opts.assets.markers[el.icon]
+      if (path) jobs.push(preloadAsset(path))
+    }
+    if (el.type === 'unit') {
+      const img = iconImage(glyphFor('marker', el.unit), affiliationColor(el.affiliation))
+      jobs.push(
+        img.complete
+          ? Promise.resolve()
+          : new Promise<void>((resolve) => {
+              img.addEventListener('load', () => resolve(), { once: true })
+              img.addEventListener('error', () => resolve(), { once: true })
+            }),
+      )
+    }
   }
-  const uniqueGlyphs = [...new Map(glyphs.map((g) => [`${g.name}|${g.color}`, g])).values()]
-  await Promise.all(
-    uniqueGlyphs.map(({ name, color }) => {
-      const img = iconImage(name, color)
-      if (img.complete) return Promise.resolve()
-      return new Promise<void>((resolve) => {
-        img.addEventListener('load', () => resolve(), { once: true })
-        img.addEventListener('error', () => resolve(), { once: true })
-      })
-    }),
-  )
+  await Promise.all(jobs)
 
   if (map.images) {
     try {
@@ -256,10 +313,46 @@ export async function renderStageCanvas(
     }
   }
 
-  if (opts.showFlags) for (const cp of layer.controlPoints) drawFlag(ctx, cp, layer.world, size, opts.showLabels)
+  const routeIndex = Math.max(0, (layer.routes ?? []).findIndex((r) => r.id === opts.routeId))
+  const activeRoute = layer.routes?.[routeIndex]
+  const activeColor = laneColor(routeIndex)
+  const activeIds = activeRoute ? activeRoute.cps : layer.controlPoints.map((cp) => cp.id)
+  const cpsById = new Map(layer.controlPoints.map((cp) => [cp.id, cp]))
+  const routeLane = (ids: number[]) => {
+    const pts: [number, number][] = []
+    for (const id of ids) {
+      const cp = cpsById.get(id)
+      if (!cp) continue
+      pts.push([((cp.x + layer.world / 2) / layer.world) * size, ((cp.z + layer.world / 2) / layer.world) * size])
+    }
+    return pts
+  }
+
+  if (opts.showFlags) {
+    for (let i = 0; i < (layer.routes ?? []).length; i++) {
+      const route = layer.routes[i]
+      if (!opts.showAllRoutes && route.id !== activeRoute?.id) continue
+      const pts = routeLane(route.cps)
+      if (pts.length < 2) continue
+      ctx.save()
+      ctx.beginPath()
+      ctx.moveTo(pts[0][0], pts[0][1])
+      for (const [x, y] of pts.slice(1)) ctx.lineTo(x, y)
+      ctx.strokeStyle = laneColor(i)
+      ctx.globalAlpha = route.id === activeRoute?.id ? 0.45 : 0.22
+      ctx.lineWidth = size * 0.0018
+      ctx.lineJoin = 'round'
+      ctx.lineCap = 'round'
+      ctx.stroke()
+      ctx.restore()
+    }
+    for (const id of activeIds) {
+      const cp = cpsById.get(id)
+      if (cp) drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, activeColor)
+    }
+  }
 
   if (opts.showVehicles) {
-    const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
     for (const v of layer.vehicles) {
       if (v.team === null) {
         if (!opts.showAssets) continue
@@ -288,8 +381,18 @@ export async function renderStageCanvas(
         ctx.stroke()
         ctx.restore()
       }
-      const s = size * (v.category === 'mbt' ? 0.026 : v.category === 'boat' || v.category === 'carrier' ? 0.03 : 0.021)
-      const img = iconImage(glyphFor('vehicle', v.category), color)
+      const s = size * (v.category === 'mbt' ? 0.032 : v.category === 'boat' || v.category === 'carrier' ? 0.034 : 0.028)
+      const iconPath = opts.assets.vehicles[v.icon] ?? opts.assets.vehicles[v.category] ?? opts.assets.vehicles.other
+      const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(x, y, s * 0.68, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(5,9,7,0.62)'
+      ctx.fill()
+      ctx.strokeStyle = `${color}88`
+      ctx.lineWidth = size * 0.0012
+      ctx.stroke()
+      ctx.restore()
       ctx.save()
       ctx.translate(x, y)
       ctx.rotate((pos.rotation * Math.PI) / 180)
@@ -317,7 +420,7 @@ export async function renderStageCanvas(
     }
   }
 
-  for (const el of stage.elements) drawElement(ctx, el, size)
+  for (const el of stage.elements) drawElement(ctx, el, size, opts.assets)
 
   // footer
   const bar = size * 0.036

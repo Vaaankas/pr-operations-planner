@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, X, ChevronRight, Layers, Users, Shield, Crosshair } from 'lucide-react'
+import { Search, ChevronRight, Crosshair } from 'lucide-react'
 import type { LayerRef, MapIndex, MapMeta, Team } from '../types'
 import { dataUrl } from '../lib/utils'
+import { factionFlag, useAssets } from '../lib/assets'
 
 interface Props {
   index: MapIndex
@@ -11,11 +12,14 @@ interface Props {
   onClose?: () => void
 }
 
-const MODES = ['ALL', 'AAS', 'Insurgency', 'CNC'] as const
+const MODES = ['ALL', 'AAS', 'Insurgency', 'Skirmish'] as const
+const SIZES = ['ALL', 1, 2, 4, 8] as const
 
 export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }: Props) {
+  const assets = useAssets()
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<(typeof MODES)[number]>('ALL')
+  const [size, setSize] = useState<(typeof SIZES)[number]>('ALL')
   const [selectedId, setSelectedId] = useState<string | null>(currentMapId ?? index.maps[0]?.id ?? null)
   const [layerId, setLayerId] = useState<string | null>(currentLayerId ?? null)
   const [side, setSide] = useState<Team>(1)
@@ -27,11 +31,12 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
     return index.maps.filter((m) => {
       if (!m.images) return false
       if (mode !== 'ALL' && !m.layers.some((l) => l.modeLabel === mode)) return false
+      if (size !== 'ALL' && m.sizeKm !== size) return false
       if (!q) return true
       if (m.name.toLowerCase().includes(q)) return true
-      return m.layers.some((l) => `${l.name} ${l.layerTypeLabel}`.toLowerCase().includes(q))
+      return m.layers.some((l) => l.displayName.toLowerCase().includes(q))
     })
-  }, [index, query, mode])
+  }, [index, query, mode, size])
 
   const layerGroups = useMemo(() => {
     if (!selected) return []
@@ -74,11 +79,11 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
             <div className="mt-1 font-mono text-[9px] tracking-[0.28em] text-slate-500">MISSION PLANNING BOARD</div>
           </div>
         </div>
-        <div className="ml-6 hidden items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-slate-500 md:flex">
+        <div className="ml-6 hidden items-center gap-2 font-mono text-[12px] uppercase tracking-widest text-slate-400 md:flex">
           <span>{index.maps.length} maps</span>
-          <span className="text-slate-700">/</span>
+          <span className="text-slate-600">/</span>
           <span>{index.maps.reduce((n, m) => n + m.layers.length, 0)} layers</span>
-          <span className="text-slate-700">/</span>
+          <span className="text-slate-600">/</span>
           <span>PvP deployment</span>
         </div>
         <div className="ml-auto flex items-center gap-2">
@@ -107,13 +112,24 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={`rounded px-2.5 py-1 text-[11px] font-semibold tracking-wide ${mode === m ? 'bg-amber-400 text-black' : 'text-slate-400 hover:bg-white/5'}`}
+                  className={`rounded px-2.5 py-1 text-[12px] font-semibold tracking-wide ${mode === m ? 'bg-amber-400 text-black' : 'text-slate-300 hover:bg-white/5'}`}
                 >
                   {m}
                 </button>
               ))}
             </div>
-            <div className="ml-auto font-mono text-[10px] uppercase tracking-widest text-slate-600">{maps.length} results</div>
+            <div className="flex items-center gap-1 rounded border border-white/10 p-0.5">
+              {SIZES.map((s) => (
+                <button
+                  key={String(s)}
+                  onClick={() => setSize(s)}
+                  className={`rounded px-2.5 py-1 text-[12px] font-semibold tracking-wide ${size === s ? 'bg-amber-400 text-black' : 'text-slate-300 hover:bg-white/5'}`}
+                >
+                  {s === 'ALL' ? 'ALL KM' : `${s} KM`}
+                </button>
+              ))}
+            </div>
+            <div className="ml-auto font-mono text-[11px] uppercase tracking-widest text-slate-400">{maps.length} results</div>
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
@@ -139,10 +155,8 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                       )}
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-2 pb-1.5 pt-6">
                         <div className="truncate text-[12px] font-semibold text-slate-100">{m.name}</div>
-                        <div className="mt-0.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-slate-400">
-                          <Layers className="h-2.5 w-2.5" /> {m.layers.length} layers
-                          <span className="mx-0.5 text-slate-600">·</span>
-                          {Math.round((m.world / 1000) * 10) / 10} km
+                        <div className="mt-0.5 flex items-center gap-1 font-mono text-[11px] uppercase tracking-wider text-slate-300">
+                          {m.sizeKm} km
                         </div>
                       </div>
                       {active && <div className="absolute right-1.5 top-1.5 rounded bg-amber-400 px-1.5 py-0.5 font-mono text-[9px] font-bold text-black">SELECTED</div>}
@@ -162,24 +176,30 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
             <>
               <div className="border-b border-white/10 px-5 py-4">
                 <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/80">Selected map</div>
-                <div className="mt-1 text-lg font-semibold leading-tight text-slate-100">{selected.name}</div>
-                <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
-                  <Shield className="h-3.5 w-3.5 text-slate-500" />
-                  <span>{team1?.name ?? 'Team 1'}</span>
+                <div className="mt-1 text-xl font-semibold leading-tight text-slate-100">{selected.name}</div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
+                  <span className="flex items-center gap-1.5 font-medium text-rose-400">
+                    {team1 && factionFlag(assets, team1.key) && (
+                      <img src={dataUrl(factionFlag(assets, team1.key)!)} alt="" className="h-3.5 w-5 object-contain" />
+                    )}
+                    {team1?.name ?? 'Team 1'}
+                  </span>
                   <span className="font-mono text-slate-600">vs</span>
-                  <span>{team2?.name ?? 'Team 2'}</span>
+                  <span className="flex items-center gap-1.5 font-medium text-sky-400">
+                    {team2 && factionFlag(assets, team2.key) && (
+                      <img src={dataUrl(factionFlag(assets, team2.key)!)} alt="" className="h-3.5 w-5 object-contain" />
+                    )}
+                    {team2?.name ?? 'Team 2'}
+                  </span>
                 </div>
-                <div className="mt-2 font-mono text-[10px] uppercase tracking-wider text-slate-600">
-                  {(selected.world / 1000).toFixed(1)} km world · {selected.layers.length} layers
-                </div>
+                <div className="mt-2 font-mono text-[11px] uppercase tracking-wider text-slate-400">{selected.sizeKm} km</div>
               </div>
 
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
                 {layerGroups.map(([label, layers]) => (
                   <div key={label} className="mb-4">
-                    <div className="mb-1.5 flex items-center gap-1 px-1 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                    <div className="mb-1.5 flex items-center gap-1 px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-slate-400">
                       {label}
-                      <span className="ml-auto text-slate-700">{layers.length}</span>
                     </div>
                     <div className="space-y-1">
                       {layers.map((l) => {
@@ -188,19 +208,9 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                           <button
                             key={l.id}
                             onClick={() => setLayerId(l.id)}
-                            className={`flex w-full items-center gap-2 rounded border px-2.5 py-2 text-left transition ${active ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/5 bg-black/20 hover:border-white/15'}`}
+                            className={`flex w-full items-center gap-2 rounded border px-3 py-2.5 text-left transition ${active ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/5 bg-black/20 hover:border-white/15'}`}
                           >
-                            <span className={`font-mono text-sm font-bold ${active ? 'text-amber-300' : 'text-slate-300'}`}>{l.players}</span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[12px] font-medium text-slate-200">{l.name}</span>
-                              <span className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500">
-                                {l.layerTypeLabel || l.name}
-                                <span className="text-slate-700">·</span>
-                                {l.vehiclesAtStart} at start
-                                <span className="text-slate-700">·</span>
-                                {l.controlPoints} flags
-                              </span>
-                            </span>
+                            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-100">{l.displayName}</span>
                             {active && <ChevronRight className="h-4 w-4 text-amber-400" />}
                           </button>
                         )
@@ -212,19 +222,31 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
               </div>
 
               <div className="border-t border-white/10 px-4 py-4">
-                <div className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">Planning side</div>
+                <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400">Planning side</div>
                 <div className="grid grid-cols-2 gap-2">
                   {([1, 2] as Team[]).map((t) => {
                     const f = factions[String(t)]
+                    const active = side === t
+                    const flag = f ? factionFlag(assets, f.key) : undefined
                     return (
                       <button
                         key={t}
                         onClick={() => setSide(t)}
-                        className={`rounded border px-2 py-2 text-left ${side === t ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/10 hover:border-white/20'}`}
+                        className={`rounded border px-2.5 py-2 text-left ${
+                          active
+                            ? t === 1
+                              ? 'border-rose-400 bg-rose-500/15'
+                              : 'border-sky-400 bg-sky-500/15'
+                            : 'border-white/10 hover:border-white/25'
+                        }`}
                       >
-                        <div className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Team {t}</div>
-                        <div className="truncate text-[12px] font-semibold text-slate-200">{f?.name ?? 'Unknown'}</div>
-                        <div className="font-mono text-[10px] text-slate-500">{f?.short ?? '—'}</div>
+                        <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-400">
+                          {flag && <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-contain" />}
+                          Team {t}
+                        </div>
+                        <div className={`mt-1 truncate text-[13px] font-semibold ${active ? (t === 1 ? 'text-rose-300' : 'text-sky-300') : 'text-slate-200'}`}>
+                          {f?.name ?? 'Unknown'}
+                        </div>
                       </button>
                     )
                   })}
@@ -234,9 +256,8 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                   onClick={() => selected && pickLayer && onStart(selected, pickLayer, side)}
                   className="mt-3 w-full rounded bg-amber-400 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                 >
-                  {pickLayer ? `Open ${selected.name} · ${pickLayer.name}` : 'Select a layer'}
+                  {pickLayer ? `Open ${selected.name}` : 'Select a layer'}
                 </button>
-                <div className="mt-2 text-center text-[10px] text-slate-600">50-player roster · editable spawns · stage timeline</div>
               </div>
             </>
           ) : (

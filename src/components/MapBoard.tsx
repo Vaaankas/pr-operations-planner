@@ -2,11 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
+import type { DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
 import { affiliationColor, clamp, dataUrl, SQUAD_COLORS } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor, worldToNorm } from '../lib/render'
+import { cpFlag, useAssets } from '../lib/assets'
+import { assetImage, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
+import { routeColor } from './RoutesPanel'
 
 interface Props {
   map: MapMeta
@@ -17,6 +20,13 @@ interface Props {
 
 interface Draft {
   kind: 'pen' | 'line' | 'rect' | 'ellipse'
+  points: Point[]
+}
+
+type ShapeKind = 'line' | 'rect' | 'ellipse'
+
+interface ShapeDraft {
+  kind: ShapeKind
   points: Point[]
 }
 
@@ -42,10 +52,20 @@ function IconGlyph({
   return <KonvaImage image={img} x={x - size / 2} y={y - size / 2} width={size} height={size} rotation={rotation} offsetX={0} offsetY={0} listening={false} />
 }
 
+function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color: string }) {
+  const assets = useAssets()
+  const path = icon.startsWith('order_') ? assets.orders[icon.slice(6)] : assets.markers[icon]
+  if (path) {
+    return <KonvaImage image={assetImage(path)} x={-size / 2} y={-size / 2} width={size} height={size} listening={false} />
+  }
+  return <IconGlyph icon={glyphFor('marker', icon)} color={color} size={size} x={0} y={0} />
+}
+
 const PENCIL = '#f8fafc'
 
 export function MapBoard({ map, layer, plan, stage }: Props) {
   const ui = useUI()
+  const assets = useAssets()
   const planner = usePlanner()
   const wrapRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
@@ -53,14 +73,31 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
   const [draft, setDraft] = useState<Draft | null>(null)
+  const [pending, setPending] = useState<ShapeDraft | null>(null)
+  const pendingRef = useRef<ShapeDraft | null>(null)
+  const setPendingShape = (value: ShapeDraft | null) => {
+    pendingRef.current = value
+    setPending(value)
+  }
+  const pointerDown = useRef(false)
+  const panStart = useRef<{ px: number; py: number; vx: number; vy: number } | null>(null)
+  const panMoved = useRef(false)
+  const [panning, setPanning] = useState(false)
   const [polygon, setPolygon] = useState<Point[]>([])
   const polygonRef = useRef<Point[]>([])
   const pendingText = useRef<Point | null>(null)
   const [textAt, setTextAt] = useState<Point | null>(null)
   const [textValue, setTextValue] = useState('')
-  const [space, setSpace] = useState(false)
   const [tick, setTick] = useState(0)
   const fitted = useRef<string>('')
+
+  const routes = layer.routes ?? []
+  const routeIndex = Math.max(0, routes.findIndex((r) => r.id === ui.routeId))
+  const activeRoute = routes[routeIndex]
+  const activeCps = activeRoute
+    ? activeRoute.cps.map((id) => layer.controlPoints.find((c) => c.id === id)).filter(Boolean)
+    : layer.controlPoints
+  const laneColor = routeColor(routeIndex)
 
   const imageUrl = map.images ? dataUrl(`maps/${map.images.image}`) : null
   const image = useMapImage(imageUrl)
@@ -87,31 +124,35 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     setView({ scale: s, x: (box.w - mapW * s) / 2, y: (box.h - mapH * s) / 2 })
   }, [box, map.id, mapW, mapH])
 
-  // Warm the icon cache: every vehicle category and marker in current plan colours.
+  // Warm the game-icon cache used by this layer and plan.
   useEffect(() => {
-    const colors = [PENCIL, '#38bdf8', '#f87171', '#fbbf24', '#94a3b8', ...SQUAD_COLORS]
-    const names = [
-      'mbt', 'ifv', 'apc', 'recon', 'jeep', 'logistics', 'aa', 'artillery', 'transport_heli',
-      'attack_heli', 'jet', 'bomber', 'boat', 'carrier', 'emplacement', 'asset', 'crate', 'other',
-      'flag', 'fob', 'rally', 'lz', 'objective', 'observe', 'attack', 'defend', 'waypoint',
-      'mine', 'cache', 'repair', 'supply', 'mortar', 'tow', 'star', 'inf', 'armor', 'air', 'hq', 'mech', 'support',
-    ]
+    const jobs: Promise<void>[] = []
+    const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
+    for (const cp of layer.controlPoints) {
+      const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
+      const path = cpFlag(assets, key)
+      if (path) jobs.push(preloadAsset(path))
+    }
+    for (const v of layer.vehicles) {
+      const path = assets.vehicles[v.icon] ?? assets.vehicles[v.category] ?? assets.vehicles.other
+      if (!path) continue
+      jobs.push(preloadAsset(path))
+      jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
+    }
+    for (const path of Object.values(assets.markers)) jobs.push(preloadAsset(path))
+    for (const path of Object.values(assets.orders)) jobs.push(preloadAsset(path))
+    for (const el of stage.elements) {
+      if (el.type === 'icon') {
+        const path = el.icon.startsWith('order_') ? assets.orders[el.icon.slice(6)] : assets.markers[el.icon]
+        if (path) jobs.push(preloadAsset(path))
+      }
+    }
     let alive = true
-    Promise.all(
-      names.flatMap((n) =>
-        colors.map((c) => {
-          const img = iconImage(n, c)
-          return img.complete ? Promise.resolve() : new Promise<void>((res) => {
-            img.addEventListener('load', () => res(), { once: true })
-            img.addEventListener('error', () => res(), { once: true })
-          })
-        }),
-      ),
-    ).then(() => alive && setTick((t) => t + 1))
+    Promise.all(jobs).then(() => alive && setTick((t) => t + 1))
     return () => {
       alive = false
     }
-  }, [])
+  }, [assets, layer, plan, stage.elements])
 
   const mapCoords = useCallback((clientX?: number, clientY?: number) => {
     const st = stageRef.current
@@ -129,16 +170,20 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
   const commit = useCallback((el: DrawElement) => {
     planner.addElement(el)
-    useUI.getState().setSelected(el.id, 'element')
+    useUI.getState().setSelected(null, null)
   }, [planner])
 
-  const base = useCallback(() => ({
-    id: `el_${Math.random().toString(36).slice(2, 9)}`,
-    color: ui.color,
-    width: ui.width,
-    opacity: ui.opacity,
-    dash: ui.dash,
-  }), [ui.color, ui.width, ui.opacity, ui.dash])
+  const base = useCallback(() => {
+    const state = useUI.getState()
+    return {
+      id: `el_${Math.random().toString(36).slice(2, 9)}`,
+      color: state.color,
+      width: state.width,
+      opacity: state.opacity,
+      dash: state.dash,
+      fillOpacity: state.fillOpacity,
+    }
+  }, [])
 
   const onWheel = (e: KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault()
@@ -148,7 +193,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     if (!pointer) return
     const old = view.scale
     const dir = e.evt.deltaY > 0 ? 0.9 : 1.1
-    const next = clamp(old * dir, Math.max(0.02, fitScale * 0.4), 6)
+    const next = clamp(old * dir, Math.max(0.02, fitScale * 0.4), 20)
     const wx = (pointer.x - view.x) / old
     const wy = (pointer.y - view.y) / old
     setView({ scale: next, x: pointer.x - wx * next, y: pointer.y - wy * next })
@@ -156,7 +201,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
   const zoomBy = (factor: number) => {
     const old = view.scale
-    const next = clamp(old * factor, Math.max(0.02, fitScale * 0.4), 6)
+    const next = clamp(old * factor, Math.max(0.02, fitScale * 0.4), 20)
     const cx = box.w / 2
     const cy = box.h / 2
     const wx = (cx - view.x) / old
@@ -169,43 +214,62 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     setView({ scale: s, x: (box.w - mapW * s) / 2, y: (box.h - mapH * s) / 2 })
   }
 
+  const commitShape = (kind: ShapeKind, a: Point, b: Point) => {
+    const state = useUI.getState()
+    if (kind === 'line') {
+      commit({
+        ...base(),
+        type: 'line',
+        a,
+        b,
+        arrow: state.tool === 'arrow' ? (state.arrowBoth ? 'both' : 'end') : 'none',
+        dash: state.tool === 'dashed' || state.dash,
+      } as DrawElement)
+    } else {
+      commit({
+        ...base(),
+        type: kind,
+        a,
+        b,
+        fill: state.fillShapes,
+        fillOpacity: state.fillOpacity,
+      } as DrawElement)
+    }
+  }
+
   const onStageDown = (e: KonvaEventObject<MouseEvent>) => {
-    if (space || ui.tool === 'pan' || e.evt.button === 1) return
+    if (e.evt.button === 1) return
     const st = stageRef.current
     if (!st) return
-    if (ui.tool === 'select' || ui.tool === 'erase') {
+    const state = useUI.getState()
+    const tool = state.tool
+    if (tool === 'select') {
       if (e.target !== st) return
-      useUI.getState().setSelected(null, null)
+      const p = st.getPointerPosition()
+      if (!p) return
+      panStart.current = { px: p.x, py: p.y, vx: view.x, vy: view.y }
+      panMoved.current = false
+      setPanning(false)
+      return
+    }
+    if (tool === 'erase') {
+      if (e.target === st) state.setSelected(null, null)
       return
     }
     const pos = mapCoords()
-    if (ui.tool === 'text') {
+    if (tool === 'text') {
       pendingText.current = toNorm(pos)
       return
     }
-    if (ui.tool === 'marker') {
-      commit({
-        ...base(),
-        type: 'icon',
-        at: toNorm(pos),
-        icon: ui.markerIcon,
-        rotation: 0,
-        size: 0.02,
-      } as DrawElement)
+    if (tool === 'marker') {
+      commit({ ...base(), type: 'icon', at: toNorm(pos), icon: state.markerIcon, rotation: 0, size: 0.022 } as DrawElement)
       return
     }
-    if (ui.tool === 'unit') {
-      commit({
-        ...base(),
-        type: 'unit',
-        at: toNorm(pos),
-        unit: ui.unitKind,
-        affiliation: ui.unitAffiliation,
-        size: 0.024,
-      } as DrawElement)
+    if (tool === 'unit') {
+      commit({ ...base(), type: 'unit', at: toNorm(pos), unit: state.unitKind, affiliation: state.unitAffiliation, size: 0.026 } as DrawElement)
       return
     }
-    if (ui.tool === 'polygon') {
+    if (tool === 'polygon') {
       if (e.evt.detail > 1) return
       const n = toNorm(pos)
       const current = polygonRef.current
@@ -221,58 +285,91 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       setPolygon(next)
       return
     }
-    if (ui.tool === 'pen') {
+    if (tool === 'pen') {
       setDraft({ kind: 'pen', points: [toNorm(pos)] })
-    } else if (ui.tool === 'line' || ui.tool === 'arrow' || ui.tool === 'dashed') {
-      setDraft({ kind: 'line', points: [toNorm(pos)] })
-    } else if (ui.tool === 'rect') {
-      setDraft({ kind: 'rect', points: [toNorm(pos), toNorm(pos)] })
-    } else if (ui.tool === 'ellipse') {
-      setDraft({ kind: 'ellipse', points: [toNorm(pos), toNorm(pos)] })
+      pointerDown.current = true
+      return
+    }
+    if (['line', 'arrow', 'dashed', 'rect', 'ellipse'].includes(tool)) {
+      const kind: ShapeKind = tool === 'rect' ? 'rect' : tool === 'ellipse' ? 'ellipse' : 'line'
+      const current = pendingRef.current
+      if (current) {
+        const a = current.points[0]
+        const b = toNorm(pos)
+        commitShape(current.kind, a, b)
+        setPendingShape(null)
+        setDraft(null)
+        pointerDown.current = false
+        return
+      }
+      const start = toNorm(pos)
+      setPendingShape({ kind, points: [start, start] })
+      pointerDown.current = true
     }
   }
 
   const onStageMove = () => {
+    if (panStart.current) {
+      const st = stageRef.current
+      const p = st?.getPointerPosition()
+      if (!st || !p) return
+      const dx = p.x - panStart.current.px
+      const dy = p.y - panStart.current.py
+      if (Math.abs(dx) + Math.abs(dy) > 2) {
+        panMoved.current = true
+        setPanning(true)
+      }
+      setView((v) => ({ ...v, x: panStart.current!.vx + dx, y: panStart.current!.vy + dy }))
+      return
+    }
+    if (pendingRef.current) {
+      const n = toNorm(mapCoords())
+      setPendingShape({ ...pendingRef.current, points: [pendingRef.current.points[0], n] })
+      return
+    }
     if (!draft) return
     const n = toNorm(mapCoords())
-    if (draft.kind === 'pen') {
+    if (draft.kind === 'pen' && pointerDown.current) {
       const last = draft.points[draft.points.length - 1]
       if (Math.hypot(n.x - last.x, n.y - last.y) > 0.0018) {
         setDraft({ ...draft, points: [...draft.points, n] })
       }
-    } else {
-      setDraft({ ...draft, points: [draft.points[0], n] })
     }
   }
 
   const onStageUp = () => {
-    if (pendingText.current && ui.tool === 'text') {
+    if (panStart.current) {
+      const moved = panMoved.current
+      panStart.current = null
+      panMoved.current = false
+      setPanning(false)
+      if (!moved) useUI.getState().setSelected(null, null)
+      return
+    }
+    if (pendingText.current && useUI.getState().tool === 'text') {
       const pos = pendingText.current
       pendingText.current = null
       setTextAt(pos)
       setTextValue('')
       return
     }
-    if (!draft) return
-    const pts = draft.points
-    if (draft.kind === 'pen') {
-      if (pts.length > 2) commit({ ...base(), type: 'pen', points: pts } as DrawElement)
-    } else if (draft.kind === 'line') {
-      const [a, b] = pts
+    if (pendingRef.current) {
+      const current = pendingRef.current
+      const [a, b] = current.points
       if (Math.hypot(a.x - b.x, a.y - b.y) > 0.006) {
-        if (ui.tool === 'arrow') {
-          commit({ ...base(), type: 'line', a, b, arrow: ui.arrowBoth ? 'both' : 'end', dash: false } as DrawElement)
-        } else {
-          commit({ ...base(), type: 'line', a, b, arrow: 'none', dash: ui.tool === 'dashed' || ui.dash } as DrawElement)
-        }
+        commitShape(current.kind, a, b)
+        setPendingShape(null)
+        setDraft(null)
       }
-    } else if (draft.kind === 'rect' || draft.kind === 'ellipse') {
-      const [a, b] = pts
-      if (Math.abs(a.x - b.x) > 0.008 && Math.abs(a.y - b.y) > 0.008) {
-        commit({ ...base(), type: draft.kind, a, b, fill: ui.fillShapes } as DrawElement)
-      }
+      pointerDown.current = false
+      return
+    }
+    if (!draft) return
+    if (draft.kind === 'pen' && draft.points.length > 2) {
+      commit({ ...base(), type: 'pen', points: draft.points } as DrawElement)
     }
     setDraft(null)
+    pointerDown.current = false
   }
 
   const finishPolygon = () => {
@@ -300,6 +397,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }
 
   useEffect(() => {
+    setPendingShape(null)
+    setDraft(null)
+    pointerDown.current = false
     if (ui.tool !== 'polygon' && polygonRef.current.length) {
       polygonRef.current = []
       setPolygon([])
@@ -312,6 +412,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
   useEffect(() => {
     setDraft(null)
+    setPendingShape(null)
+    pointerDown.current = false
     polygonRef.current = []
     setPolygon([])
     pendingText.current = null
@@ -322,13 +424,11 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     const down = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
-      if (e.code === 'Space' && !typing) {
-        setSpace(true)
-        e.preventDefault()
-      }
       if (typing) return
       if (e.key === 'Escape') {
         setDraft(null)
+        setPendingShape(null)
+        pointerDown.current = false
         polygonRef.current = []
         setPolygon([])
         pendingText.current = null
@@ -351,17 +451,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         planner.redo()
       }
     }
-    const up = (e: KeyboardEvent) => {
-      if (e.code === 'Space') setSpace(false)
-    }
-    const blur = () => setSpace(false)
     window.addEventListener('keydown', down)
-    window.addEventListener('keyup', up)
-    window.addEventListener('blur', blur)
     return () => {
       window.removeEventListener('keydown', down)
-      window.removeEventListener('keyup', up)
-      window.removeEventListener('blur', blur)
     }
   }, [ui.tool, ui.selectedId, ui.selectedKind, planner, polygon])
 
@@ -416,7 +508,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }
 
   const iconScale = 1 / view.scale
-  const stageCursor = space || ui.tool === 'pan' ? 'grab' : ui.tool === 'select' ? 'default' : ui.tool === 'erase' ? 'not-allowed' : 'crosshair'
+  const stageCursor = panning ? 'grabbing' : ui.tool === 'select' ? 'default' : 'crosshair'
 
   const drawElementNode = (el: DrawElement) => {
     const selected = ui.selectedId === el.id
@@ -574,7 +666,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
               planner.updateElement(el.id, { rotation })
             }}
           >
-            <IconGlyph icon={glyphFor('marker', el.icon)} color={color} size={el.size * mapW} x={0} y={0} />
+            <MarkerGlyph icon={el.icon} color={color} size={el.size * mapW} />
           </Group>
         )
       case 'unit': {
@@ -650,8 +742,69 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     )
   }
 
-  const flags = ui.showFlags ? layer.controlPoints : []
+  const pendingNode = () => {
+    if (!pending) return null
+    const [a, b] = pending.points
+    const sw = Math.max(1, (ui.width * mapW) / 1000)
+    if (pending.kind === 'line') {
+      return (
+        <Arrow
+          points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
+          stroke={ui.color}
+          fill={ui.color}
+          strokeWidth={sw}
+          pointerLength={ui.tool === 'arrow' ? 12 : 0}
+          pointerWidth={ui.tool === 'arrow' ? 10 : 0}
+          pointerAtBeginning={ui.tool === 'arrow' && ui.arrowBoth}
+          dash={ui.tool === 'dashed' || ui.dash ? [sw * 3, sw * 2] : undefined}
+          opacity={0.85}
+          listening={false}
+        />
+      )
+    }
+    if (pending.kind === 'rect') {
+      return (
+        <Rect
+          x={Math.min(a.x, b.x) * mapW}
+          y={Math.min(a.y, b.y) * mapH}
+          width={Math.abs(b.x - a.x) * mapW}
+          height={Math.abs(b.y - a.y) * mapH}
+          stroke={ui.color}
+          fill={ui.fillShapes ? `${ui.color}22` : undefined}
+          strokeWidth={sw}
+          dash={[6, 4]}
+          opacity={0.85}
+          listening={false}
+        />
+      )
+    }
+    return (
+      <Ellipse
+        x={((a.x + b.x) / 2) * mapW}
+        y={((a.y + b.y) / 2) * mapH}
+        radiusX={(Math.abs(b.x - a.x) * mapW) / 2}
+        radiusY={(Math.abs(b.y - a.y) * mapH) / 2}
+        stroke={ui.color}
+        fill={ui.fillShapes ? `${ui.color}22` : undefined}
+        strokeWidth={sw}
+        dash={[6, 4]}
+        opacity={0.85}
+        listening={false}
+      />
+    )
+  }
+
   const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
+  const routePoints = (ids: number[]) => {
+    const pts: number[] = []
+    for (const id of ids) {
+      const cp = layer.controlPoints.find((c) => c.id === id)
+      if (!cp) continue
+      const p = worldToNorm(cp.x, cp.z, layer.world)
+      pts.push(p.x * mapW, p.y * mapH)
+    }
+    return pts
+  }
 
   return (
     <div ref={wrapRef} className="relative h-full w-full overflow-hidden bg-[#080c0a]" style={{ cursor: stageCursor }}>
@@ -663,10 +816,6 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         scaleY={view.scale}
         x={view.x}
         y={view.y}
-        draggable={space || ui.tool === 'pan'}
-        onDragEnd={(e) => {
-          if (e.target === stageRef.current) setView((v) => ({ ...v, x: e.target.x(), y: e.target.y() }))
-        }}
         onWheel={onWheel}
         onMouseDown={onStageDown}
         onMouseMove={onStageMove}
@@ -685,27 +834,77 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
 
         <Layer listening={false}>
-          {flags.map((cp: ControlPoint) => {
+          {ui.showFlags && ui.showAllRoutes &&
+            routes.map((r, i) => (
+              <Line
+                key={`lane-${r.id}`}
+                points={routePoints(r.cps)}
+                stroke={routeColor(i)}
+                strokeWidth={2 * iconScale}
+                opacity={0.22}
+                lineJoin="round"
+                lineCap="round"
+                listening={false}
+              />
+            ))}
+          {ui.showFlags && activeRoute && (
+            <Line
+              points={routePoints(activeRoute.cps)}
+              stroke={laneColor}
+              strokeWidth={2.5 * iconScale}
+              opacity={0.45}
+              lineJoin="round"
+              lineCap="round"
+              listening={false}
+            />
+          )}
+          {ui.showFlags && activeCps.map((cp) => {
+            if (!cp) return null
             const p = worldToNorm(cp.x, cp.z, layer.world)
-            const s = 30 * iconScale
+            const s = 26 * iconScale
+            const radius = (cp.radius / layer.world) * mapW
+            const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
+            const flagPath = cpFlag(assets, key)
             return (
               <Group key={cp.id} x={p.x * mapW} y={p.y * mapH}>
-                <IconGlyph icon="flag" color="#fbbf24" size={s} x={0} y={0} />
+                {radius > 0 && (
+                  <Circle
+                    radius={radius}
+                    fill={`${laneColor}1a`}
+                    stroke={`${laneColor}80`}
+                    strokeWidth={1.5 * iconScale}
+                    listening={false}
+                  />
+                )}
+                {flagPath ? (
+                  <KonvaImage
+                    image={assetImage(flagPath)}
+                    x={-s / 2}
+                    y={-s / 2}
+                    width={s}
+                    height={s}
+                    listening={false}
+                    shadowColor="#020604"
+                    shadowBlur={3 * iconScale}
+                    shadowOpacity={0.85}
+                  />
+                ) : (
+                  <IconGlyph icon="flag" color={laneColor} size={s} x={0} y={0} />
+                )}
                 {ui.showLabels && (
                   <Text
-                    text={cp.name.toUpperCase()}
-                    fontSize={11 * iconScale}
+                    text={cp.name}
+                    fontSize={10.5 * iconScale}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
-                    fill="#fde68a"
-                    stroke="rgba(2,6,4,0.9)"
+                    fill="#f8fafc"
+                    stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={s * 0.55}
-                    offsetX={0}
-                    width={220 * iconScale}
+                    y={s * 0.6}
+                    width={180 * iconScale}
                     align="center"
-                    x={-110 * iconScale}
+                    x={-90 * iconScale}
                     listening={false}
                   />
                 )}
@@ -721,7 +920,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const orig = worldToNorm(v.x, v.z, layer.world)
             const moved = Boolean(stage.moves[v.id])
             const color = vehicleColor(v, plan, squadColors)
-            const s = (v.category === 'mbt' ? 26 : v.category === 'boat' || v.category === 'carrier' ? 28 : 22) * iconScale
+            const s = (v.category === 'mbt' ? 32 : v.category === 'boat' || v.category === 'carrier' ? 34 : 30) * iconScale
             const nodeId = `veh_${v.id}`
             const selected = ui.selectedId === nodeId
             return (
@@ -780,7 +979,23 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     planner.moveVehicle(v.id, { x: pos.x, z: pos.z, rotation })
                   }}
                 >
-                  <IconGlyph icon={glyphFor('vehicle', v.category)} color={selected ? '#fbbf24' : color} size={s} x={0} y={0} />
+                  <Circle radius={s * 0.62} fill="rgba(5,9,7,0.62)" stroke={`${selected ? '#fbbf24' : color}88`} strokeWidth={1.2 * iconScale} />
+                  {(() => {
+                    const iconPath = assets.vehicles[v.icon] ?? assets.vehicles[v.category] ?? assets.vehicles.other
+                    if (!iconPath) {
+                      return <IconGlyph icon={glyphFor('vehicle', v.category)} color={selected ? '#fbbf24' : color} size={s} x={0} y={0} />
+                    }
+                    return (
+                      <KonvaImage
+                        image={tintedAssetImage(iconPath, selected ? '#fbbf24' : color)}
+                        x={-s / 2}
+                        y={-s / 2}
+                        width={s}
+                        height={s}
+                        listening={false}
+                      />
+                    )
+                  })()}
                 </Group>
                 {plan.claims[v.id] && (() => {
                   const sq = plan.roster.squads.find((q) => q.id === plan.claims[v.id])
@@ -835,6 +1050,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             />
           )}
           {draftNode()}
+          {pendingNode()}
         </Layer>
       </Stage>
 
@@ -887,8 +1103,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
       <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1 text-[10px] font-semibold tracking-widest text-slate-400">
         <span className="rounded bg-black/70 px-2 py-1 uppercase">
-          {map.name} · {layer.name}
-          {layer.layerTypeLabel ? ` · ${layer.layerTypeLabel}` : ''}
+          {map.name} · {layer.displayName}
         </span>
         <span className="rounded bg-black/40 px-2 py-1 uppercase text-slate-500">
           {plan.side === 1 ? layer.factions['1']?.name : layer.factions['2']?.name} side
@@ -924,11 +1139,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           </button>
         </div>
       )}
-      {(ui.tool === 'pen' || ui.tool === 'line' || ui.tool === 'arrow' || ui.tool === 'rect' || ui.tool === 'ellipse' || ui.tool === 'text') && (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded border border-white/10 bg-black/75 px-3 py-1.5 text-[11px] text-slate-400">
-          {ui.tool === 'text' ? 'Click the map to place a label' : 'Drag on the map to draw · Esc cancels'}
-        </div>
-      )}
+
     </div>
   )
 }

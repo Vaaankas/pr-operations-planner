@@ -3,8 +3,9 @@ import { Crosshair, Eye, EyeOff, Flag, RotateCcw, Search, ShieldAlert } from 'lu
 import type { LayerData, Plan, Stage, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
 import { CATEGORY_LABELS, formatTime } from '../lib/utils'
-import { iconDataUrl, glyphFor } from '../icons'
 import { stageVehiclePos, vehicleColor } from '../lib/render'
+import { useAssets } from '../lib/assets'
+import { GameIcon } from '../lib/gameIcons'
 
 interface Props {
   layer: LayerData
@@ -21,6 +22,7 @@ const ORDER = [
 export function AssetsPanel({ layer, plan, stage }: Props) {
   const planner = usePlanner()
   const ui = useUI()
+  const assets = useAssets()
   const [query, setQuery] = useState('')
   const [startOnly, setStartOnly] = useState(true)
 
@@ -102,7 +104,9 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                     className={`group flex cursor-pointer items-center gap-1.5 rounded border px-1.5 py-1 ${selected ? 'border-amber-400/60 bg-amber-400/10' : 'border-transparent hover:border-white/10 hover:bg-white/5'}`}
                     title={v.template}
                   >
-                    <img src={iconDataUrl(glyphFor('vehicle', v.category), color)} alt="" className="h-5 w-5 shrink-0" />
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/40" style={{ border: `1px solid ${color}66` }}>
+                      <GameIcon path={assets.vehicles[v.icon] ?? assets.vehicles[v.category]} tint={color} size={24} />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
                         <span className="truncate text-[11px] font-medium text-slate-200">{v.label}</span>

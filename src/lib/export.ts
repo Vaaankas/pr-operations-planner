@@ -1,4 +1,4 @@
-import type { LayerData, MapMeta, Plan, Stage } from '../types'
+import type { AssetManifest, LayerData, MapMeta, Plan, Stage } from '../types'
 import { formatTime, safeName } from './utils'
 import { renderStageCanvas } from './render'
 
@@ -10,12 +10,15 @@ export interface ExportOptions {
   stages: 'all' | 'active'
   includeRoster: boolean
   download: boolean
+  routeId: string | null
+  showAllRoutes: boolean
 }
 
 interface Source {
   plan: Plan
   map: MapMeta
   layer: LayerData
+  assets: AssetManifest
 }
 
 const PAGE_W = 13.333
@@ -54,7 +57,7 @@ function rosterRows(plan: Plan): any[][] {
     })),
   ]
   const rows: any[][] = [header]
-  const max = Math.max(8, ...squads.map((s) => s.members.length))
+  const max = 8
   for (let r = 0; r < max; r++) {
     rows.push([
       { text: r === 0 ? (plan.roster.commander?.name ?? '—') : '', options: { fontSize: 9, align: 'center', color: '0F172A' } },
@@ -69,7 +72,7 @@ function rosterRows(plan: Plan): any[][] {
 
 function subtitle(src: Source): string {
   const side = src.layer.factions[String(src.plan.side)]
-  return `${src.map.name} · ${src.layer.name} · ${side?.name ?? `Team ${src.plan.side}`}`
+  return `${src.map.name} · ${src.layer.displayName} · ${side?.name ?? `Team ${src.plan.side}`}`
 }
 
 async function renderAll(
@@ -90,6 +93,9 @@ async function renderAll(
       showAssets: false,
       showLabels: true,
       showSpawnMarks: true,
+      assets: src.assets,
+      routeId: opts.routeId,
+      showAllRoutes: opts.showAllRoutes,
     })
     images.push({ stage: stages[i], data: canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined) })
   }
@@ -148,11 +154,13 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
       valign: 'middle',
       margin: 0.04,
     })
-    if (src.plan.roster.unassigned.length) {
-      slide.addText(
-        `Reserve: ${src.plan.roster.unassigned.map((m) => m.name).join(' · ')}`,
-        { x: 0.45, y: 6.7, w: 12.4, h: 0.35, fontFace: 'Segoe UI', fontSize: 9, color: '64748B' },
-      )
+    const overflow = src.plan.roster.squads.flatMap((s) => s.members.slice(8).map((m) => `${s.name}: ${m.name}`))
+    if (src.plan.roster.unassigned.length || overflow.length) {
+      const extra = [
+        src.plan.roster.unassigned.length ? `Reserve: ${src.plan.roster.unassigned.map((m) => m.name).join(' · ')}` : '',
+        overflow.length ? `Overflow: ${overflow.join(' · ')}` : '',
+      ].filter(Boolean).join('    |    ')
+      slide.addText(extra, { x: 0.45, y: 6.7, w: 12.4, h: 0.35, fontFace: 'Segoe UI', fontSize: 9, color: '64748B' })
     }
     slide.addText(`${src.plan.operation}  ·  roster`, { x: 0.45, y: 7.12, w: 8, h: 0.2, fontFace: 'Segoe UI', fontSize: 8, color: '94A3B8' })
   }
@@ -267,7 +275,7 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
       doc.text(`${s.name} · ${s.type}`, cx + 0.05, y0 + 0.24)
     })
     doc.setFont('helvetica', 'normal')
-    const rows = Math.max(8, ...squads.map((s) => s.members.length))
+    const rows = 8
     const rowH = 0.48
     for (let r = 0; r < rows; r++) {
       const y = y0 + headerH + rowH * r

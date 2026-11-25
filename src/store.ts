@@ -14,7 +14,7 @@ export function makePlan(meta: MapMeta, layer: LayerData, side: Team, operation?
   return {
     version: 1,
     id: uid('plan'),
-    operation: operation || `${meta.name} — ${layer.name}`,
+    operation: operation || `Operation ${meta.name}`,
     mapId: meta.id,
     layerId: layer.id,
     side,
@@ -76,6 +76,8 @@ interface PlannerStore {
   addSquad: () => void
   updateSquad: (squadId: string, patch: Partial<Omit<Squad, 'members'>>) => void
   removeSquad: (squadId: string) => void
+  reorderSquads: (fromId: string, toId: string) => void
+  cycleConfirmation: (memberId: string) => void
   claimVehicle: (vehicleId: string, squadId: string | null) => void
   setRoster: (roster: Roster) => void
   resetAll: () => void
@@ -239,7 +241,6 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
     const { plan } = get()
     if (!plan) return false
     const roster = plan.roster
-    if (totalMembers(roster) >= PLAYER_CAP) return false
     const member: Member = { id: uid('m'), name: name.trim(), kit }
     if (!member.name) return false
     if (target === 'commander') {
@@ -248,7 +249,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       // allowed
     } else {
       const squad = roster.squads.find((s) => s.id === target)
-      if (!squad || squad.members.length >= SQUAD_SIZE) return false
+      if (!squad) return false
     }
     get().mutate((draft) => {
       if (target === 'commander') draft.roster.commander = member
@@ -277,7 +278,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
         plan.roster.unassigned.splice(index ?? plan.roster.unassigned.length, 0, member)
       } else {
         const squad = plan.roster.squads.find((s) => s.id === target)
-        if (!squad || squad.members.length >= SQUAD_SIZE) {
+        if (!squad) {
           plan.roster.unassigned.push(member)
           return
         }
@@ -294,11 +295,34 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 
   addSquad: () => {
     const { plan } = get()
-    if (!plan || plan.roster.squads.length >= 9) return
+    if (!plan || plan.roster.squads.length >= 10) return
     get().mutate((draft) => {
       draft.roster.squads.push(newSquad(draft.roster.squads.length))
     })
   },
+
+  reorderSquads: (fromId, toId) =>
+    get().mutate((plan) => {
+      const from = plan.roster.squads.findIndex((s) => s.id === fromId)
+      const to = plan.roster.squads.findIndex((s) => s.id === toId)
+      if (from < 0 || to < 0 || from === to) return
+      const [squad] = plan.roster.squads.splice(from, 1)
+      plan.roster.squads.splice(to, 0, squad)
+    }),
+
+  cycleConfirmation: (memberId) =>
+    get().mutate((plan) => {
+      const member = findMember(plan.roster, memberId)
+      if (!member) return
+      if (!member.unconfirmed && !member.confirmed) {
+        member.unconfirmed = true
+      } else if (member.unconfirmed) {
+        member.unconfirmed = false
+        member.confirmed = true
+      } else {
+        member.confirmed = false
+      }
+    }),
 
   updateSquad: (squadId, patch) =>
     get().mutate((plan) => {
@@ -332,13 +356,17 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 }))
 
 export const useUI = create<UIState & {
+  setView: (view: UIState['view']) => void
   setTool: (tool: UIState['tool']) => void
   setColor: (color: string) => void
   setWidth: (width: number) => void
   setOpacity: (opacity: number) => void
+  setFillOpacity: (opacity: number) => void
   setDash: (dash: boolean) => void
   setArrowBoth: (value: boolean) => void
   setFillShapes: (value: boolean) => void
+  setRouteId: (id: string | null) => void
+  setShowAllRoutes: (value: boolean) => void
   setMarker: (icon: string) => void
   setUnit: (unit: string) => void
   setAffiliation: (a: UIState['unitAffiliation']) => void
@@ -349,19 +377,23 @@ export const useUI = create<UIState & {
   setHelpOpen: (open: boolean) => void
   setLayerPickerOpen: (open: boolean) => void
 }>((set) => ({
+  view: 'plan',
   tool: 'select',
   color: '#f8fafc',
   width: 4,
   opacity: 1,
+  fillOpacity: 0.18,
   dash: false,
   arrowBoth: false,
   fillShapes: false,
+  routeId: null,
+  showAllRoutes: false,
   markerIcon: 'objective',
   unitKind: 'inf',
   unitAffiliation: 'hostile',
   selectedId: null,
   selectedKind: null,
-  rightTab: 'roster',
+  rightTab: 'assets',
   showVehicles: true,
   showEnemy: true,
   showFlags: true,
@@ -371,13 +403,17 @@ export const useUI = create<UIState & {
   helpOpen: false,
   layerPickerOpen: false,
 
+  setView: (view) => set({ view }),
   setTool: (tool) => set({ tool, selectedId: null, selectedKind: null }),
   setColor: (color) => set({ color }),
   setWidth: (width) => set({ width: clamp(width, 1, 24) }),
   setOpacity: (opacity) => set({ opacity: clamp(opacity, 0.1, 1) }),
+  setFillOpacity: (fillOpacity) => set({ fillOpacity: clamp(fillOpacity, 0.02, 1) }),
   setDash: (dash) => set({ dash }),
   setArrowBoth: (arrowBoth) => set({ arrowBoth }),
   setFillShapes: (fillShapes) => set({ fillShapes }),
+  setRouteId: (routeId) => set({ routeId }),
+  setShowAllRoutes: (showAllRoutes) => set({ showAllRoutes }),
   setMarker: (markerIcon) => set({ markerIcon }),
   setUnit: (unitKind) => set({ unitKind }),
   setAffiliation: (unitAffiliation) => set({ unitAffiliation }),

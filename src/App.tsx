@@ -1,20 +1,39 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Boxes, ClipboardList, Crosshair, Loader2, Map as MapIcon, AlertTriangle } from 'lucide-react'
-import type { LayerData, LayerRef, MapIndex, MapMeta, Team } from './types'
+import { Boxes, Crosshair, Loader2, Map as MapIcon, AlertTriangle, Route as RouteIcon } from 'lucide-react'
+import type { AssetManifest, LayerData, LayerRef, MapIndex, MapMeta, Team } from './types'
 import { makePlan, loadStoredPlan, storePlan, usePlanner, useUI } from './store'
 import { dataUrl } from './lib/utils'
+import { AssetProvider } from './lib/assets'
 import { Picker } from './components/Picker'
 import { Header } from './components/Header'
 import { ToolbarRail, OptionsBar, useToolHotkeys } from './components/Toolbar'
 import { MapBoard } from './components/MapBoard'
-import { RosterPanel } from './components/RosterPanel'
+import { RosterBoard } from './components/RosterBoard'
 import { AssetsPanel } from './components/AssetsPanel'
 import { StagePanel } from './components/StagePanel'
+import { RoutesPanel } from './components/RoutesPanel'
 import { Timeline } from './components/Timeline'
 import { ExportDialog } from './components/ExportDialog'
 import { HelpDialog } from './components/HelpDialog'
 
+const EMPTY_ASSETS: AssetManifest = { factionFlags: {}, cpFlags: {}, vehicles: {}, markers: {}, orders: {} }
+
 export function App() {
+  const [assets, setAssets] = useState<AssetManifest>(EMPTY_ASSETS)
+  useEffect(() => {
+    fetch(dataUrl('assets.json'))
+      .then((r) => (r.ok ? r.json() : EMPTY_ASSETS))
+      .then(setAssets)
+      .catch(() => setAssets(EMPTY_ASSETS))
+  }, [])
+  return (
+    <AssetProvider value={assets}>
+      <AppInner />
+    </AssetProvider>
+  )
+}
+
+function AppInner() {
   const [index, setIndex] = useState<MapIndex | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [layer, setLayer] = useState<LayerData | null>(null)
@@ -59,8 +78,13 @@ export function App() {
       setLoadError(`Layer "${plan.layerId}" is not in this build.`)
       return
     }
+    const applyLayer = (data: LayerData) => {
+      setLayer(data)
+      useUI.getState().setRouteId(data.routes?.[0]?.id ?? null)
+      useUI.getState().setShowAllRoutes(false)
+    }
     if (cache.current.has(plan.layerId)) {
-      setLayer(cache.current.get(plan.layerId)!)
+      applyLayer(cache.current.get(plan.layerId)!)
       return
     }
     setLayerLoading(true)
@@ -71,7 +95,7 @@ export function App() {
       })
       .then((data: LayerData) => {
         cache.current.set(data.id, data)
-        setLayer(data)
+        applyLayer(data)
         setLayerLoading(false)
       })
       .catch((err) => {
@@ -83,7 +107,17 @@ export function App() {
   useEffect(() => {
     if (!plan) return
     const timer = setTimeout(() => storePlan(plan), 350)
-    return () => clearTimeout(timer)
+    const flush = () => {
+      const current = usePlanner.getState().plan
+      if (current) storePlan(current)
+    }
+    window.addEventListener('pagehide', flush)
+    window.addEventListener('beforeunload', flush)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('pagehide', flush)
+      window.removeEventListener('beforeunload', flush)
+    }
   }, [plan])
 
   useEffect(() => {
@@ -109,6 +143,9 @@ export function App() {
       }
       const next = makePlan(nextMap, data, side)
       setLayer(data)
+      useUI.getState().setRouteId(data.routes?.[0]?.id ?? null)
+      useUI.getState().setShowAllRoutes(false)
+      useUI.getState().setView('plan')
       usePlanner.getState().setPlan(next)
       setPickerOpen(false)
       setLoadError(null)
@@ -197,42 +234,46 @@ export function App() {
         onReset={reset}
       />
 
-      <div className="flex min-h-0 flex-1">
-        <ToolbarRail />
+      {ui.view === 'roster' ? (
+        <RosterBoard />
+      ) : (
+        <div className="flex min-h-0 flex-1">
+          <ToolbarRail />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <OptionsBar />
-          <div className="min-h-0 flex-1">
-            <MapBoard key={`${map.id}:${layer.id}`} map={map} layer={layer} plan={plan} stage={stage} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <OptionsBar />
+            <div className="min-h-0 flex-1">
+              <MapBoard key={`${map.id}:${layer.id}`} map={map} layer={layer} plan={plan} stage={stage} />
+            </div>
+            <Timeline plan={plan} stage={stage} />
           </div>
-          <Timeline plan={plan} stage={stage} />
+
+          <aside className="flex w-[352px] shrink-0 flex-col border-l border-white/10 bg-[#080d0a]">
+            <div className="flex h-10 shrink-0 items-center border-b border-white/10">
+              {([
+                { id: 'assets' as const, label: 'Assets', icon: Boxes },
+                { id: 'stage' as const, label: 'Stage', icon: MapIcon },
+                { id: 'routes' as const, label: 'Routes', icon: RouteIcon },
+              ]).map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => ui.setRightTab(id)}
+                  className={`flex h-full flex-1 items-center justify-center gap-1.5 border-b-2 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                    ui.rightTab === id ? 'border-amber-400 text-amber-300' : 'border-transparent text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ))}
+            </div>
+            <div className="min-h-0 flex-1">
+              {ui.rightTab === 'assets' && <AssetsPanel layer={layer} plan={plan} stage={stage} />}
+              {ui.rightTab === 'stage' && <StagePanel layer={layer} plan={plan} stage={stage} />}
+              {ui.rightTab === 'routes' && <RoutesPanel layer={layer} />}
+            </div>
+          </aside>
         </div>
-
-        <aside className="flex w-[352px] shrink-0 flex-col border-l border-white/10 bg-[#080d0a]">
-          <div className="flex h-10 shrink-0 items-center border-b border-white/10">
-            {([
-              { id: 'roster' as const, label: 'Roster', icon: ClipboardList },
-              { id: 'assets' as const, label: 'Assets', icon: Boxes },
-              { id: 'stage' as const, label: 'Stage', icon: MapIcon },
-            ]).map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => ui.setRightTab(id)}
-                className={`flex h-full flex-1 items-center justify-center gap-1.5 border-b-2 text-[10px] font-bold uppercase tracking-[0.14em] ${
-                  ui.rightTab === id ? 'border-amber-400 text-amber-300' : 'border-transparent text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" /> {label}
-              </button>
-            ))}
-          </div>
-          <div className="min-h-0 flex-1">
-            {ui.rightTab === 'roster' && <RosterPanel />}
-            {ui.rightTab === 'assets' && <AssetsPanel layer={layer} plan={plan} stage={stage} />}
-            {ui.rightTab === 'stage' && <StagePanel layer={layer} plan={plan} stage={stage} />}
-          </div>
-        </aside>
-      </div>
+      )}
 
       {pickerOpen && (
         <Picker

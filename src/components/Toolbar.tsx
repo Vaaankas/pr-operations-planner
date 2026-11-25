@@ -1,15 +1,16 @@
 import { useEffect } from 'react'
 import {
-  MousePointer2, Hand, Pencil, Minus, MoveUpRight, Square, Circle, Pentagon,
-  Type, MapPin, Shield, Eraser, Ruler, Crosshair,
+  MousePointer2, Pencil, Minus, MoveUpRight, Square, Circle, Pentagon,
+  Type, MapPin, Shield, Eraser, Ruler,
 } from 'lucide-react'
 import { useUI } from '../store'
 import type { Tool } from '../types'
 import { iconDataUrl } from '../icons'
+import { useAssets } from '../lib/assets'
+import { GameIcon } from '../lib/gameIcons'
 
 const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: string }[] = [
   { tool: 'select', icon: MousePointer2, label: 'Select / move', key: 'V' },
-  { tool: 'pan', icon: Hand, label: 'Pan map', key: 'H' },
   { tool: 'pen', icon: Pencil, label: 'Freehand', key: 'P' },
   { tool: 'line', icon: Minus, label: 'Line', key: 'L' },
   { tool: 'arrow', icon: MoveUpRight, label: 'Arrow', key: 'A' },
@@ -26,9 +27,11 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
 const COLORS = ['#f8fafc', '#facc15', '#fb923c', '#f87171', '#f472b6', '#a78bfa', '#38bdf8', '#34d399']
 
 const MARKERS = [
-  'objective', 'flag', 'fob', 'rally', 'lz', 'observe', 'attack', 'defend', 'waypoint',
+  'objective', 'fob', 'rally', 'lz', 'observe', 'attack', 'defend', 'waypoint',
   'mine', 'cache', 'repair', 'supply', 'mortar', 'tow', 'aa', 'star', 'phase',
 ]
+
+const ORDERS = ['move', 'attack', 'defend', 'repair', 'build', 'observe']
 
 const UNITS = ['inf', 'armor', 'recon', 'air', 'hq', 'mech', 'support', 'artillery']
 
@@ -47,16 +50,13 @@ export function ToolbarRail() {
           {ui.tool === tool && <span className="absolute -right-0.5 -top-0.5 rounded bg-black px-0.5 font-mono text-[8px] text-amber-300">{key}</span>}
         </button>
       ))}
-      <div className="mt-auto flex flex-col items-center gap-1 pb-1 text-[8px] font-mono uppercase tracking-wider text-slate-600">
-        <span>SPACE</span>
-        <span>PAN</span>
-      </div>
     </div>
   )
 }
 
 export function OptionsBar() {
   const ui = useUI()
+  const assets = useAssets()
   const tool = ui.tool
   const isDraw = ['pen', 'line', 'arrow', 'dashed', 'rect', 'ellipse', 'polygon', 'text'].includes(tool)
   return (
@@ -122,28 +122,67 @@ export function OptionsBar() {
             </button>
           )}
           {['rect', 'ellipse', 'polygon'].includes(tool) && (
-            <button
-              onClick={() => ui.setFillShapes(!ui.fillShapes)}
-              className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${ui.fillShapes ? 'border-amber-400/60 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500 hover:text-slate-300'}`}
-            >
-              Fill area
-            </button>
+            <>
+              <button
+                onClick={() => ui.setFillShapes(!ui.fillShapes)}
+                className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${ui.fillShapes ? 'border-amber-400/60 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500 hover:text-slate-300'}`}
+              >
+                Fill area
+              </button>
+              {ui.fillShapes && (
+                <label className="flex items-center gap-2 text-[10px] text-slate-400">
+                  FILL
+                  <input
+                    type="range"
+                    min={0.02}
+                    max={1}
+                    step={0.02}
+                    value={ui.fillOpacity}
+                    onChange={(e) => ui.setFillOpacity(Number(e.target.value))}
+                    className="h-1 w-16 accent-amber-400"
+                  />
+                  <span className="w-7 font-mono text-slate-300">{Math.round(ui.fillOpacity * 100)}%</span>
+                </label>
+              )}
+            </>
           )}
         </>
       )}
 
       {tool === 'marker' && (
         <div className="flex flex-1 items-center gap-1 overflow-x-auto">
-          {MARKERS.map((m) => (
-            <button
-              key={m}
-              onClick={() => ui.setMarker(m)}
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === m ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
-              title={m}
-            >
-              <img src={iconDataUrl(m, ui.markerIcon === m ? '#fbbf24' : '#cbd5e1')} alt={m} className="h-5 w-5" />
-            </button>
-          ))}
+          {MARKERS.map((m) => {
+            const path = assets.markers[m]
+            return (
+              <button
+                key={m}
+                onClick={() => ui.setMarker(m)}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === m ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
+                title={m}
+              >
+                {path ? (
+                  <GameIcon path={path} size={20} />
+                ) : (
+                  <img src={iconDataUrl(m, ui.markerIcon === m ? '#fbbf24' : '#cbd5e1')} alt={m} className="h-5 w-5" />
+                )}
+              </button>
+            )
+          })}
+          <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />
+          {ORDERS.map((o) => {
+            const icon = `order_${o}`
+            const path = assets.orders[o]
+            return (
+              <button
+                key={icon}
+                onClick={() => ui.setMarker(icon)}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
+                title={`commander order: ${o}`}
+              >
+                {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -175,16 +214,6 @@ export function OptionsBar() {
         </div>
       )}
 
-      {!isDraw && tool !== 'marker' && tool !== 'unit' && (
-        <span className="text-[10px] text-slate-500">
-          {tool === 'select' ? 'Click to select · drag to move · amber handle rotates assets' : tool === 'erase' ? 'Click a drawing or moved vehicle to remove it' : 'Drag the map to pan · wheel to zoom'}
-        </span>
-      )}
-
-      <div className="ml-auto flex items-center gap-3 text-[10px] text-slate-500">
-        <span className="hidden items-center gap-1 md:flex"><Crosshair className="h-3 w-3" /> wheel = zoom</span>
-        <span className="hidden font-mono lg:inline">Ctrl+Z undo</span>
-      </div>
     </div>
   )
 }

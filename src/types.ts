@@ -12,12 +12,15 @@ export interface LayerRef {
   modeLabel: string
   players: number
   name: string
+  displayName: string
+  sizeKm: number
   layerType: string
   layerTypeLabel: string
   file: string | null
   vehicles: number
   vehiclesAtStart: number
   controlPoints: number
+  routes: number
 }
 
 export interface MapImages {
@@ -31,6 +34,7 @@ export interface MapMeta {
   id: string
   name: string
   world: number
+  sizeKm: number
   factions: Record<string, Faction>
   images: MapImages | null
   layers: LayerRef[]
@@ -52,6 +56,7 @@ export interface VehicleSpawn {
   template: string
   label: string
   category: VehicleCategory
+  icon: string
   team: Team | null
   x: number
   z: number
@@ -63,10 +68,23 @@ export interface VehicleSpawn {
 
 export interface ControlPoint {
   id: number
+  cpId: number
   raw: string
   name: string
   x: number
   z: number
+  team: number
+  radius: number
+  sgid: number
+  order: number
+  pick: number
+  route: number | null
+}
+
+export interface Route {
+  id: string
+  label: string
+  cps: number[]
 }
 
 export interface LayerData {
@@ -77,13 +95,24 @@ export interface LayerData {
   players: number
   layerType: string
   layerTypeLabel: string
+  displayName: string
   name: string
+  sizeKm: number
   world: number
   factions: Record<string, Faction>
   controlPoints: ControlPoint[]
+  routes: Route[]
   vehicles: VehicleSpawn[]
   vehicleAtStart: number
   counts: Record<string, number>
+}
+
+export interface AssetManifest {
+  factionFlags: Record<string, string>
+  cpFlags: Record<string, string>
+  vehicles: Record<string, string>
+  markers: Record<string, string>
+  orders: Record<string, string>
 }
 
 export interface Point {
@@ -97,6 +126,7 @@ export interface ElementBase {
   color: string
   width: number
   dash?: boolean
+  fillOpacity?: number
 }
 
 export type DrawElement =
@@ -137,6 +167,8 @@ export interface Member {
   id: string
   name: string
   kit?: string
+  unconfirmed?: boolean
+  confirmed?: boolean
 }
 
 export interface Squad {
@@ -170,23 +202,27 @@ export interface Plan {
 }
 
 export type Tool =
-  | 'select' | 'pan' | 'pen' | 'line' | 'arrow' | 'dashed' | 'rect' | 'ellipse'
+  | 'select' | 'pen' | 'line' | 'arrow' | 'dashed' | 'rect' | 'ellipse'
   | 'polygon' | 'text' | 'marker' | 'unit' | 'erase'
 
 export interface UIState {
+  view: 'plan' | 'roster'
   tool: Tool
   color: string
   width: number
   opacity: number
+  fillOpacity: number
   dash: boolean
   arrowBoth: boolean
   fillShapes: boolean
+  routeId: string | null
+  showAllRoutes: boolean
   markerIcon: string
   unitKind: string
   unitAffiliation: 'friend' | 'hostile' | 'neutral'
   selectedId: string | null
   selectedKind: 'element' | 'vehicle' | null
-  rightTab: 'roster' | 'assets' | 'stage'
+  rightTab: 'assets' | 'stage' | 'routes'
   showVehicles: boolean
   showEnemy: boolean
   showFlags: boolean

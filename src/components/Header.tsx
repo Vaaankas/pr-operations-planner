@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ChevronDown, Crosshair, Download, FileJson, HelpCircle, Map, Menu, Redo2, Save,
+  ArrowLeft, Crosshair, Download, FileJson, HelpCircle, Map, Menu, Redo2, Save,
   Trash2, Undo2, Upload, Users,
 } from 'lucide-react'
 import type { LayerData, MapMeta, Plan } from '../types'
-import { usePlanner } from '../store'
+import { usePlanner, useUI } from '../store'
 import { downloadBlob, playerCount, safeName } from '../lib/utils'
+import { factionFlag, useAssets } from '../lib/assets'
+import { dataUrl } from '../lib/utils'
 
 interface Props {
   plan: Plan
@@ -19,6 +21,8 @@ interface Props {
 
 export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onReset }: Props) {
   const planner = usePlanner()
+  const ui = useUI()
+  const assets = useAssets()
   const [operation, setOperation] = useState(plan.operation)
   const [menu, setMenu] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -49,40 +53,72 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
 
   return (
     <header className="relative z-30 flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-[#080d0a] px-3">
-      <div className="flex items-center gap-2">
+      <button
+        onClick={onOpenPicker}
+        className="flex h-8 shrink-0 items-center gap-1 rounded border border-white/10 px-2 text-slate-300 hover:border-amber-400/40 hover:text-amber-300"
+        title="Back to map menu"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span className="hidden font-mono text-[9px] font-bold uppercase tracking-wider xl:inline">Menu</span>
+      </button>
+
+      <div className="flex shrink-0 items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded border border-amber-400/40 bg-amber-400/10">
           <Crosshair className="h-4 w-4 text-amber-400" />
         </div>
-        <div className="hidden leading-none sm:block">
+        <div className="hidden leading-none lg:block">
           <div className="font-mono text-[10px] font-bold tracking-[0.22em] text-amber-400/90">PR OPS</div>
-          <div className="mt-0.5 font-mono text-[8px] tracking-[0.2em] text-slate-600">PLANNING BOARD</div>
+          <div className="mt-0.5 font-mono text-[8px] tracking-[0.2em] text-slate-500">PLANNING BOARD</div>
         </div>
       </div>
 
-      <div className="h-7 w-px bg-white/10" />
+      <div className="hidden h-7 w-px bg-white/10 md:block" />
 
       <div className="min-w-0">
+        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Operation</div>
         <input
           value={operation}
           onChange={(e) => setOperation(e.target.value)}
           onBlur={() => operation.trim() && operation !== plan.operation && planner.setMeta({ operation: operation.trim() })}
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-          className="w-[260px] max-w-[34vw] truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[13px] font-semibold text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
+          className="w-[230px] max-w-[24vw] truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[13px] font-semibold text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
           title="Operation name"
         />
-        <button onClick={onOpenPicker} className="group flex items-center gap-1 px-1 text-[10px] text-slate-500 hover:text-amber-300">
-          <Map className="h-3 w-3" />
-          <span className="truncate">{map.name} · {layer.name}</span>
-          <ChevronDown className="h-2.5 w-2.5" />
+      </div>
+
+      <div className="hidden min-w-0 border-l border-white/10 pl-3 lg:block">
+        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Map</div>
+        <div className="max-w-[240px] truncate px-1 py-0.5 text-[12px] font-medium text-slate-300" title={`${map.name} · ${layer.displayName}`}>
+          {map.name} <span className="text-slate-600">·</span> {layer.displayName}
+        </div>
+      </div>
+
+      <div className="ml-1 flex shrink-0 items-center rounded border border-white/10 p-0.5">
+        <button
+          onClick={() => ui.setView('roster')}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Roster
+        </button>
+        <button
+          onClick={() => ui.setView('plan')}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Battle Plan
         </button>
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <span className="hidden items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-slate-400 lg:flex">
+        <span className={`hidden items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider 2xl:flex ${playerCount(plan) > 50 ? 'text-amber-300' : 'text-slate-400'}`}>
           <Users className="h-3 w-3" /> {playerCount(plan)}/50
         </span>
-        <span className="hidden items-center gap-1 rounded border border-white/10 px-2 py-1 text-[10px] text-slate-400 md:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-sky-400" /> {side?.name ?? `Team ${plan.side}`}
+        <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 xl:flex">
+          {side && factionFlag(assets, side.key) ? (
+            <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-3 w-5 object-contain" />
+          ) : (
+            <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+          )}
+          {side?.name ?? `Team ${plan.side}`}
         </span>
 
         <button onClick={() => planner.undo()} disabled={!canUndo} className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Undo (Ctrl+Z)">
