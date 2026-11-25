@@ -23,6 +23,7 @@ export function normToWorld(p: { x: number; y: number }, world: number): { x: nu
 export function vehicleColor(v: VehicleSpawn, plan: Plan, squads: { id: string; color: string }[]): string {
   if (v.team !== null && v.team !== plan.side) return '#f87171'
   const claim = plan.claims[v.id]
+  if (claim === 'commander') return '#facc15'
   if (claim) {
     const squad = squads.find((s) => s.id === claim)
     if (squad) return squad.color
@@ -445,7 +446,9 @@ export async function renderStageCanvas(
       ctx.restore()
       const squadId = plan.claims[v.id]
       const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
-      if (squadIndex >= 0) {
+      if (squadId === 'commander') {
+        label(ctx, `★ ${v.label}`, x, y + s * 0.62, size * 0.009, color)
+      } else if (squadIndex >= 0) {
         label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
       }
     }

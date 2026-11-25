@@ -1193,8 +1193,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const s = (v.category === 'mbt' ? 32 : v.category === 'boat' || v.category === 'carrier' ? 34 : 30) * iconScale
             const nodeId = `veh_${v.id}`
             const selected = ui.selectedId === nodeId
+            const commanderClaim = plan.claims[v.id] === 'commander'
             const claimIndex = plan.roster.squads.findIndex((q) => q.id === plan.claims[v.id])
-            const claimPrefix = claimIndex >= 0 ? `[${claimIndex + 1}] ` : ''
+            const claimPrefix = commanderClaim ? '★ ' : claimIndex >= 0 ? `[${claimIndex + 1}] ` : ''
             const turns = stage.turns?.[v.id] ?? []
             const base = baseVehiclePos(v)
             const route = move
@@ -1307,7 +1308,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     )
                   })()}
                 </Group>
-                {ui.showLabels && (view.scale >= 0.55 || selected || claimIndex >= 0) && (
+                {ui.showLabels && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0) && (
                   <Text
                     text={`${claimPrefix}${v.label}`}
                     fontSize={9 * iconScale}

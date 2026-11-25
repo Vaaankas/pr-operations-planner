@@ -98,8 +98,9 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                 const selected = ui.selectedId === `veh_${v.id}`
                 const moved = Boolean(stage.moves[v.id])
                 const squadId = plan.claims[v.id] ?? ''
+                const isCommander = squadId === 'commander'
                 const squadIndex = plan.roster.squads.findIndex((s) => s.id === squadId)
-                const prefix = squadIndex >= 0 ? `[${squadIndex + 1}] ` : ''
+                const prefix = isCommander ? '★ ' : squadIndex >= 0 ? `[${squadIndex + 1}] ` : ''
                 return (
                   <div
                     key={v.id}
@@ -152,6 +153,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                           title="Assign to squad"
                         >
                           <option value="">—</option>
+                          <option value="commander">★ Commander</option>
                           {plan.roster.squads.map((s, i) => (
                             <option key={s.id} value={s.id}>[{i + 1}] {s.name}</option>
                           ))}
