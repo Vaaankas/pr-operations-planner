@@ -122,32 +122,33 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                         </span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9.5px] text-slate-500">
-                        <span>Delay: <span className="text-slate-400">{v.atStart ? 'start' : formatTime(v.respawn ?? 0)}</span></span>
-                        <span className="text-slate-700">·</span>
+                        {!v.atStart && (
+                          <>
+                            <span>Delay: <span className="text-slate-400">{formatTime(v.respawn ?? 0)}</span></span>
+                            <span className="text-slate-700">·</span>
+                          </>
+                        )}
                         <span>Respawn: <span className="text-slate-400">{v.respawn ? formatTime(v.respawn) : '—'}</span></span>
                       </div>
-                      <div className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-wider text-slate-500">
-                        <span>{v.team === plan.side ? 'friendly' : v.team ? 'enemy' : 'neutral'}</span>
-                        {moved && (
-                          <span className="flex items-center gap-0.5 text-amber-400/80">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); ui.toggleVehiclePath(v.id) }}
-                              className="text-slate-500 hover:text-amber-300"
-                              title={ui.hiddenVehiclePaths.includes(v.id) ? 'Show vehicle path' : 'Hide vehicle path'}
-                            >
-                              {ui.hiddenVehiclePaths.includes(v.id) ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                            </button>
-                            <span>moved</span>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); planner.clearVehicleMove(v.id) }}
-                              className="text-slate-500 hover:text-amber-300"
-                              title="Return to previous stage (first stage: spawn)"
-                            >
-                              <RotateCcw className="h-3 w-3" />
-                            </button>
-                          </span>
-                        )}
-                      </div>
+                      {moved && (
+                        <div className="mt-0.5 flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-wider text-amber-400/80">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); ui.toggleVehiclePath(v.id) }}
+                            className="text-slate-500 hover:text-amber-300"
+                            title={ui.hiddenVehiclePaths.includes(v.id) ? 'Show vehicle path' : 'Hide vehicle path'}
+                          >
+                            {ui.hiddenVehiclePaths.includes(v.id) ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                          </button>
+                          <span>moved</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); planner.clearVehicleMove(v.id) }}
+                            className="text-slate-500 hover:text-amber-300"
+                            title="Return to previous stage (first stage: spawn)"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     {v.team === plan.side && (
                       <div className="flex shrink-0 items-center gap-1">

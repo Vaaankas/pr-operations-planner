@@ -66,8 +66,6 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
 
   const pickLayer = selected?.layers.find((l) => l.id === layerId) ?? null
   const factions = pickLayer?.factions ?? selected?.factions ?? {}
-  const team1 = factions['1']
-  const team2 = factions['2']
 
   return (
     <div className={onClose ? 'fixed inset-0 z-50 flex flex-col bg-[#070b08]/97 backdrop-blur' : 'flex h-full flex-col bg-[#070b08]'}>
@@ -78,13 +76,6 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
             <div className="font-mono text-[13px] font-bold tracking-[0.22em] text-slate-100">PR OPERATIONS</div>
             <div className="mt-1 font-mono text-[9px] tracking-[0.28em] text-slate-500">MISSION PLANNING BOARD</div>
           </div>
-        </div>
-        <div className="ml-6 hidden items-center gap-2 font-mono text-[12px] uppercase tracking-widest text-slate-400 md:flex">
-          <span>{index.maps.length} maps</span>
-          <span className="text-slate-600">/</span>
-          <span>{index.maps.reduce((n, m) => n + m.layers.length, 0)} layers</span>
-          <span className="text-slate-600">/</span>
-          <span>PvP deployment</span>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {onClose && (
@@ -177,21 +168,6 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
               <div className="border-b border-white/10 px-5 py-4">
                 <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-400/80">Selected map</div>
                 <div className="mt-1 text-xl font-semibold leading-tight text-slate-100">{selected.name}</div>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
-                  <span className="flex items-center gap-1.5 font-medium text-rose-400">
-                    {team1 && cpFlag(assets, team1.key) && (
-                      <img src={dataUrl(cpFlag(assets, team1.key)!)} alt="" className="h-4 w-4 object-contain" />
-                    )}
-                    {team1?.name ?? 'Team 1'}
-                  </span>
-                  <span className="font-mono text-slate-600">vs</span>
-                  <span className="flex items-center gap-1.5 font-medium text-sky-400">
-                    {team2 && cpFlag(assets, team2.key) && (
-                      <img src={dataUrl(cpFlag(assets, team2.key)!)} alt="" className="h-4 w-4 object-contain" />
-                    )}
-                    {team2?.name ?? 'Team 2'}
-                  </span>
-                </div>
                 <div className="mt-2 font-mono text-[11px] uppercase tracking-wider text-slate-400">{selected.sizeKm} km</div>
               </div>
 
@@ -204,13 +180,31 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                     <div className="space-y-1">
                       {layers.map((l) => {
                         const active = l.id === layerId
+                        const lf = l.factions ?? selected.factions ?? {}
+                        const f1 = lf['1']
+                        const f2 = lf['2']
+                        const flag1 = f1 ? cpFlag(assets, f1.key) : undefined
+                        const flag2 = f2 ? cpFlag(assets, f2.key) : undefined
                         return (
                           <button
                             key={l.id}
                             onClick={() => setLayerId(l.id)}
                             className={`flex w-full items-center gap-2 rounded border px-3 py-2.5 text-left transition ${active ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/5 bg-black/20 hover:border-white/15'}`}
                           >
-                            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-100">{l.displayName}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[13px] font-medium text-slate-100">{l.displayName}</span>
+                              <span className="mt-1 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider">
+                                <span className="flex items-center gap-1 text-rose-400">
+                                  {flag1 && <img src={dataUrl(flag1)} alt="" className="h-3 w-4 object-contain" />}
+                                  {f1?.short ?? '—'}
+                                </span>
+                                <span className="text-slate-600">vs</span>
+                                <span className="flex items-center gap-1 text-sky-400">
+                                  {flag2 && <img src={dataUrl(flag2)} alt="" className="h-3 w-4 object-contain" />}
+                                  {f2?.short ?? '—'}
+                                </span>
+                              </span>
+                            </span>
                             {active && <ChevronRight className="h-4 w-4 text-amber-400" />}
                           </button>
                         )
@@ -242,7 +236,7 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                       >
                         <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-400">
                           {flag && <img src={dataUrl(flag)} alt="" className="h-4 w-4 object-contain" />}
-                          Team {t}
+                          {t === 1 ? 'REDFOR' : 'BLUFOR'}
                         </div>
                         <div className={`mt-1 truncate text-[13px] font-semibold ${active ? (t === 1 ? 'text-rose-300' : 'text-sky-300') : 'text-slate-200'}`}>
                           {f?.name ?? 'Unknown'}
