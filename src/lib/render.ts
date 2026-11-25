@@ -3,17 +3,20 @@ import { affiliationColor, dataUrl, formatTime } from './utils'
 import { iconImage, glyphFor } from '../icons'
 import { cpFlag } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
+import { displayRotation, rotateNorm, unrotateNorm, worldToDisplayNorm } from './coords'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
-  return [p.x * size, p.y * size]
+  const r = rotateNorm(p)
+  return [r.x * size, r.y * size]
 }
 
 export function worldToNorm(x: number, z: number, world: number): { x: number; y: number } {
-  return { x: (x + world / 2) / world, y: (z + world / 2) / world }
+  return worldToDisplayNorm(x, z, world)
 }
 
 export function normToWorld(p: { x: number; y: number }, world: number): { x: number; z: number } {
-  return { x: p.x * world - world / 2, z: p.y * world - world / 2 }
+  const w = unrotateNorm(p)
+  return { x: w.x * world - world / 2, z: w.y * world - world / 2 }
 }
 
 export function vehicleColor(v: VehicleSpawn, plan: Plan, squads: { id: string; color: string }[]): string {
@@ -40,8 +43,8 @@ export interface RenderOptions {
   showLabels: boolean
   showSpawnMarks: boolean
   assets: AssetManifest
-  routeId: string | null
-  showAllRoutes: boolean
+  visibleRoutes: string[]
+  hiddenCps: number[]
 }
 
 const LANE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
@@ -112,14 +115,18 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       break
     }
     case 'rect': {
-      const [x1, y1] = normPoint(el.a, size)
-      const [x2, y2] = normPoint(el.b, size)
+      const [ax, ay] = normPoint(el.a, size)
+      const [bx, by] = normPoint(el.b, size)
+      const x1 = Math.min(ax, bx)
+      const y1 = Math.min(ay, by)
+      const w = Math.abs(bx - ax)
+      const h = Math.abs(by - ay)
       if (el.fill) {
         ctx.globalAlpha = el.fillOpacity ?? 0.18
-        ctx.fillRect(x1, y1, x2 - x1, y2 - y1)
+        ctx.fillRect(x1, y1, w, h)
         ctx.globalAlpha = el.opacity
       }
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1)
+      ctx.strokeRect(x1, y1, w, h)
       break
     }
     case 'ellipse': {
@@ -172,7 +179,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       const path = el.icon.startsWith('order_') ? assets?.orders[el.icon.slice(6)] : assets?.markers[el.icon]
       const img = path ? assetImage(path) : iconImage(glyphFor('marker', el.icon), el.color)
       ctx.translate(x, y)
-      ctx.rotate((el.rotation * Math.PI) / 180)
+      ctx.rotate((displayRotation(el.rotation) * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       break
     }
@@ -219,38 +226,35 @@ function drawFlag(
   assets: AssetManifest,
   color: string,
 ) {
-  const world = layer.world
-  const x = ((cp.x + world / 2) / world) * size
-  const y = ((cp.z + world / 2) / world) * size
-  const s = size * 0.032
-  const radius = (cp.radius / world) * size
+  const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
+  const x = p.x * size
+  const y = p.y * size
+  const w = size * 0.034
+  const radius = (cp.radius / layer.world) * size
   const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
   const flagPath = cpFlag(assets, key)
+  const img = flagPath ? assetImage(flagPath) : null
+  const ratio = img && img.width && img.height ? img.height / img.width : 1
+  const h = w * Math.min(1, Math.max(0.4, ratio))
   if (radius > 0) {
     ctx.save()
     ctx.beginPath()
     ctx.arc(x, y, radius, 0, Math.PI * 2)
-    ctx.fillStyle = `${color}1a`
+    ctx.fillStyle = `${color}14`
     ctx.fill()
-    ctx.strokeStyle = `${color}80`
+    ctx.strokeStyle = `${color}70`
     ctx.lineWidth = size * 0.0012
     ctx.stroke()
     ctx.restore()
   }
-  ctx.save()
-  ctx.beginPath()
-  ctx.arc(x, y, s * 0.62, 0, Math.PI * 2)
-  ctx.fillStyle = 'rgba(5,9,7,0.65)'
-  ctx.fill()
-  ctx.strokeStyle = `${color}cc`
-  ctx.lineWidth = size * 0.001
-  ctx.stroke()
-  ctx.restore()
-  if (flagPath) {
-    const img = assetImage(flagPath)
-    if (img.complete) ctx.drawImage(img, x - s / 2, y - s / 2, s, s)
+  if (img?.complete) {
+    ctx.save()
+    ctx.shadowColor = 'rgba(2,6,4,0.85)'
+    ctx.shadowBlur = size * 0.004
+    ctx.drawImage(img, x - w / 2, y - h / 2, w, h)
+    ctx.restore()
   }
-  if (showLabel) label(ctx, cp.name, x, y + s * 0.62, size * 0.015, '#f8fafc')
+  if (showLabel) label(ctx, cp.name, x, y + h / 2 + size * 0.003, size * 0.015, '#f8fafc')
 }
 
 export async function renderStageCanvas(
@@ -313,108 +317,109 @@ export async function renderStageCanvas(
     }
   }
 
-  const routeIndex = Math.max(0, (layer.routes ?? []).findIndex((r) => r.id === opts.routeId))
-  const activeRoute = layer.routes?.[routeIndex]
-  const activeColor = laneColor(routeIndex)
-  const activeIds = activeRoute ? activeRoute.cps : layer.controlPoints.map((cp) => cp.id)
+  const routes = layer.routes ?? []
+  const visibleRoutes = routes.filter((r) => opts.visibleRoutes.includes(r.id))
   const cpsById = new Map(layer.controlPoints.map((cp) => [cp.id, cp]))
   const routeLane = (ids: number[]) => {
     const pts: [number, number][] = []
     for (const id of ids) {
       const cp = cpsById.get(id)
       if (!cp) continue
-      pts.push([((cp.x + layer.world / 2) / layer.world) * size, ((cp.z + layer.world / 2) / layer.world) * size])
+      const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
+      pts.push([p.x * size, p.y * size])
     }
     return pts
   }
 
   if (opts.showFlags) {
-    for (let i = 0; i < (layer.routes ?? []).length; i++) {
-      const route = layer.routes[i]
-      if (!opts.showAllRoutes && route.id !== activeRoute?.id) continue
+    for (const route of visibleRoutes) {
+      const index = routes.findIndex((r) => r.id === route.id)
       const pts = routeLane(route.cps)
       if (pts.length < 2) continue
       ctx.save()
       ctx.beginPath()
       ctx.moveTo(pts[0][0], pts[0][1])
       for (const [x, y] of pts.slice(1)) ctx.lineTo(x, y)
-      ctx.strokeStyle = laneColor(i)
-      ctx.globalAlpha = route.id === activeRoute?.id ? 0.45 : 0.22
-      ctx.lineWidth = size * 0.0018
+      ctx.strokeStyle = laneColor(index)
+      ctx.globalAlpha = 0.45
+      ctx.lineWidth = size * 0.002
       ctx.lineJoin = 'round'
       ctx.lineCap = 'round'
       ctx.stroke()
       ctx.restore()
     }
-    for (const id of activeIds) {
+    const visibleIds = [...new Set(visibleRoutes.flatMap((r) => r.cps))]
+    for (const id of visibleIds) {
       const cp = cpsById.get(id)
-      if (cp) drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, activeColor)
+      if (!cp || opts.hiddenCps.includes(id)) continue
+      const routeIndex = Math.max(0, visibleRoutes.findIndex((r) => r.cps.includes(id)))
+      drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex))
     }
   }
 
   if (opts.showVehicles) {
+    const stageIndex = plan.stages.findIndex((s) => s.id === stage.id)
+    const basePos = (v: VehicleSpawn) => {
+      for (let i = stageIndex - 1; i >= 0; i--) {
+        const move = plan.stages[i].moves[v.id]
+        if (move) return move
+      }
+      return { x: v.x, z: v.z, rotation: v.rotation }
+    }
     for (const v of layer.vehicles) {
       if (v.team === null) {
         if (!opts.showAssets) continue
       } else if (v.team !== plan.side && !opts.showEnemy) continue
       if (['asset', 'crate', 'emplacement'].includes(v.category) && !opts.showAssets) continue
-      const pos = stageVehiclePos(v, stage)
-      const x = ((pos.x + layer.world / 2) / layer.world) * size
-      const y = ((pos.z + layer.world / 2) / layer.world) * size
+      const move = stage.moves[v.id]
+      const pos = move ?? basePos(v)
+      const p = worldToDisplayNorm(pos.x, pos.z, layer.world)
+      const x = p.x * size
+      const y = p.y * size
       const color = vehicleColor(v, plan, squadColors)
-      const moved = Boolean(stage.moves[v.id])
-      if (moved && opts.showSpawnMarks) {
-        const ox = ((v.x + layer.world / 2) / layer.world) * size
-        const oy = ((v.z + layer.world / 2) / layer.world) * size
-        ctx.save()
-        ctx.globalAlpha = 0.8
-        ctx.strokeStyle = 'rgba(226,232,240,0.7)'
-        ctx.setLineDash([size * 0.006, size * 0.004])
-        ctx.lineWidth = Math.max(1, size * 0.0012)
-        ctx.beginPath()
-        ctx.moveTo(ox, oy)
-        ctx.lineTo(x, y)
-        ctx.stroke()
-        ctx.setLineDash([])
-        ctx.beginPath()
-        ctx.arc(ox, oy, size * 0.008, 0, Math.PI * 2)
-        ctx.stroke()
-        ctx.restore()
+      if (move) {
+        const turns = stage.turns?.[v.id] ?? []
+        const path = [basePos(v), ...turns, move].map((q) => worldToDisplayNorm(q.x, q.z, layer.world))
+        if (path.length > 1) {
+          ctx.save()
+          ctx.globalAlpha = 0.82
+          ctx.strokeStyle = color
+          ctx.lineWidth = size * 0.0022
+          ctx.lineCap = 'round'
+          ctx.lineJoin = 'round'
+          ctx.beginPath()
+          ctx.moveTo(path[0].x * size, path[0].y * size)
+          for (const pt of path.slice(1)) ctx.lineTo(pt.x * size, pt.y * size)
+          ctx.stroke()
+          ctx.restore()
+        }
       }
       const s = size * (v.category === 'mbt' ? 0.032 : v.category === 'boat' || v.category === 'carrier' ? 0.034 : 0.028)
       const iconPath = opts.assets.vehicles[v.icon] ?? opts.assets.vehicles[v.category] ?? opts.assets.vehicles.other
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
-      ctx.beginPath()
-      ctx.arc(x, y, s * 0.68, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(5,9,7,0.62)'
-      ctx.fill()
-      ctx.strokeStyle = `${color}88`
-      ctx.lineWidth = size * 0.0012
-      ctx.stroke()
-      ctx.restore()
-      ctx.save()
       ctx.translate(x, y)
-      ctx.rotate((pos.rotation * Math.PI) / 180)
+      ctx.rotate((displayRotation(pos.rotation) * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const squadId = plan.claims[v.id]
       const squad = plan.roster.squads.find((sq) => sq.id === squadId)
       if (squad) {
-        const r = size * 0.0075
         ctx.save()
-        ctx.beginPath()
-        ctx.arc(x + s * 0.34, y - s * 0.34, r, 0, Math.PI * 2)
+        const bx = x + s * 0.26
+        const by = y - s * 0.44
+        const bw = size * 0.016
+        const bh = size * 0.011
         ctx.fillStyle = squad.color
-        ctx.fill()
-        ctx.lineWidth = size * 0.0014
+        ctx.fillRect(bx, by, bw, bh)
         ctx.strokeStyle = '#08110c'
-        ctx.stroke()
+        ctx.lineWidth = size * 0.0014
+        ctx.strokeRect(bx, by, bw, bh)
         ctx.fillStyle = '#07110a'
-        ctx.font = `700 ${size * 0.009}px "Inter", "Segoe UI", sans-serif`
-        ctx.textAlign = 'center'
+        ctx.font = `700 ${size * 0.008}px "Inter", "Segoe UI", sans-serif`
+        ctx.textAlign = 'left'
         ctx.textBaseline = 'middle'
-        ctx.fillText(squad.name, x + s * 0.34, y - s * 0.34)
+        ctx.fillText(squad.name, bx + size * 0.002, by + bh / 2)
         ctx.restore()
       }
     }

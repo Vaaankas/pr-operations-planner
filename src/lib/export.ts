@@ -9,9 +9,10 @@ export interface ExportOptions {
   resolution: 2048 | 3072
   stages: 'all' | 'active'
   includeRoster: boolean
+  rosterOnly: boolean
   download: boolean
-  routeId: string | null
-  showAllRoutes: boolean
+  visibleRoutes: string[]
+  hiddenCps: number[]
 }
 
 interface Source {
@@ -29,6 +30,7 @@ function orderedStages(plan: Plan): Stage[] {
 }
 
 function stageList(src: Source, opts: ExportOptions): Stage[] {
+  if (opts.rosterOnly) return []
   const all = orderedStages(src.plan)
   return opts.stages === 'active' ? all.filter((s) => s.id === src.plan.activeStageId) : all
 }
@@ -46,7 +48,7 @@ function rosterRows(plan: Plan): any[][] {
   const header: any[] = [
     { text: 'CMD', options: { fill: { color: '111827' }, color: 'FDE68A', bold: true, fontSize: 10, align: 'center' } },
     ...squads.map((s) => ({
-      text: `${s.name} · ${s.type}`,
+      text: `${squads.indexOf(s) + 1} · ${s.name}`,
       options: {
         fill: { color: s.color.replace('#', '') },
         color: textOn(s.color),
@@ -94,8 +96,8 @@ async function renderAll(
       showLabels: true,
       showSpawnMarks: true,
       assets: src.assets,
-      routeId: opts.routeId,
-      showAllRoutes: opts.showAllRoutes,
+      visibleRoutes: opts.visibleRoutes,
+      hiddenCps: opts.hiddenCps,
     })
     images.push({ stage: stages[i], data: canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined) })
   }
@@ -117,27 +119,29 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
   const ink = '0F172A'
 
   // title
-  const title = pptx.addSlide()
-  title.background = { color: dark }
-  title.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.16, h: PAGE_H, fill: { color: amber } })
-  title.addText('PROJECT REALITY', { x: 0.7, y: 0.55, w: 6, h: 0.3, fontFace: 'Segoe UI', fontSize: 11, color: '94A3B8', bold: true, charSpacing: 4 })
-  title.addText(src.plan.operation, { x: 0.7, y: 1.25, w: 12, h: 1.7, fontFace: 'Segoe UI', fontSize: 38, bold: true, color: 'F8FAFC' })
-  title.addText(subtitle(src), { x: 0.7, y: 3.1, w: 12, h: 0.45, fontFace: 'Segoe UI', fontSize: 16, color: 'CBD5E1' })
-  title.addShape(pptx.ShapeType.rect, { x: 0.7, y: 3.85, w: 3.2, h: 0.02, fill: { color: amber } })
-  title.addText(
-    [
-      { text: 'OPERATION ORDER', options: { fontSize: 10, color: 'FBBF24', bold: true, breakLine: true } },
-      { text: `${src.plan.roster.squads.length} squads · ${src.plan.stages.length} stages · ${src.layer.controlPoints.length} control points`, options: { fontSize: 12, color: '94A3B8' } },
-    ],
-    { x: 0.7, y: 4.2, w: 8, h: 0.8, fontFace: 'Segoe UI' },
-  )
-  const stageLine = orderedStages(src.plan).map((s) => `${formatTime(s.time)} ${s.name}`).join('   ·   ')
-  title.addText('STAGES', { x: 0.7, y: 5.1, w: 2, h: 0.25, fontFace: 'Segoe UI', fontSize: 9, bold: true, color: 'FBBF24', charSpacing: 2 })
-  title.addText(stageLine, { x: 0.7, y: 5.4, w: 11.8, h: 0.7, fontFace: 'Segoe UI', fontSize: 11, color: '94A3B8' })
-  title.addText(new Date(src.plan.createdAt).toLocaleDateString(), { x: 0.7, y: 6.6, w: 4, h: 0.3, fontFace: 'Segoe UI', fontSize: 10, color: '64748B' })
+  if (!opts.rosterOnly) {
+    const title = pptx.addSlide()
+    title.background = { color: dark }
+    title.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.16, h: PAGE_H, fill: { color: amber } })
+    title.addText('PROJECT REALITY', { x: 0.7, y: 0.55, w: 6, h: 0.3, fontFace: 'Segoe UI', fontSize: 11, color: '94A3B8', bold: true, charSpacing: 4 })
+    title.addText(src.plan.operation, { x: 0.7, y: 1.25, w: 12, h: 1.7, fontFace: 'Segoe UI', fontSize: 38, bold: true, color: 'F8FAFC' })
+    title.addText(subtitle(src), { x: 0.7, y: 3.1, w: 12, h: 0.45, fontFace: 'Segoe UI', fontSize: 16, color: 'CBD5E1' })
+    title.addShape(pptx.ShapeType.rect, { x: 0.7, y: 3.85, w: 3.2, h: 0.02, fill: { color: amber } })
+    title.addText(
+      [
+        { text: 'OPERATION ORDER', options: { fontSize: 10, color: 'FBBF24', bold: true, breakLine: true } },
+        { text: `${src.plan.roster.squads.length} squads · ${src.plan.stages.length} stages · ${src.layer.controlPoints.length} control points`, options: { fontSize: 12, color: '94A3B8' } },
+      ],
+      { x: 0.7, y: 4.2, w: 8, h: 0.8, fontFace: 'Segoe UI' },
+    )
+    const stageLine = orderedStages(src.plan).map((s) => `${formatTime(s.time)} ${s.name}`).join('   ·   ')
+    title.addText('STAGES', { x: 0.7, y: 5.1, w: 2, h: 0.25, fontFace: 'Segoe UI', fontSize: 9, bold: true, color: 'FBBF24', charSpacing: 2 })
+    title.addText(stageLine, { x: 0.7, y: 5.4, w: 11.8, h: 0.7, fontFace: 'Segoe UI', fontSize: 11, color: '94A3B8' })
+    title.addText(new Date(src.plan.createdAt).toLocaleDateString(), { x: 0.7, y: 6.6, w: 4, h: 0.3, fontFace: 'Segoe UI', fontSize: 10, color: '64748B' })
+  }
 
   // roster
-  if (opts.includeRoster) {
+  if (opts.includeRoster || opts.rosterOnly) {
     const slide = pptx.addSlide()
     slide.background = { color: 'FFFFFF' }
     slide.addText('ROSTER', { x: 0.45, y: 0.32, w: 6, h: 0.35, fontFace: 'Segoe UI', fontSize: 22, bold: true, color: ink, charSpacing: 3 })
@@ -206,40 +210,42 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
   }
 
   // title
-  newPage()
-  doc.setFillColor(11, 17, 13)
-  doc.rect(0, 0, PAGE_W, PAGE_H, 'F')
-  doc.setFillColor(251, 191, 36)
-  doc.rect(0, 0, 0.16, PAGE_H, 'F')
-  doc.setTextColor(148, 163, 184)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(9)
-  doc.text('PROJECT REALITY', 0.7, 0.75)
-  doc.setTextColor(248, 250, 252)
-  doc.setFontSize(32)
-  const titleLines = doc.splitTextToSize(src.plan.operation, 11.5)
-  doc.text(titleLines, 0.7, 1.7)
-  doc.setTextColor(203, 213, 225)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(14)
-  doc.text(subtitle(src), 0.7, 3.4)
-  doc.setDrawColor(251, 191, 36)
-  doc.setLineWidth(0.02)
-  doc.line(0.7, 3.75, 3.6, 3.75)
-  doc.setFontSize(10)
-  doc.setTextColor(148, 163, 184)
-  doc.text(`${src.plan.roster.squads.length} squads · ${src.plan.stages.length} stages · ${src.layer.controlPoints.length} control points`, 0.7, 4.1)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(251, 191, 36)
-  doc.setFontSize(8)
-  doc.text('STAGES', 0.7, 5.0)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(148, 163, 184)
-  doc.setFontSize(10)
-  doc.text(orderedStages(src.plan).map((s) => `${formatTime(s.time)}  ${s.name}`).join('    ·    '), 0.7, 5.35, { maxWidth: 11.8 })
-  doc.text(new Date(src.plan.createdAt).toLocaleDateString(), 0.7, 7.05)
+  if (!opts.rosterOnly) {
+    newPage()
+    doc.setFillColor(11, 17, 13)
+    doc.rect(0, 0, PAGE_W, PAGE_H, 'F')
+    doc.setFillColor(251, 191, 36)
+    doc.rect(0, 0, 0.16, PAGE_H, 'F')
+    doc.setTextColor(148, 163, 184)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.text('PROJECT REALITY', 0.7, 0.75)
+    doc.setTextColor(248, 250, 252)
+    doc.setFontSize(32)
+    const titleLines = doc.splitTextToSize(src.plan.operation, 11.5)
+    doc.text(titleLines, 0.7, 1.7)
+    doc.setTextColor(203, 213, 225)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(14)
+    doc.text(subtitle(src), 0.7, 3.4)
+    doc.setDrawColor(251, 191, 36)
+    doc.setLineWidth(0.02)
+    doc.line(0.7, 3.75, 3.6, 3.75)
+    doc.setFontSize(10)
+    doc.setTextColor(148, 163, 184)
+    doc.text(`${src.plan.roster.squads.length} squads · ${src.plan.stages.length} stages · ${src.layer.controlPoints.length} control points`, 0.7, 4.1)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(251, 191, 36)
+    doc.setFontSize(8)
+    doc.text('STAGES', 0.7, 5.0)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(148, 163, 184)
+    doc.setFontSize(10)
+    doc.text(orderedStages(src.plan).map((s) => `${formatTime(s.time)}  ${s.name}`).join('    ·    '), 0.7, 5.35, { maxWidth: 11.8 })
+    doc.text(new Date(src.plan.createdAt).toLocaleDateString(), 0.7, 7.05)
+  }
 
-  if (opts.includeRoster) {
+  if (opts.includeRoster || opts.rosterOnly) {
     newPage()
     doc.setFillColor(255, 255, 255)
     doc.rect(0, 0, PAGE_W, PAGE_H, 'F')

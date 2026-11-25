@@ -65,7 +65,7 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
   }, [onClose])
 
   const pickLayer = selected?.layers.find((l) => l.id === layerId) ?? null
-  const factions = selected?.factions ?? {}
+  const factions = pickLayer?.factions ?? selected?.factions ?? {}
   const team1 = factions['1']
   const team2 = factions['2']
 
@@ -89,7 +89,7 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
         <div className="ml-auto flex items-center gap-2">
           {onClose && (
             <button onClick={onClose} className="rounded border border-white/10 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">
-              Close
+              {currentMapId ? 'Back to planning' : 'Close'}
             </button>
           )}
         </div>
@@ -125,7 +125,7 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                   onClick={() => setSize(s)}
                   className={`rounded px-2.5 py-1 text-[12px] font-semibold tracking-wide ${size === s ? 'bg-amber-400 text-black' : 'text-slate-300 hover:bg-white/5'}`}
                 >
-                  {s === 'ALL' ? 'ALL KM' : `${s} KM`}
+                  {s === 'ALL' ? 'ALL' : `${s} KM`}
                 </button>
               ))}
             </div>
@@ -256,7 +256,7 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
                   onClick={() => selected && pickLayer && onStart(selected, pickLayer, side)}
                   className="mt-3 w-full rounded bg-amber-400 px-4 py-2.5 text-sm font-bold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                 >
-                  {pickLayer ? `Open ${selected.name}` : 'Select a layer'}
+                  {pickLayer ? `New plan on ${selected.name}` : 'Select a layer'}
                 </button>
               </div>
             </>

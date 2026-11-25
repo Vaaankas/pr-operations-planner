@@ -11,7 +11,7 @@ import { GameIcon } from '../lib/gameIcons'
 
 const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: string }[] = [
   { tool: 'select', icon: MousePointer2, label: 'Select / move', key: 'V' },
-  { tool: 'pen', icon: Pencil, label: 'Freehand', key: 'P' },
+  { tool: 'pen', icon: Pencil, label: 'Draw', key: 'P' },
   { tool: 'line', icon: Minus, label: 'Line', key: 'L' },
   { tool: 'arrow', icon: MoveUpRight, label: 'Arrow', key: 'A' },
   { tool: 'dashed', icon: Ruler, label: 'Dashed line', key: 'D' },

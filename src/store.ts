@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { DrawElement, LayerData, MapMeta, Member, Plan, Roster, Squad, Stage, Team, UIState, VehicleMove } from './types'
+import type { DrawElement, LayerData, MapMeta, Member, Plan, Roster, Squad, Stage, Team, UIState, VehicleMove, VehicleTurn } from './types'
 import { clamp, defaultRoster, newSquad, newStage, PLAYER_CAP, SQUAD_SIZE, uid } from './lib/utils'
 
 const HISTORY_LIMIT = 80
@@ -34,6 +34,9 @@ export function loadStoredPlan(): Plan | null {
     if (!raw) return null
     const plan = JSON.parse(raw) as Plan
     if (plan?.version !== 1 || !plan.mapId || !Array.isArray(plan.stages) || plan.stages.length === 0) return null
+    plan.roster.squads.forEach((squad) => {
+      if (/^\d+$/.test(squad.name) && squad.type) squad.name = squad.type
+    })
     return plan
   } catch {
     return null
@@ -63,6 +66,7 @@ interface PlannerStore {
   updateElement: (id: string, patch: Partial<DrawElement>) => void
   removeElement: (id: string) => void
   moveVehicle: (vehicleId: string, move: VehicleMove) => void
+  setVehicleTurns: (vehicleId: string, turns: VehicleTurn[]) => void
   clearVehicleMove: (vehicleId: string) => void
   addStage: () => void
   updateStage: (id: string, patch: Partial<Stage>) => void
@@ -198,6 +202,22 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
     })
   },
 
+  setVehicleTurns: (vehicleId, turns) => {
+    const { plan } = get()
+    if (!plan) return
+    const stage = plan.stages.find((s) => s.id === plan.activeStageId)
+    if (!stage) return
+    set({
+      plan: {
+        ...plan,
+        updatedAt: new Date().toISOString(),
+        stages: plan.stages.map((s) =>
+          s.id === stage.id ? { ...s, turns: { ...(s.turns ?? {}), [vehicleId]: turns } } : s,
+        ),
+      },
+    })
+  },
+
   clearVehicleMove: (vehicleId) =>
     get().mutate((plan) => {
       const stage = plan.stages.find((s) => s.id === plan.activeStageId)
@@ -208,7 +228,13 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
     const { plan } = get()
     if (!plan) return
     const maxTime = plan.stages.reduce((n, s) => Math.max(n, s.time), 0)
+    const previous = [...plan.stages].sort((a, b) => a.time - b.time)[plan.stages.length - 1]
     const stage = newStage(plan.stages.length, maxTime + 300)
+    if (previous) {
+      stage.elements = clone(previous.elements).map((el) => ({ ...el, id: uid('el') }))
+      stage.moves = clone(previous.moves)
+      stage.turns = {}
+    }
     get().mutate((draft) => {
       draft.stages.push(stage)
       draft.activeStageId = stage.id
@@ -315,12 +341,12 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       const member = findMember(plan.roster, memberId)
       if (!member) return
       if (!member.unconfirmed && !member.confirmed) {
-        member.unconfirmed = true
-      } else if (member.unconfirmed) {
-        member.unconfirmed = false
         member.confirmed = true
-      } else {
+      } else if (member.confirmed) {
         member.confirmed = false
+        member.unconfirmed = true
+      } else {
+        member.unconfirmed = false
       }
     }),
 
@@ -365,8 +391,10 @@ export const useUI = create<UIState & {
   setDash: (dash: boolean) => void
   setArrowBoth: (value: boolean) => void
   setFillShapes: (value: boolean) => void
-  setRouteId: (id: string | null) => void
-  setShowAllRoutes: (value: boolean) => void
+  setVisibleRoutes: (ids: string[]) => void
+  toggleRoute: (id: string) => void
+  toggleCp: (id: number) => void
+  setAllRoutes: (ids: string[], visible: boolean) => void
   setMarker: (icon: string) => void
   setUnit: (unit: string) => void
   setAffiliation: (a: UIState['unitAffiliation']) => void
@@ -386,8 +414,8 @@ export const useUI = create<UIState & {
   dash: false,
   arrowBoth: false,
   fillShapes: false,
-  routeId: null,
-  showAllRoutes: false,
+  visibleRoutes: [],
+  hiddenCps: [],
   markerIcon: 'objective',
   unitKind: 'inf',
   unitAffiliation: 'hostile',
@@ -412,8 +440,18 @@ export const useUI = create<UIState & {
   setDash: (dash) => set({ dash }),
   setArrowBoth: (arrowBoth) => set({ arrowBoth }),
   setFillShapes: (fillShapes) => set({ fillShapes }),
-  setRouteId: (routeId) => set({ routeId }),
-  setShowAllRoutes: (showAllRoutes) => set({ showAllRoutes }),
+  setVisibleRoutes: (visibleRoutes) => set({ visibleRoutes }),
+  toggleRoute: (id) => set((s) => ({
+    visibleRoutes: s.visibleRoutes.includes(id)
+      ? s.visibleRoutes.filter((r) => r !== id)
+      : [...s.visibleRoutes, id],
+  })),
+  toggleCp: (id) => set((s) => ({
+    hiddenCps: s.hiddenCps.includes(id)
+      ? s.hiddenCps.filter((c) => c !== id)
+      : [...s.hiddenCps, id],
+  })),
+  setAllRoutes: (ids, visible) => set({ visibleRoutes: visible ? ids : [] }),
   setMarker: (markerIcon) => set({ markerIcon }),
   setUnit: (unitKind) => set({ unitKind }),
   setAffiliation: (unitAffiliation) => set({ unitAffiliation }),

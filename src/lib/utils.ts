@@ -54,7 +54,7 @@ export function safeName(text: string): string {
 export function newSquad(index: number, type = 'INF'): Squad {
   return {
     id: uid('sq'),
-    name: String(index + 1),
+    name: type,
     type,
     color: SQUAD_COLORS[index % SQUAD_COLORS.length],
     members: [],

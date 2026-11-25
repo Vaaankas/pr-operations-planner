@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Crosshair, Eye, EyeOff, Flag, RotateCcw, Search, ShieldAlert } from 'lucide-react'
-import type { LayerData, Plan, Stage, VehicleSpawn } from '../types'
+import { Crosshair, Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
+import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { CATEGORY_LABELS, formatTime } from '../lib/utils'
 import { stageVehiclePos, vehicleColor } from '../lib/render'
-import { useAssets } from '../lib/assets'
+import { factionFlag, useAssets } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
 
 interface Props {
@@ -36,14 +36,17 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
       .sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category))
   }, [layer.vehicles, query, startOnly, ui.showAssets, ui.showEnemy, plan.side])
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, VehicleSpawn[]>()
-    for (const v of vehicles) {
-      if (!map.has(v.category)) map.set(v.category, [])
-      map.get(v.category)!.push(v)
-    }
-    return [...map.entries()]
-  }, [vehicles])
+  const teamGroups = useMemo(() => {
+    const order = [plan.side, null, plan.side === 1 ? 2 : 1] as (number | null)[]
+    return order
+      .map((team) => ({
+        team,
+        list: vehicles
+          .filter((v) => (team === null ? v.team === null : v.team === team))
+          .sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category)),
+      }))
+      .filter((g) => g.list.length > 0)
+  }, [vehicles, plan.side])
 
   const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
   const startCount = layer.vehicles.filter((v) => v.atStart).length
@@ -80,11 +83,18 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
-        {grouped.map(([cat, list]) => (
-          <div key={cat} className="mb-3">
-            <div className="mb-1 flex items-center gap-1.5 px-1">
-              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">{CATEGORY_LABELS[cat] ?? cat}</span>
-              <span className="font-mono text-[9px] text-slate-700">{list.length}</span>
+        {teamGroups.map(({ team, list }, groupIndex) => {
+          const faction = team ? layer.factions[String(team)] : null
+          const flag = factionFlag(assets, faction?.key)
+          const label = team === plan.side ? 'Friendly' : team ? 'Enemy' : 'Neutral'
+          const color = team === plan.side ? '#38bdf8' : team ? '#f87171' : '#fbbf24'
+          return (
+          <div key={`${team ?? 'neutral'}-${groupIndex}`} className="mb-3">
+            <div className="mb-1 flex items-center gap-1.5 border-b border-white/10 px-1 pb-1">
+              {flag ? <img src={`./data/${flag}`} alt="" className="h-3 w-4 object-contain" /> : <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />}
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color }}>{label}</span>
+              {faction && <span className="text-[9px] text-slate-500">{faction.name}</span>}
+              <span className="ml-auto font-mono text-[9px] text-slate-700">{list.length}</span>
             </div>
             <div className="space-y-0.5">
               {list.map((v) => {
@@ -149,18 +159,9 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
               })}
             </div>
           </div>
-        ))}
-        {grouped.length === 0 && <div className="mt-10 text-center text-xs text-slate-600">No assets match.</div>}
-      </div>
-
-      <div className="shrink-0 border-t border-white/10">
-        <div className="flex items-center gap-2 px-3 py-1.5 text-[10px] text-slate-500">
-          <Flag className="h-3 w-3 text-amber-400/70" />
-          <span>{layer.controlPoints.length} control points</span>
-          <span className="ml-auto flex items-center gap-1">
-            <ShieldAlert className="h-3 w-3" /> delay shown on icon
-          </span>
-        </div>
+          )
+        })}
+        {teamGroups.length === 0 && <div className="mt-10 text-center text-xs text-slate-600">No assets match.</div>}
       </div>
     </div>
   )

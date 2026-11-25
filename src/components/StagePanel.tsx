@@ -153,11 +153,6 @@ export function StagePanel({ layer, plan, stage }: Props) {
         </button>
       </div>
 
-      <div className="shrink-0 border-t border-white/10 px-3 py-2 text-[9px] text-slate-600">
-        <div className="flex items-center gap-1">
-          <RotateCcw className="h-2.5 w-2.5" /> moved vehicles leave a dashed return line
-        </div>
-      </div>
     </div>
   )
 }

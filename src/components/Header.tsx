@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ArrowLeft, Crosshair, Download, FileJson, HelpCircle, Map, Menu, Redo2, Save,
+  Crosshair, Download, FileJson, HelpCircle, Map, Menu, Redo2, Save,
   Trash2, Undo2, Upload, Users,
 } from 'lucide-react'
 import type { LayerData, MapMeta, Plan } from '../types'
@@ -50,18 +50,15 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
   }
 
   const side = layer.factions[String(plan.side)]
+  const members = [
+    ...(plan.roster.commander ? [plan.roster.commander] : []),
+    ...plan.roster.squads.flatMap((s) => s.members),
+    ...plan.roster.unassigned,
+  ]
+  const confirmed = members.filter((m) => m.confirmed).length
 
   return (
     <header className="relative z-30 flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-[#080d0a] px-3">
-      <button
-        onClick={onOpenPicker}
-        className="flex h-8 shrink-0 items-center gap-1 rounded border border-white/10 px-2 text-slate-300 hover:border-amber-400/40 hover:text-amber-300"
-        title="Back to map menu"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span className="hidden font-mono text-[9px] font-bold uppercase tracking-wider xl:inline">Menu</span>
-      </button>
-
       <div className="flex shrink-0 items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded border border-amber-400/40 bg-amber-400/10">
           <Crosshair className="h-4 w-4 text-amber-400" />
@@ -109,7 +106,10 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <span className={`hidden items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider 2xl:flex ${playerCount(plan) > 50 ? 'text-amber-300' : 'text-slate-400'}`}>
+        <span
+          className={`hidden items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider 2xl:flex ${playerCount(plan) > 50 ? 'text-amber-300' : 'text-slate-400'}`}
+          title={`${playerCount(plan)}/50 players · ${confirmed}/50 confirmed · ${members.length - confirmed} unconfirmed`}
+        >
           <Users className="h-3 w-3" /> {playerCount(plan)}/50
         </span>
         <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 xl:flex">
@@ -136,8 +136,15 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
           <Download className="h-3.5 w-3.5" /> Export
         </button>
 
-        <button onClick={() => setMenu(!menu)} className="flex h-8 w-8 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Menu">
+        <button onClick={() => setMenu(!menu)} className="flex h-8 w-8 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Plan options">
           <Menu className="h-4 w-4" />
+        </button>
+        <button
+          onClick={onOpenPicker}
+          className="flex h-8 items-center gap-1.5 rounded border border-white/15 px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
+          title="Back to planning menu"
+        >
+          <Map className="h-3.5 w-3.5" /> Menu
         </button>
       </div>
 

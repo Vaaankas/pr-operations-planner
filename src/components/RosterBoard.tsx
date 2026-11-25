@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { GripVertical, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
+import { Command, GripVertical, Plus, Trash2, UserPlus, Users, X } from 'lucide-react'
 import type { Member, Squad } from '../types'
 import { usePlanner } from '../store'
-import { playerCount, SQUAD_COLORS, SQUAD_TYPES } from '../lib/utils'
+import { playerCount, SQUAD_COLORS } from '../lib/utils'
 
 function EditableName({ value, onCommit, className, placeholder }: { value: string; onCommit: (v: string) => void; className?: string; placeholder?: string }) {
   const [v, setV] = useState(value)
@@ -39,13 +39,13 @@ function ConfirmationToggle({ member }: { member: Member }) {
       }`}
       title={
         state === 'unconfirmed'
-          ? 'Unconfirmed — click to mark confirmed'
+          ? 'Unconfirmed — click to clear'
           : state === 'confirmed'
-            ? 'Confirmed — click to clear'
-            : 'Click to mark unconfirmed'
+            ? 'Confirmed — click to mark unconfirmed'
+            : 'Click to confirm'
       }
     >
-      {state === 'unconfirmed' ? '?' : state === 'confirmed' ? '✓' : '?'}
+      {state === 'unconfirmed' ? '?' : state === 'confirmed' ? '✓' : ''}
     </button>
   )
 }
@@ -55,23 +55,16 @@ function MemberRow({
   accent,
   index,
   target,
-  showPromote,
 }: {
   member: Member
   accent?: string
   index: number
   target: string
-  showPromote?: boolean
 }) {
   const planner = usePlanner()
   const [over, setOver] = useState(false)
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/pr-member', member.id)
-        e.dataTransfer.effectAllowed = 'move'
-      }}
       onDragOver={(e) => {
         e.preventDefault()
         setOver(true)
@@ -84,27 +77,28 @@ function MemberRow({
         const id = e.dataTransfer.getData('text/pr-member')
         if (id) planner.moveMember(id, target, index)
       }}
-      className={`group flex cursor-grab items-center gap-1.5 rounded border px-1.5 py-1 active:cursor-grabbing ${
+      className={`group flex items-center gap-1.5 rounded border px-1.5 py-1 ${
         over ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/10 bg-black/25'
       }`}
     >
-      <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 group-hover:text-slate-400" />
-      <ConfirmationToggle member={member} />
+      <span
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData('text/pr-member', member.id)
+          e.dataTransfer.effectAllowed = 'move'
+        }}
+        className="cursor-grab active:cursor-grabbing"
+        title="Drag player"
+      >
+        <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 group-hover:text-slate-400" />
+      </span>
       {accent && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: accent }} />}
       <EditableName
         value={member.name}
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
-        className="min-w-0 flex-1 truncate bg-transparent text-[12px] font-medium text-slate-200 outline-none"
+        className="min-w-0 flex-1 select-text truncate bg-transparent text-[12px] font-medium text-slate-200 outline-none"
       />
-      {showPromote && (
-        <button
-          onClick={() => planner.moveMember(member.id, 'commander')}
-          className="opacity-0 transition group-hover:opacity-100"
-          title="Make commander"
-        >
-          <Star className="h-3.5 w-3.5 text-slate-500 hover:text-amber-300" />
-        </button>
-      )}
+      <ConfirmationToggle member={member} />
       <button onClick={() => planner.removeMember(member.id)} className="opacity-0 transition group-hover:opacity-100" title="Remove player">
         <X className="h-3.5 w-3.5 text-slate-500 hover:text-rose-400" />
       </button>
@@ -184,11 +178,6 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       className={`flex min-h-[260px] flex-col rounded border bg-[#0b120e]/85 ${drop ? 'border-amber-400/70 bg-amber-400/5' : 'border-white/10'}`}
     >
       <div
-        draggable
-        onDragStart={(e) => {
-          e.dataTransfer.setData('text/pr-squad', squad.id)
-          e.dataTransfer.effectAllowed = 'move'
-        }}
         onDragOver={(e) => {
           e.preventDefault()
           setHeaderDrop(true)
@@ -201,28 +190,34 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
           if (squadId) planner.reorderSquads(squadId, squad.id)
           setHeaderDrop(false)
         }}
-        className={`flex cursor-grab items-center gap-1.5 border-b px-2 py-1.5 active:cursor-grabbing ${
+        className={`flex items-center gap-1.5 border-b px-2 py-1.5 ${
           headerDrop ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/5'
         }`}
         style={{ boxShadow: `inset 3px 0 0 ${squad.color}` }}
       >
-        <GripVertical className="h-3.5 w-3.5 text-slate-600" />
+        <span
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/pr-squad', squad.id)
+            e.dataTransfer.effectAllowed = 'move'
+          }}
+          className="cursor-grab active:cursor-grabbing"
+          title="Drag squad"
+        >
+          <GripVertical className="h-3.5 w-3.5 text-slate-600" />
+        </span>
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-white/15 bg-black/40 font-mono text-[10px] font-bold text-slate-300">
+          {index + 1}
+        </span>
         <EditableName
           value={squad.name}
           onCommit={(name) => planner.updateSquad(squad.id, { name })}
-          className="w-10 bg-transparent text-[13px] font-bold text-slate-100 outline-none"
+          placeholder="Squad name"
+          className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
         />
-        <select
-          value={squad.type}
-          onChange={(e) => planner.updateSquad(squad.id, { type: e.target.value })}
-          className="rounded border border-white/10 bg-black/40 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-slate-300 outline-none"
-        >
-          {SQUAD_TYPES.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
         <button onClick={() => setColorOpen(!colorOpen)} className="h-3.5 w-3.5 rounded-full border border-white/40" style={{ background: squad.color }} title="Squad colour" />
-        <span className={`ml-auto font-mono text-[11px] ${overCap ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/8</span>
+        <span className={`font-mono text-[11px] ${overCap ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/8</span>
+        {overCap && <span className="font-bold text-amber-300" title="Over the 8-player squad limit">!</span>}
         <button onClick={() => planner.removeSquad(squad.id)} className="text-slate-600 hover:text-rose-400" title="Delete squad">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -244,13 +239,12 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       )}
       <div className="flex min-h-0 flex-1 flex-col gap-1 p-1.5">
         {squad.members.map((m, i) => (
-          <MemberRow key={m.id} member={m} accent={squad.color} index={i} target={squad.id} showPromote />
+          <MemberRow key={m.id} member={m} accent={squad.color} index={i} target={squad.id} />
         ))}
         {squad.members.length === 0 && <div className="px-1 py-2 text-[10px] uppercase tracking-wider text-slate-600">Empty squad</div>}
         <div className="mt-auto">
           <AddPlayer target={squad.id} />
         </div>
-        {overCap && <div className="px-1 text-[9px] uppercase tracking-wider text-amber-400/90">Over the 8-player norm</div>}
       </div>
     </div>
   )
@@ -267,8 +261,8 @@ export function RosterBoard() {
     ...plan.roster.squads.flatMap((s) => s.members),
     ...plan.roster.unassigned,
   ]
-  const unconfirmed = allMembers.filter((m) => m.unconfirmed).length
   const confirmed = allMembers.filter((m) => m.confirmed).length
+  const unconfirmed = allMembers.length - confirmed
 
   return (
     <div className="flex min-h-0 flex-1">
@@ -277,8 +271,8 @@ export function RosterBoard() {
           <Users className="h-4 w-4 text-amber-400" />
           <span className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-slate-200">Roster</span>
           <span className={`font-mono text-[11px] ${count > 50 ? 'text-amber-300' : 'text-slate-400'}`}>{count}/50 players</span>
+          <span className="font-mono text-[11px] text-emerald-400/90">{confirmed}/50 confirmed</span>
           <span className="font-mono text-[11px] text-amber-400/90">{unconfirmed} unconfirmed</span>
-          <span className="font-mono text-[11px] text-emerald-400/90">{confirmed} confirmed</span>
           <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-500">Drag players or squad headers to reorder</span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -302,7 +296,7 @@ export function RosterBoard() {
       <aside className="flex w-[340px] shrink-0 flex-col border-l border-white/10 bg-[#080d0a]">
         <div className="border-b border-white/10 px-3 py-2">
           <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 text-amber-300" />
+            <Command className="h-4 w-4 text-amber-300" />
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-200">Commander</span>
           </div>
           <div
@@ -347,7 +341,7 @@ export function RosterBoard() {
           </div>
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-2">
             {plan.roster.unassigned.map((m, i) => (
-              <MemberRow key={m.id} member={m} index={i} target="unassigned" showPromote />
+              <MemberRow key={m.id} member={m} index={i} target="unassigned" />
             ))}
             {plan.roster.unassigned.length === 0 && (
               <div className="rounded border border-dashed border-white/10 px-2 py-6 text-center text-[10px] uppercase tracking-wider text-slate-600">
@@ -358,9 +352,7 @@ export function RosterBoard() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 px-3 py-2 font-mono text-[9px] uppercase tracking-wider text-slate-600">
-          {plan.roster.squads.length}/10 squads · 8-player soft limit
-        </div>
+
       </aside>
     </div>
   )

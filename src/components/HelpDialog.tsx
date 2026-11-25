@@ -13,11 +13,12 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="mb-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400/90">Workflow</h3>
             <ol className="list-decimal space-y-1 pl-5 text-slate-400">
-              <li>Pick a map and route. Every PvP layer keeps its own vehicle manifest, control points and SGID attack routes.</li>
-              <li>Fill the roster: 50-player target, commander, up to ten squads. Drag names between squads and drag squad headers to reorder.</li>
-              <li>Place or move vehicles, claim them for squads, then draw the scheme of manoeuvre.</li>
-              <li>Add stages with mission-clock times and notes. Each stage carries its own drawings and vehicle moves.</li>
-              <li>Export a PowerPoint, PDF, or stage JPEGs. Everything autosaves in this browser.</li>
+              <li>Pick a map and layer. Every PvP layer keeps its own vehicle manifest, control points and SGID attack routes.</li>
+              <li>Toggle routes and individual flags in the Routes tab. Multiple routes can be visible at once.</li>
+              <li>Fill the roster: 50-player target, commander, up to ten squads. Drag the grip handles to move players or reorder squads.</li>
+              <li>Place or move vehicles, claim them for squads, then draw the scheme of manoeuvre. Drag a vehicle route to add turning points.</li>
+              <li>Add stages with mission-clock times and notes. A new stage inherits the previous stage's drawings and vehicle positions.</li>
+              <li>Export a PowerPoint, PDF, PNG maps, or a roster-only brief. Everything autosaves in this browser.</li>
             </ol>
           </section>
 
@@ -26,6 +27,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             <div className="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-[11px] text-slate-400">
               <span>Wheel</span><span>Zoom to cursor (20×)</span>
               <span>Drag empty map</span><span>Pan (Select tool)</span>
+              <span>Middle mouse drag</span><span>Pan with any tool</span>
               <span>Click / drag</span><span>Draw lines, arrows and areas</span>
               <span>V / P / L / A / D</span><span>Select, pen, line, arrow, dashed</span>
               <span>R / O / G / T / M / U</span><span>Rect, ellipse, zone, text, marker, unit</span>
@@ -39,10 +41,10 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400/90"><Pencil className="h-3 w-3" /> Map symbology</h3>
             <p className="text-slate-400">
-              Asset glyphs are the in-game vehicle silhouettes, tinted by team or claiming squad. Flags use the in-game minimap flag textures and real capture radii.
-              Attack lanes follow the layer's AASv4 SupplyGroupId order; switch routes in the Routes tab or overlay all lanes.
-              Delayed spawns are dimmed with their timer, and a moved vehicle leaves a dashed return line to its spawn.
-              Player status cycles blank → amber ? (unconfirmed) → green ✓ (confirmed).
+              Asset glyphs are the in-game vehicle silhouettes, tinted by team or claiming squad. Flags use the in-game capture-point flag sprites and real capture radii.
+              Attack lanes follow the layer's AASv4 SupplyGroupId order; toggle any combination of routes and flags.
+              Delayed spawns are dimmed with their timer. Vehicle trails start at the previous stage's position and use the vehicle's colour.
+              Player status cycles blank → green ✓ (confirmed) → amber ? (unconfirmed).
             </p>
           </section>
 

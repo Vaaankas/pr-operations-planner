@@ -16,6 +16,7 @@ export interface LayerRef {
   sizeKm: number
   layerType: string
   layerTypeLabel: string
+  factions: Record<string, Faction>
   file: string | null
   vehicles: number
   vehiclesAtStart: number
@@ -110,6 +111,7 @@ export interface LayerData {
 export interface AssetManifest {
   factionFlags: Record<string, string>
   cpFlags: Record<string, string>
+  scoreFlags: Record<string, string>
   vehicles: Record<string, string>
   markers: Record<string, string>
   orders: Record<string, string>
@@ -154,6 +156,11 @@ export interface VehicleMove {
   rotation: number
 }
 
+export interface VehicleTurn {
+  x: number
+  z: number
+}
+
 export interface Stage {
   id: string
   name: string
@@ -161,6 +168,7 @@ export interface Stage {
   notes: string
   elements: DrawElement[]
   moves: Record<string, VehicleMove>
+  turns?: Record<string, VehicleTurn[]>
 }
 
 export interface Member {
@@ -215,8 +223,8 @@ export interface UIState {
   dash: boolean
   arrowBoth: boolean
   fillShapes: boolean
-  routeId: string | null
-  showAllRoutes: boolean
+  visibleRoutes: string[]
+  hiddenCps: number[]
   markerIcon: string
   unitKind: string
   unitAffiliation: 'friend' | 'hostile' | 'neutral'

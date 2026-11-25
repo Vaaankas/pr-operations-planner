@@ -154,6 +154,29 @@ def load_flag_names() -> dict[str, str]:
     return names
 
 
+def load_vehicle_names() -> dict[str, str]:
+    """English vehicle names from PR's prvehicles.utxt."""
+    path = PR_ROOT / "localization" / "english" / "prvehicles.utxt"
+    if not path.exists():
+        return {}
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-16")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+    names: dict[str, str] = {}
+    for line in text.splitlines():
+        m = re.match(r"^([A-Z0-9_]+)\s+(.+?)\s*$", line)
+        if not m:
+            continue
+        value = m.group(2).replace("\x1b", "")
+        value = re.sub(r"[\x00-\x1f]", "", value)
+        value = re.sub(r"\s+", " ", value).strip()
+        if value:
+            names[m.group(1)] = value
+    return names
+
+
 def classify(template: str) -> str:
     t = template.lower()
     for cat, pats in CATEGORY_RULES:
@@ -405,7 +428,7 @@ def sgid_parts(sgid: int) -> tuple[int, int, int | None]:
     return sgid // 100, (sgid // 10) % 10, sgid % 10
 
 
-def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None, flag_names: dict[str, str]) -> dict | None:
+def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None, flag_names: dict[str, str], vehicle_names: dict[str, str]) -> dict | None:
     layer_id = f"{level}__{mode.replace('gpm_', '')}__{players}"
     server_path = level_dir / "server.zip"
     gpo_name = f"gamemodes/{mode}/{players}/gameplayobjects.con"
@@ -439,7 +462,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         vehicles.append({
             "id": f"{inst['name']}",
             "template": obj,
-            "label": prettify_template(obj),
+            "label": vehicle_names.get(obj.upper()) or prettify_template(obj),
             "category": cat,
             "icon": vehicle_icon_key(cat, obj),
             "team": team,
@@ -635,8 +658,16 @@ UNIT_ICONS = {
 }
 
 
-def _save_asset(im: Image.Image, path: Path, size: int = 64, color_key: bool = True) -> None:
+def _save_asset(im: Image.Image, path: Path, size: int = 64, color_key: bool = True, key_black: bool = False, trim: bool = False) -> None:
     im = im.convert("RGBA")
+    if key_black:
+        # Vehicle glyphs must be pure silhouette: no black backing or outline remains.
+        pixels = im.load()
+        for y in range(im.height):
+            for x in range(im.width):
+                r, g, b, a = pixels[x, y]
+                if r < 24 and g < 24 and b < 24:
+                    pixels[x, y] = (0, 0, 0, 0)
     if color_key and im.getchannel("A").getextrema() == (255, 255):
         # A few old TGA glyphs use an opaque black background instead of alpha.
         pixels = im.load()
@@ -645,7 +676,19 @@ def _save_asset(im: Image.Image, path: Path, size: int = 64, color_key: bool = T
                 r, g, b, a = pixels[x, y]
                 if r + g + b < 12:
                     pixels[x, y] = (0, 0, 0, 0)
-    if im.size != (size, size):
+    if trim:
+        bbox = im.getchannel("A").getbbox()
+        if bbox:
+            content = im.crop(bbox)
+            scale = min((size * 0.92) / content.width, (size * 0.92) / content.height)
+            content = content.resize(
+                (max(1, round(content.width * scale)), max(1, round(content.height * scale))),
+                Image.NEAREST,
+            )
+            canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+            canvas.alpha_composite(content, ((size - content.width) // 2, (size - content.height) // 2))
+            im = canvas
+    elif im.size != (size, size):
         im = im.resize((size, size), Image.NEAREST)
     path.parent.mkdir(parents=True, exist_ok=True)
     im.save(path, "WEBP", lossless=True, quality=100)
@@ -654,7 +697,7 @@ def _save_asset(im: Image.Image, path: Path, size: int = 64, color_key: bool = T
 def extract_assets() -> dict:
     """Copy PR's HUD flags and minimap glyphs into the static dataset."""
     archive = PR_ROOT / "content" / "menu_client.zip"
-    manifest: dict = {"factionFlags": {}, "cpFlags": {}, "vehicles": {}, "markers": {}}
+    manifest: dict = {"factionFlags": {}, "cpFlags": {}, "scoreFlags": {}, "vehicles": {}, "markers": {}}
     FLAGS_DIR.mkdir(parents=True, exist_ok=True)
     if not archive.exists():
         return manifest
@@ -671,24 +714,34 @@ def extract_assets() -> dict:
                 manifest["factionFlags"][key] = f"flags/{out.name}"
 
         for name in names:
-            m = re.match(r"hud/texture/ingame/flags/icons/minimap/([^/]+)/minimap_flag\.dds$", name)
-            if m and m.group(1) not in {"aas", "supplyline"}:
+            m = re.match(r"hud/texture/ingame/flags/icons/minimap/([^/]+)/minimap_cp\.tga$", name)
+            if m and m.group(1) not in {"aas", "supplyline", "neutral"}:
                 key = m.group(1)
                 im = Image.open(io.BytesIO(z.read(name)))
                 out = FLAGS_DIR / f"cp_{key}.webp"
-                _save_asset(im, out)
+                _save_asset(im, out, trim=True)
                 manifest["cpFlags"][key] = f"flags/{out.name}"
 
         neutral_name = "hud/texture/ingame/flags/icons/minimap/neutral/minimap_cp.tga"
         if neutral_name in names:
-            _save_asset(Image.open(io.BytesIO(z.read(neutral_name))), FLAGS_DIR / "cp_neutral.webp")
+            _save_asset(Image.open(io.BytesIO(z.read(neutral_name))), FLAGS_DIR / "cp_neutral.webp", trim=True)
             manifest["cpFlags"]["neutral"] = "flags/cp_neutral.webp"
+
+        for name in names:
+            m = re.match(r"hud/texture/ingame/flags/icons/hud/score/([^/]+)/scoreboard_flag\.tga$", name)
+            if not m:
+                continue
+            key = m.group(1)
+            im = Image.open(io.BytesIO(z.read(name)))
+            out = FLAGS_DIR / f"score_{key}.webp"
+            _save_asset(im, out, key_black=True)
+            manifest["scoreFlags"][key] = f"flags/{out.name}"
 
         for category, name in VEHICLE_ICONS.items():
             if name not in names:
                 continue
             out = ICONS_DIR / "vehicles" / f"{category}.webp"
-            _save_asset(Image.open(io.BytesIO(z.read(name))), out)
+            _save_asset(Image.open(io.BytesIO(z.read(name))), out, key_black=True, trim=True)
             manifest["vehicles"][category] = f"icons/vehicles/{out.name}"
 
         for category, name in MARKER_ICONS.items():
@@ -728,11 +781,12 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     LAYERS_DIR.mkdir(parents=True, exist_ok=True)
     flag_names = load_flag_names()
-    print(f"Localized flag names: {len(flag_names)}", flush=True)
+    vehicle_names = load_vehicle_names()
+    print(f"Localized flag names: {len(flag_names)}; vehicles: {len(vehicle_names)}", flush=True)
     assets = extract_assets()
     print(
         f"Assets: {len(assets['vehicles'])} vehicles, {len(assets['markers'])} markers, "
-        f"{len(assets['cpFlags'])} flags",
+        f"{len(assets['cpFlags'])} CP flags, {len(assets['scoreFlags'])} score flags",
         flush=True,
     )
 
@@ -768,7 +822,7 @@ def main() -> None:
                     "file": None, "vehicles": 0, "vehiclesAtStart": 0, "controlPoints": 0,
                 })
                 continue
-            layer = build_layer(level, level_dir, mode, players, maptype, flag_names)
+            layer = build_layer(level, level_dir, mode, players, maptype, flag_names, vehicle_names)
             if not layer:
                 continue
             path = LAYERS_DIR / f"{layer['id']}.json"
@@ -780,6 +834,7 @@ def main() -> None:
                 "players": players, "name": layer["displayName"], "displayName": layer["displayName"],
                 "layerType": layer["layerType"], "layerTypeLabel": layer["layerTypeLabel"],
                 "sizeKm": layer["sizeKm"],
+                "factions": layer["factions"],
                 "file": path.name, "vehicles": len(layer["vehicles"]),
                 "vehiclesAtStart": layer["vehicleAtStart"],
                 "controlPoints": len(layer["controlPoints"]),

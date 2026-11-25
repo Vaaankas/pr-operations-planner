@@ -19,6 +19,7 @@ export function ExportDialog({ plan, map, layer }: Props) {
   const [resolution, setResolution] = useState<2048 | 3072>(2048)
   const [stages, setStages] = useState<'all' | 'active'>('all')
   const [includeRoster, setIncludeRoster] = useState(true)
+  const [rosterOnly, setRosterOnly] = useState(false)
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState({ done: 0, total: 0, label: '' })
   const [error, setError] = useState<string | null>(null)
@@ -32,10 +33,11 @@ export function ExportDialog({ plan, map, layer }: Props) {
         format,
         resolution,
         stages,
-        includeRoster,
+        includeRoster: rosterOnly ? true : includeRoster,
+        rosterOnly,
         download: true,
-        routeId: ui.routeId,
-        showAllRoutes: ui.showAllRoutes,
+        visibleRoutes: ui.visibleRoutes,
+        hiddenCps: ui.hiddenCps,
       }
       const src = { plan, map, layer, assets }
       const onProgress = (done: number, total: number, label: string) => setProgress({ done, total, label })
@@ -82,7 +84,8 @@ export function ExportDialog({ plan, map, layer }: Props) {
                 <button
                   key={id}
                   onClick={() => setFormat(id)}
-                  className={`rounded border px-3 py-3 text-left transition ${format === id ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/10 hover:border-white/25'}`}
+                  disabled={rosterOnly && id === 'png'}
+                  className={`rounded border px-3 py-3 text-left transition ${format === id ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/10 hover:border-white/25'} ${rosterOnly && id === 'png' ? 'cursor-not-allowed opacity-30' : ''}`}
                 >
                   <Icon className={`h-4 w-4 ${format === id ? 'text-amber-300' : 'text-slate-400'}`} />
                   <div className="mt-2 text-[12px] font-semibold text-slate-100">{title}</div>
@@ -92,7 +95,7 @@ export function ExportDialog({ plan, map, layer }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {!rosterOnly && <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">Stages</div>
               <div className="flex gap-1">
@@ -121,12 +124,26 @@ export function ExportDialog({ plan, map, layer }: Props) {
                 ))}
               </div>
             </div>
-          </div>
+          </div>}
 
-          <label className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-300">
-            <input type="checkbox" checked={includeRoster} onChange={(e) => setIncludeRoster(e.target.checked)} className="accent-amber-400" />
-            Include roster slide
-          </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-300">
+              <input type="checkbox" checked={includeRoster} disabled={rosterOnly} onChange={(e) => setIncludeRoster(e.target.checked)} className="accent-amber-400" />
+              Include roster slide
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-[12px] text-slate-300">
+              <input
+                type="checkbox"
+                checked={rosterOnly}
+                onChange={(e) => {
+                  setRosterOnly(e.target.checked)
+                  if (e.target.checked && format === 'png') setFormat('pdf')
+                }}
+                className="accent-amber-400"
+              />
+              Roster only
+            </label>
+          </div>
 
           <div className="rounded border border-white/10 bg-black/25 px-3 py-2 text-[11px] text-slate-500">
             <div className="flex justify-between"><span>Operation</span><span className="text-slate-300">{plan.operation}</span></div>

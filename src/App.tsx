@@ -16,7 +16,7 @@ import { Timeline } from './components/Timeline'
 import { ExportDialog } from './components/ExportDialog'
 import { HelpDialog } from './components/HelpDialog'
 
-const EMPTY_ASSETS: AssetManifest = { factionFlags: {}, cpFlags: {}, vehicles: {}, markers: {}, orders: {} }
+const EMPTY_ASSETS: AssetManifest = { factionFlags: {}, cpFlags: {}, scoreFlags: {}, vehicles: {}, markers: {}, orders: {} }
 
 export function App() {
   const [assets, setAssets] = useState<AssetManifest>(EMPTY_ASSETS)
@@ -80,8 +80,8 @@ function AppInner() {
     }
     const applyLayer = (data: LayerData) => {
       setLayer(data)
-      useUI.getState().setRouteId(data.routes?.[0]?.id ?? null)
-      useUI.getState().setShowAllRoutes(false)
+      useUI.getState().setVisibleRoutes(data.routes?.[0] ? [data.routes[0].id] : [])
+      useUI.setState({ hiddenCps: [] })
     }
     if (cache.current.has(plan.layerId)) {
       applyLayer(cache.current.get(plan.layerId)!)
@@ -143,8 +143,8 @@ function AppInner() {
       }
       const next = makePlan(nextMap, data, side)
       setLayer(data)
-      useUI.getState().setRouteId(data.routes?.[0]?.id ?? null)
-      useUI.getState().setShowAllRoutes(false)
+      useUI.getState().setVisibleRoutes(data.routes?.[0] ? [data.routes[0].id] : [])
+      useUI.setState({ hiddenCps: [] })
       useUI.getState().setView('plan')
       usePlanner.getState().setPlan(next)
       setPickerOpen(false)
