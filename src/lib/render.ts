@@ -224,6 +224,28 @@ export async function renderStageCanvas(
   ctx.fillStyle = '#0a0f0c'
   ctx.fillRect(0, 0, size, size)
 
+  // Make sure every glyph drawn below has finished decoding before the
+  // synchronous canvas pass; otherwise early exports can miss icons.
+  const glyphs: { name: string; color: string }[] = [{ name: 'flag', color: '#fbbf24' }]
+  for (const v of layer.vehicles) {
+    const color = vehicleColor(v, plan, plan.roster.squads.map((s) => ({ id: s.id, color: s.color })))
+    glyphs.push({ name: glyphFor('vehicle', v.category), color })
+  }
+  for (const el of stage.elements) {
+    if (el.type === 'icon') glyphs.push({ name: glyphFor('marker', el.icon), color: el.color })
+    if (el.type === 'unit') glyphs.push({ name: glyphFor('marker', el.unit), color: affiliationColor(el.affiliation) })
+  }
+  await Promise.all(
+    glyphs.map(({ name, color }) => {
+      const img = iconImage(name, color)
+      if (img.complete) return Promise.resolve()
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve()
+        img.onerror = () => resolve()
+      })
+    }),
+  )
+
   if (map.images) {
     try {
       const img = await loadImage(dataUrl(`maps/${map.images.image}`))
