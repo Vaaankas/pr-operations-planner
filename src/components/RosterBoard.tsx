@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Command, GripVertical, Plus, Trash2, UserPlus, Users, X } from 'lucide-react'
+import { GripVertical, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
 import type { Member, Squad } from '../types'
 import { usePlanner } from '../store'
 import { playerCount, SQUAD_COLORS } from '../lib/utils'
@@ -99,7 +99,7 @@ function MemberRow({
         className="min-w-0 flex-1 select-text truncate bg-transparent text-[12px] font-medium text-slate-200 outline-none"
       />
       <ConfirmationToggle member={member} />
-      <button onClick={() => planner.removeMember(member.id)} className="opacity-0 transition group-hover:opacity-100" title="Remove player">
+      <button onClick={() => planner.removeMember(member.id)} title="Remove player">
         <X className="h-3.5 w-3.5 text-slate-500 hover:text-rose-400" />
       </button>
     </div>
@@ -206,14 +206,14 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         >
           <GripVertical className="h-3.5 w-3.5 text-slate-600" />
         </span>
-        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-white/15 bg-black/40 font-mono text-[10px] font-bold text-slate-300">
+        <span className="w-6 shrink-0 border-0 text-left font-mono text-[18px] font-bold leading-none text-slate-100 outline-none">
           {index + 1}
         </span>
         <EditableName
           value={squad.name}
           onCommit={(name) => planner.updateSquad(squad.id, { name })}
           placeholder="Squad name"
-          className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
+          className="min-w-0 flex-1 border-0 bg-transparent text-[12px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
         />
         <button onClick={() => setColorOpen(!colorOpen)} className="h-3.5 w-3.5 rounded-full border border-white/40" style={{ background: squad.color }} title="Squad colour" />
         <span className={`font-mono text-[11px] ${overCap ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/8</span>
@@ -296,7 +296,7 @@ export function RosterBoard() {
       <aside className="flex w-[340px] shrink-0 flex-col border-l border-white/10 bg-[#080d0a]">
         <div className="border-b border-white/10 px-3 py-2">
           <div className="flex items-center gap-2">
-            <Command className="h-4 w-4 text-amber-300" />
+            <Star className="h-4 w-4 text-amber-300" />
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-200">Commander</span>
           </div>
           <div

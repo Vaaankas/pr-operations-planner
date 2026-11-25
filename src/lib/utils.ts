@@ -4,10 +4,14 @@ export const PLAYER_CAP = 50
 export const SQUAD_SIZE = 8
 export const SQUAD_COLORS = [
   '#3b82f6', '#65a30d', '#22d3ee', '#facc15', '#e2e8f0',
-  '#f472b6', '#86efac', '#a78bfa', '#fb923c',
+  '#f472b6', '#86efac', '#a78bfa', '#fb923c', '#ef4444',
 ]
 export const SQUAD_TYPES = [
   'INF', 'ARMOR', 'CAS', 'TRANS', 'RECON', 'MORTARS', 'APC', 'LOGISTICS', 'CMD',
+]
+export const PHONETIC = [
+  'ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO',
+  'FOXTROT', 'GOLF', 'HOTEL', 'INDIA', 'JULIET',
 ]
 
 export function uid(prefix = 'id'): string {
@@ -51,10 +55,10 @@ export function safeName(text: string): string {
   return text.replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || 'plan'
 }
 
-export function newSquad(index: number, type = 'INF'): Squad {
+export function newSquad(index: number, type = 'INF', name?: string): Squad {
   return {
     id: uid('sq'),
-    name: type,
+    name: name ?? PHONETIC[index] ?? `SQUAD ${index + 1}`,
     type,
     color: SQUAD_COLORS[index % SQUAD_COLORS.length],
     members: [],
@@ -73,7 +77,7 @@ export function newStage(index: number, time = 0): Stage {
 }
 
 export function defaultRoster(): Plan['roster'] {
-  const types = ['CAS', 'ARMOR', 'TRANS', 'INF', 'INF', 'INF', 'MORTARS', 'RECON', 'APC']
+  const types = ['INF', 'ARMOR', 'TRANS', 'RECON', 'MORTARS']
   return {
     commander: null,
     unassigned: [],

@@ -22,9 +22,19 @@ function tintCanvas(base: HTMLImageElement, color: string): HTMLCanvasElement {
   const ctx = canvas.getContext('2d')
   if (ctx) {
     ctx.drawImage(base, 0, 0, size, size)
-    ctx.globalCompositeOperation = 'source-in'
-    ctx.fillStyle = color
-    ctx.fillRect(0, 0, size, size)
+    const image = ctx.getImageData(0, 0, size, size)
+    const tint = color.replace('#', '')
+    const tr = parseInt(tint.slice(0, 2), 16)
+    const tg = parseInt(tint.slice(2, 4), 16)
+    const tb = parseInt(tint.slice(4, 6), 16)
+    for (let i = 0; i < image.data.length; i += 4) {
+      if (image.data[i + 3] === 0) continue
+      const black = image.data[i] < 45 && image.data[i + 1] < 45 && image.data[i + 2] < 45
+      image.data[i] = black ? 0 : tr
+      image.data[i + 1] = black ? 0 : tg
+      image.data[i + 2] = black ? 0 : tb
+    }
+    ctx.putImageData(image, 0, 0)
   }
   return canvas
 }

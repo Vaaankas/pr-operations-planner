@@ -1,6 +1,8 @@
-import { useUI } from '../store'
-import type { LayerData } from '../types'
-import { Eye, EyeOff, Route } from 'lucide-react'
+import { usePlanner, useUI } from '../store'
+import type { LayerData, Plan } from '../types'
+import { Route } from 'lucide-react'
+import { cpFlag, useAssets } from '../lib/assets'
+import { captureTeam, cycleTeam, teamName } from '../lib/flags'
 
 export const ROUTE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
 
@@ -8,8 +10,10 @@ export function routeColor(index: number): string {
   return ROUTE_COLORS[index % ROUTE_COLORS.length]
 }
 
-export function RoutesPanel({ layer }: { layer: LayerData }) {
+export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
   const ui = useUI()
+  const planner = usePlanner()
+  const assets = useAssets()
   const routes = layer.routes ?? []
   const cps = new Map(layer.controlPoints.map((c) => [c.id, c]))
   const visible = routes.filter((r) => ui.visibleRoutes.includes(r.id))
@@ -70,20 +74,32 @@ export function RoutesPanel({ layer }: { layer: LayerData }) {
                   const cp = cps.get(id)
                   if (!cp) return null
                   const shown = !ui.hiddenCps.includes(id)
+                  const team = captureTeam(plan, cp)
+                  const faction = team ? layer.factions[String(team)] : null
+                  const bleed = team === 1 ? (layer.tickets?.bleed1 ?? 10) : team === 2 ? (layer.tickets?.bleed2 ?? 10) : null
+                  const flag = cpFlag(assets, faction?.key)
                   return (
-                    <label key={`${r.id}-${id}-${i}`} className="flex cursor-pointer items-center gap-2 text-[11px] text-slate-400">
+                    <div key={`${r.id}-${id}-${i}`} className="flex items-center gap-1.5 text-[11px] text-slate-400">
                       <input
                         type="checkbox"
                         checked={shown}
                         onChange={() => ui.toggleCp(id)}
-                        className="h-3 w-3 accent-amber-400"
+                        className="h-3 w-3 shrink-0 accent-amber-400"
                         title="Render this flag on the map"
                       />
-                      <span className="w-4 text-right font-mono text-[10px] text-slate-600">{i + 1}</span>
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: routeColor(index) }} />
-                      <span className={`truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
-                      {cp.radius > 0 && <span className="ml-auto font-mono text-[9px] text-slate-600">{Math.round(cp.radius)}m</span>}
-                    </label>
+                      <span className="w-4 shrink-0 text-right font-mono text-[10px] text-slate-600">{i + 1}</span>
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: routeColor(index) }} />
+                      <span className={`min-w-0 flex-1 truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
+                      <button
+                        onClick={() => planner.setFlagTeam(cp.id, cycleTeam(team))}
+                        className="flex shrink-0 items-center gap-1 rounded border border-white/10 px-1 py-0.5 text-[9px] text-slate-400 hover:border-amber-400/40 hover:text-amber-300"
+                        title={`${cp.name}: ${teamName(layer, team)}. Loss ${layer.tickets?.loss ?? 30} tickets · bleed ${bleed === null ? '—' : `${bleed}/min`}. Click to cycle faction/neutral.`}
+                      >
+                        {flag ? <img src={`./data/${flag}`} alt="" className="h-3 w-4 object-contain" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
+                        <span className="max-w-14 truncate">{faction?.short ?? 'NEU'}</span>
+                      </button>
+                      {cp.radius > 0 && <span className="shrink-0 font-mono text-[9px] text-slate-600">{Math.round(cp.radius)}m</span>}
+                    </div>
                   )
                 })}
               </div>
@@ -91,26 +107,7 @@ export function RoutesPanel({ layer }: { layer: LayerData }) {
           )
         })}
 
-        <div className="mt-4">
-          <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">Map layers</div>
-          <div className="space-y-1">
-            <LayerToggle label="Vehicles" value={ui.showVehicles} onClick={() => ui.toggle('showVehicles')} />
-            <LayerToggle label="Enemy assets" value={ui.showEnemy} onClick={() => ui.toggle('showEnemy')} />
-            <LayerToggle label="Flags" value={ui.showFlags} onClick={() => ui.toggle('showFlags')} />
-            <LayerToggle label="Static assets" value={ui.showAssets} onClick={() => ui.toggle('showAssets')} />
-            <LayerToggle label="Labels" value={ui.showLabels} onClick={() => ui.toggle('showLabels')} />
-          </div>
-        </div>
       </div>
     </div>
-  )
-}
-
-function LayerToggle({ label, value, onClick }: { label: string; value: boolean; onClick: () => void }) {
-  return (
-    <button onClick={onClick} className="flex w-full items-center gap-2 rounded px-1 py-1 text-[10px] text-slate-400 hover:bg-white/5">
-      <span>{label}</span>
-      <span className="ml-auto">{value ? <Eye className="h-3 w-3 text-slate-500" /> : <EyeOff className="h-3 w-3 text-slate-700" />}</span>
-    </button>
   )
 }

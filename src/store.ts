@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { DrawElement, LayerData, MapMeta, Member, Plan, Roster, Squad, Stage, Team, UIState, VehicleMove, VehicleTurn } from './types'
-import { clamp, defaultRoster, newSquad, newStage, PLAYER_CAP, SQUAD_SIZE, uid } from './lib/utils'
+import { clamp, defaultRoster, newSquad, newStage, PHONETIC, PLAYER_CAP, SQUAD_SIZE, SQUAD_TYPES, uid } from './lib/utils'
 
 const HISTORY_LIMIT = 80
 const STORAGE_KEY = 'prplanner.plan.v1'
@@ -34,8 +34,10 @@ export function loadStoredPlan(): Plan | null {
     if (!raw) return null
     const plan = JSON.parse(raw) as Plan
     if (plan?.version !== 1 || !plan.mapId || !Array.isArray(plan.stages) || plan.stages.length === 0) return null
-    plan.roster.squads.forEach((squad) => {
-      if (/^\d+$/.test(squad.name) && squad.type) squad.name = squad.type
+    plan.roster.squads.forEach((squad, index) => {
+      if (/^\d+$/.test(squad.name) || SQUAD_TYPES.includes(squad.name)) {
+        squad.name = PHONETIC[index] ?? squad.name
+      }
     })
     return plan
   } catch {
@@ -83,6 +85,7 @@ interface PlannerStore {
   reorderSquads: (fromId: string, toId: string) => void
   cycleConfirmation: (memberId: string) => void
   claimVehicle: (vehicleId: string, squadId: string | null) => void
+  setFlagTeam: (cpId: number, team: number) => void
   setRoster: (roster: Roster) => void
   resetAll: () => void
 }
@@ -373,6 +376,11 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       else delete plan.claims[vehicleId]
     }),
 
+  setFlagTeam: (cpId, team) =>
+    get().mutate((plan) => {
+      plan.flagTeams = { ...(plan.flagTeams ?? {}), [String(cpId)]: team }
+    }),
+
   setRoster: (roster) => get().mutate((plan) => { plan.roster = roster }),
 
   resetAll: () => {
@@ -425,7 +433,7 @@ export const useUI = create<UIState & {
   showVehicles: true,
   showEnemy: true,
   showFlags: true,
-  showAssets: false,
+  showAssets: true,
   showLabels: true,
   exportOpen: false,
   helpOpen: false,

@@ -428,6 +428,26 @@ def sgid_parts(sgid: int) -> tuple[int, int, int | None]:
     return sgid // 100, (sgid // 10) % 10, sgid % 10
 
 
+def parse_tickets(init_text: str, players: int, mode: str) -> dict:
+    start = {}
+    for m in re.finditer(r"gameLogic\.setDefaultNumberOfTicketsEx\s+(\d+)\s+([12])\s+(\d+)", init_text):
+        count, team, value = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if count == players:
+            start[team] = value
+        elif team not in start:
+            start[team] = value
+    bleed = {}
+    for m in re.finditer(r"gameLogic\.setTicketLossPerMin\s+([12])\s+([\d.]+)", init_text):
+        bleed[int(m.group(1))] = float(m.group(2))
+    return {
+        "start1": start.get(1, 0),
+        "start2": start.get(2, 0),
+        "bleed1": bleed.get(1, 10),
+        "bleed2": bleed.get(2, 10),
+        "loss": 10 if mode == "gpm_skirmish" else 30,
+    }
+
+
 def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None, flag_names: dict[str, str], vehicle_names: dict[str, str]) -> dict | None:
     layer_id = f"{level}__{mode.replace('gpm_', '')}__{players}"
     server_path = level_dir / "server.zip"
@@ -441,6 +461,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             parsed = parse_gpo(text)
             world = world_size(server)
             factions = parse_factions(init_text)
+            tickets = parse_tickets(init_text, players, mode)
     except (zipfile.BadZipFile, FileNotFoundError):
         return None
 
@@ -540,6 +561,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         "sizeKm": size_km(world),
         "world": world,
         "factions": {str(k): v for k, v in factions.items()},
+        "tickets": tickets,
         "controlPoints": cps,
         "routes": routes,
         "vehicles": vehicles,
@@ -741,7 +763,7 @@ def extract_assets() -> dict:
             if name not in names:
                 continue
             out = ICONS_DIR / "vehicles" / f"{category}.webp"
-            _save_asset(Image.open(io.BytesIO(z.read(name))), out, key_black=True, trim=True)
+            _save_asset(Image.open(io.BytesIO(z.read(name))), out, key_black=False, trim=True)
             manifest["vehicles"][category] = f"icons/vehicles/{out.name}"
 
         for category, name in MARKER_ICONS.items():
@@ -835,6 +857,7 @@ def main() -> None:
                 "layerType": layer["layerType"], "layerTypeLabel": layer["layerTypeLabel"],
                 "sizeKm": layer["sizeKm"],
                 "factions": layer["factions"],
+                "tickets": layer["tickets"],
                 "file": path.name, "vehicles": len(layer["vehicles"]),
                 "vehiclesAtStart": layer["vehicleAtStart"],
                 "controlPoints": len(layer["controlPoints"]),

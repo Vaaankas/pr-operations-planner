@@ -6,7 +6,7 @@ import {
 import type { LayerData, MapMeta, Plan } from '../types'
 import { usePlanner, useUI } from '../store'
 import { downloadBlob, playerCount, safeName } from '../lib/utils'
-import { factionFlag, useAssets } from '../lib/assets'
+import { cpFlag, useAssets } from '../lib/assets'
 import { dataUrl } from '../lib/utils'
 
 interface Props {
@@ -113,8 +113,8 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
           <Users className="h-3 w-3" /> {playerCount(plan)}/50
         </span>
         <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 xl:flex">
-          {side && factionFlag(assets, side.key) ? (
-            <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-3 w-5 object-contain" />
+          {side && cpFlag(assets, side.key) ? (
+            <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-4 object-contain" />
           ) : (
             <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
           )}

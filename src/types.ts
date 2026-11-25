@@ -17,6 +17,7 @@ export interface LayerRef {
   layerType: string
   layerTypeLabel: string
   factions: Record<string, Faction>
+  tickets?: LayerTickets
   file: string | null
   vehicles: number
   vehiclesAtStart: number
@@ -88,6 +89,14 @@ export interface Route {
   cps: number[]
 }
 
+export interface LayerTickets {
+  start1: number
+  start2: number
+  bleed1: number
+  bleed2: number
+  loss: number
+}
+
 export interface LayerData {
   id: string
   levelId: string
@@ -101,6 +110,7 @@ export interface LayerData {
   sizeKm: number
   world: number
   factions: Record<string, Faction>
+  tickets?: LayerTickets
   controlPoints: ControlPoint[]
   routes: Route[]
   vehicles: VehicleSpawn[]
@@ -206,6 +216,7 @@ export interface Plan {
   stages: Stage[]
   activeStageId: string
   claims: Record<string, string>
+  flagTeams?: Record<string, number>
   notes: string
 }
 

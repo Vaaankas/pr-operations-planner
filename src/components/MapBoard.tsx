@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import type { DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
+import { Boxes, Flag, Shield, Tag, Truck } from 'lucide-react'
+import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
 import { affiliationColor, clamp, dataUrl, SQUAD_COLORS } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
-import { displayNormToWorld, displayRotation, rotateNorm, unrotateNorm, worldToDisplayNorm } from '../lib/coords'
+import { captureTeam, cycleTeam, teamName } from '../lib/flags'
+import { displayNormToWorld, displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 
@@ -71,6 +73,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
   const [rotating, setRotating] = useState(false)
+  const rotateStart = useRef<{ angle: number; rotation: number } | null>(null)
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -91,6 +94,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const [textAt, setTextAt] = useState<Point | null>(null)
   const [textValue, setTextValue] = useState('')
   const [tick, setTick] = useState(0)
+  const [hoverFlag, setHoverFlag] = useState<{ cp: ControlPoint; x: number; y: number } | null>(null)
   const fitted = useRef<string>('')
 
   const routes = layer.routes ?? []
@@ -128,11 +132,12 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   useEffect(() => {
     const jobs: Promise<void>[] = []
     const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
-    for (const cp of layer.controlPoints) {
-      const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
-      const path = cpFlag(assets, key)
+    for (const faction of Object.values(layer.factions)) {
+      const path = cpFlag(assets, faction.key)
       if (path) jobs.push(preloadAsset(path))
     }
+    const neutralFlag = cpFlag(assets, undefined)
+    if (neutralFlag) jobs.push(preloadAsset(neutralFlag))
     for (const v of layer.vehicles) {
       const path = assets.vehicles[v.icon] ?? assets.vehicles[v.category] ?? assets.vehicles.other
       if (!path) continue
@@ -167,9 +172,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }, [view])
 
   // Screen-normalized pointer -> world-normalized plan coordinate.
-  const toNorm = useCallback((p: { x: number; y: number }): Point => unrotateNorm({ x: p.x / mapW, y: p.y / mapH }), [mapW, mapH])
+  const toNorm = useCallback((p: { x: number; y: number }): Point => unmirrorNorm({ x: p.x / mapW, y: p.y / mapH }), [mapW, mapH])
   const normToScreen = useCallback((p: Point): Point => {
-    const r = rotateNorm(p)
+    const r = mirrorNorm(p)
     return { x: r.x * mapW, y: r.y * mapH }
   }, [mapW, mapH])
 
@@ -453,9 +458,20 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       }
       if (e.key === 'Enter' && ui.tool === 'polygon') finishPolygon()
       if ((e.key === 'Delete' || e.key === 'Backspace') && ui.selectedId) {
-        if (ui.selectedKind === 'element') planner.removeElement(ui.selectedId)
-        else if (ui.selectedKind === 'vehicle') planner.clearVehicleMove(ui.selectedId)
-        useUI.getState().setSelected(null, null)
+        if (ui.selectedKind === 'element') {
+          planner.removeElement(ui.selectedId)
+          useUI.getState().setSelected(null, null)
+        } else if (ui.selectedKind === 'vehicle') {
+          const plan = usePlanner.getState().plan
+          const current = plan?.stages.find((s) => s.id === plan.activeStageId)
+          const vehicleId = ui.selectedId.replace(/^veh_/, '')
+          const turns = current?.turns?.[vehicleId] ?? []
+          if (turns.length) planner.setVehicleTurns(vehicleId, turns.slice(0, -1))
+          else {
+            planner.clearVehicleMove(vehicleId)
+            useUI.getState().setSelected(null, null)
+          }
+        }
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault()
@@ -497,25 +513,36 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       })()
     : null
 
-  const rotateFromPointer = useCallback((clientX: number, clientY: number) => {
+  const pointerAngle = useCallback((clientX: number, clientY: number) => {
     const el = wrapRef.current
-    if (!el || !selectedVehicle || !selectedVehiclePos) return
+    if (!el || !selectedVehiclePos) return 0
     const rect = el.getBoundingClientRect()
     const p = worldToDisplayNorm(selectedVehiclePos.x, selectedVehiclePos.z, layer.world)
     const cx = rect.left + p.x * mapW * view.scale + view.x
     const cy = rect.top + p.y * mapH * view.scale + view.y
-    const angle = (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI + 90
+    return (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI + 90
+  }, [selectedVehiclePos, layer.world, mapW, mapH, view])
+
+  const rotateFromPointer = useCallback((clientX: number, clientY: number) => {
+    if (!selectedVehicle || !selectedVehiclePos || !rotateStart.current) return
+    let delta = pointerAngle(clientX, clientY) - rotateStart.current.angle
+    while (delta > 180) delta -= 360
+    while (delta < -180) delta += 360
+    const rotation = (rotateStart.current.rotation - delta + 720) % 360
     planner.moveVehicle(selectedVehicle.id, {
       x: selectedVehiclePos.x,
       z: selectedVehiclePos.z,
-      rotation: (angle - 90 + 360) % 360,
+      rotation,
     })
-  }, [selectedVehicle, selectedVehiclePos, layer.world, mapW, mapH, view, planner])
+  }, [selectedVehicle, selectedVehiclePos, pointerAngle, planner])
 
   useEffect(() => {
     if (!rotating) return
     const move = (e: PointerEvent) => rotateFromPointer(e.clientX, e.clientY)
-    const up = () => setRotating(false)
+    const up = () => {
+      rotateStart.current = null
+      setRotating(false)
+    }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
     window.addEventListener('pointercancel', up)
@@ -559,8 +586,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         const node = e.target
         const dx = node.x() / mapW
         const dy = node.y() / mapH
-        const worldDx = dy
-        const worldDy = -dx
+        const worldDx = dx
+        const worldDy = -dy
         const patch = (() => {
           if (el.type === 'text' || el.type === 'icon' || el.type === 'unit') {
             return { at: { x: el.at.x + worldDx, y: el.at.y + worldDy } }
@@ -698,7 +725,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             rotation={displayRotation(el.rotation)}
             onTransformEnd={(e) => {
               const node = e.target
-              const rotation = node.rotation() - 90
+              const rotation = (180 - node.rotation() + 360) % 360
               node.rotation(0)
               node.scaleX(1)
               node.scaleY(1)
@@ -892,7 +919,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           )}
         </Layer>
 
-        <Layer listening={false}>
+        <Layer listening={ui.tool === 'select'}>
           {ui.showFlags && visibleRoutes.map((r) => {
             const index = routes.findIndex((x) => x.id === r.id)
             return (
@@ -912,7 +939,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             if (!cp || ui.hiddenCps.includes(cp.id)) return null
             const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
             const radius = (cp.radius / layer.world) * mapW
-            const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
+            const team = captureTeam(plan, cp)
+            const key = team ? layer.factions[String(team)]?.key : undefined
             const flagPath = cpFlag(assets, key)
             const img = flagPath ? assetImage(flagPath) : null
             const w = 30 * iconScale
@@ -921,7 +949,25 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const index = visibleRoutes.findIndex((r) => r.cps.includes(cp.id))
             const color = routeColor(Math.max(0, index))
             return (
-              <Group key={cp.id} x={p.x * mapW} y={p.y * mapH}>
+              <Group
+                key={cp.id}
+                x={p.x * mapW}
+                y={p.y * mapH}
+                onClick={(e) => {
+                  if (ui.tool !== 'select') return
+                  e.cancelBubble = true
+                  planner.setFlagTeam(cp.id, cycleTeam(team))
+                }}
+                onMouseEnter={() => {
+                  setHoverFlag({
+                    cp,
+                    x: p.x * mapW * view.scale + view.x,
+                    y: p.y * mapH * view.scale + view.y,
+                  })
+                }}
+                onMouseLeave={() => setHoverFlag(null)}
+              >
+                <Circle radius={w * 0.55} fill="rgba(0,0,0,0.001)" />
                 {radius > 0 && (
                   <Circle
                     radius={radius}
@@ -1000,10 +1046,14 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     onClick={(e) => {
                       if (ui.tool !== 'select') return
                       e.cancelBubble = true
+                      if (!selected) {
+                        useUI.getState().setSelected(nodeId, 'vehicle')
+                        useUI.getState().setRightTab('assets')
+                        return
+                      }
                       const m = mapCoords()
                       const world = displayNormToWorld({ x: m.x / mapW, y: m.y / mapH }, layer.world)
                       addVehicleTurn(v.id, world)
-                      useUI.getState().setSelected(nodeId, 'vehicle')
                     }}
                   />
                 )}
@@ -1023,6 +1073,12 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                       onDragEnd={(e) => {
                         const node = e.target
                         updateVehicleTurn(v.id, i, displayNormToWorld({ x: node.x() / mapW, y: node.y() / mapH }, layer.world))
+                      }}
+                      onContextMenu={(e) => {
+                        e.evt.preventDefault()
+                        e.cancelBubble = true
+                        planner.checkpoint()
+                        planner.setVehicleTurns(v.id, turns.filter((_, index) => index !== i))
                       }}
                     />
                   )
@@ -1054,7 +1110,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   }}
                   onTransformEnd={(e) => {
                     const node = e.target
-                    const rotation = node.rotation() - 90
+                    const rotation = (180 - node.rotation() + 360) % 360
                     node.rotation(0)
                     node.scaleX(1)
                     node.scaleY(1)
@@ -1146,6 +1202,12 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
               e.preventDefault()
               e.stopPropagation()
               planner.checkpoint()
+              if (selectedVehiclePos) {
+                rotateStart.current = {
+                  angle: pointerAngle(e.clientX, e.clientY),
+                  rotation: selectedVehiclePos.rotation,
+                }
+              }
               setRotating(true)
             }}
             className="pointer-events-auto absolute flex h-5 w-5 -translate-x-1/2 -translate-y-[52px] cursor-grab items-center justify-center rounded-full border border-black/70 bg-amber-400 text-black shadow-lg active:cursor-grabbing"
@@ -1186,6 +1248,26 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
+      <div className="absolute bottom-3 left-3 flex flex-col gap-1 rounded border border-white/10 bg-black/70 p-1">
+        <MapLayerToggle icon={<Truck className="h-3.5 w-3.5" />} active={ui.showVehicles} title="Vehicles" onClick={() => ui.toggle('showVehicles')} />
+        <MapLayerToggle icon={<Shield className="h-3.5 w-3.5" />} active={ui.showEnemy} title="Enemy assets" onClick={() => ui.toggle('showEnemy')} />
+        <MapLayerToggle icon={<Flag className="h-3.5 w-3.5" />} active={ui.showFlags} title="Flags and capture radii" onClick={() => ui.toggle('showFlags')} />
+        <MapLayerToggle icon={<Boxes className="h-3.5 w-3.5" />} active={ui.showAssets} title="Static assets and emplacements" onClick={() => ui.toggle('showAssets')} />
+        <MapLayerToggle icon={<Tag className="h-3.5 w-3.5" />} active={ui.showLabels} title="Map labels" onClick={() => ui.toggle('showLabels')} />
+      </div>
+
+      {plan.roster.squads.length > 0 && (
+        <div className="absolute bottom-14 right-3 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2 py-1.5">
+          {plan.roster.squads.map((s, i) => (
+            <div key={s.id} className="flex items-center gap-1.5 whitespace-nowrap text-[9px] text-slate-300">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color }} />
+              <span className="font-mono text-[9px] text-slate-500">{i + 1}</span>
+              <span className="max-w-36 truncate">{s.name || `SQUAD ${i + 1}`}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded border border-white/10 bg-black/70 p-1">
         <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(0.8)} title="Zoom out">−</button>
         <button className="h-7 min-w-12 rounded px-1 text-[10px] font-mono text-slate-400 hover:bg-white/10" onClick={resetView} title="Fit map">
@@ -1193,6 +1275,23 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </button>
         <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(1.25)} title="Zoom in">+</button>
       </div>
+
+      {hoverFlag && (() => {
+        const team = captureTeam(plan, hoverFlag.cp)
+        const bleed = team === 1 ? (layer.tickets?.bleed1 ?? 10) : team === 2 ? (layer.tickets?.bleed2 ?? 10) : null
+        return (
+          <div
+            className="pointer-events-none absolute z-30 w-52 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
+            style={{ left: clamp(hoverFlag.x + 18, 8, box.w - 220), top: clamp(hoverFlag.y - 8, 8, box.h - 110) }}
+          >
+            <div className="text-[12px] font-semibold text-slate-100">{hoverFlag.cp.name}</div>
+            <div className="mt-1 font-mono uppercase tracking-wider text-slate-500">Owner · {teamName(layer, team)}</div>
+            <div className="mt-1 text-slate-300">Ticket loss on capture: <span className="font-mono text-amber-300">{layer.tickets?.loss ?? 30}</span></div>
+            <div className="text-slate-300">Ticket bleed: <span className="font-mono text-amber-300">{bleed === null ? '—' : `${bleed}/min`}</span></div>
+            <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-600">Click to cycle faction / neutral</div>
+          </div>
+        )
+      })()}
 
       {ui.tool === 'polygon' && (
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded border border-white/10 bg-black/80 px-3 py-1.5 text-[11px] text-slate-300">
@@ -1217,5 +1316,17 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       )}
 
     </div>
+  )
+}
+
+function MapLayerToggle({ icon, active, title, onClick }: { icon: React.ReactNode; active: boolean; title: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`flex h-7 w-7 items-center justify-center rounded ${active ? 'bg-white/10 text-slate-200' : 'text-slate-600 hover:text-slate-400'}`}
+    >
+      {icon}
+    </button>
   )
 }

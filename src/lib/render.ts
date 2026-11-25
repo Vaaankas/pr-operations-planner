@@ -3,10 +3,10 @@ import { affiliationColor, dataUrl, formatTime } from './utils'
 import { iconImage, glyphFor } from '../icons'
 import { cpFlag } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
-import { displayRotation, rotateNorm, unrotateNorm, worldToDisplayNorm } from './coords'
+import { displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from './coords'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
-  const r = rotateNorm(p)
+  const r = mirrorNorm(p)
   return [r.x * size, r.y * size]
 }
 
@@ -15,7 +15,7 @@ export function worldToNorm(x: number, z: number, world: number): { x: number; y
 }
 
 export function normToWorld(p: { x: number; y: number }, world: number): { x: number; z: number } {
-  const w = unrotateNorm(p)
+  const w = unmirrorNorm(p)
   return { x: w.x * world - world / 2, z: w.y * world - world / 2 }
 }
 
@@ -225,13 +225,14 @@ function drawFlag(
   showLabel: boolean,
   assets: AssetManifest,
   color: string,
+  team: number,
 ) {
   const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
   const x = p.x * size
   const y = p.y * size
   const w = size * 0.034
   const radius = (cp.radius / layer.world) * size
-  const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
+  const key = team ? layer.factions[String(team)]?.key : undefined
   const flagPath = cpFlag(assets, key)
   const img = flagPath ? assetImage(flagPath) : null
   const ratio = img && img.width && img.height ? img.height / img.width : 1
@@ -276,11 +277,12 @@ export async function renderStageCanvas(
 
   const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
   const jobs: Promise<void>[] = []
-  for (const cp of layer.controlPoints) {
-    const key = cp.team ? layer.factions[String(cp.team)]?.key : undefined
-    const path = cpFlag(opts.assets, key)
+  for (const faction of Object.values(layer.factions)) {
+    const path = cpFlag(opts.assets, faction.key)
     if (path) jobs.push(preloadAsset(path))
   }
+  const neutralFlag = cpFlag(opts.assets, undefined)
+  if (neutralFlag) jobs.push(preloadAsset(neutralFlag))
   for (const v of layer.vehicles) {
     const path = opts.assets.vehicles[v.icon] ?? opts.assets.vehicles[v.category] ?? opts.assets.vehicles.other
     if (!path) continue
@@ -353,7 +355,8 @@ export async function renderStageCanvas(
       const cp = cpsById.get(id)
       if (!cp || opts.hiddenCps.includes(id)) continue
       const routeIndex = Math.max(0, visibleRoutes.findIndex((r) => r.cps.includes(id)))
-      drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex))
+      const team = plan.flagTeams?.[String(id)] ?? cp.team
+      drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex), team)
     }
   }
 

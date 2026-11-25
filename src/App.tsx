@@ -269,7 +269,7 @@ function AppInner() {
             <div className="min-h-0 flex-1">
               {ui.rightTab === 'assets' && <AssetsPanel layer={layer} plan={plan} stage={stage} />}
               {ui.rightTab === 'stage' && <StagePanel layer={layer} plan={plan} stage={stage} />}
-              {ui.rightTab === 'routes' && <RoutesPanel layer={layer} />}
+              {ui.rightTab === 'routes' && <RoutesPanel layer={layer} plan={plan} />}
             </div>
           </aside>
         </div>
