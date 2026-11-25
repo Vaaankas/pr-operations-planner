@@ -198,7 +198,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'squad': {
       const [x, y] = normPoint(el.at, size)
-      const r = (el.size * size) / 2
+      const r = size * 0.006
       const icon = assets?.squads[String(el.squadNumber)]
       ctx.beginPath()
       ctx.arc(x, y, r * 0.82, 0, Math.PI * 2)

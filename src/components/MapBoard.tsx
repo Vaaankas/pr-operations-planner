@@ -782,7 +782,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       }
       case 'squad': {
         const at = normToScreen(el.at)
-        const r = (el.size * mapW) / 2
+        const r = 12 * iconScale
         const icon = assets.squads[String(el.squadNumber)]
         return (
           <Group key={el.id} {...common} x={at.x} y={at.y}>
@@ -982,10 +982,34 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
 
 
-  const addVehicleTurn = (vehicleId: string, world: { x: number; z: number }) => {
+  const addVehicleTurn = (vehicle: VehicleSpawn, world: { x: number; z: number }) => {
+    const move = stage.moves[vehicle.id]
+    if (!move) return
+    const existing = stage.turns?.[vehicle.id] ?? []
+    const path = [baseVehiclePos(vehicle), ...existing, move]
+    let bestIndex = existing.length
+    let bestDistance = Number.POSITIVE_INFINITY
+    for (let i = 0; i < path.length - 1; i++) {
+      const a = path[i]
+      const b = path[i + 1]
+      const dx = b.x - a.x
+      const dz = b.z - a.z
+      const lengthSq = dx * dx + dz * dz || 1
+      const t = Math.max(0, Math.min(1, ((world.x - a.x) * dx + (world.z - a.z) * dz) / lengthSq))
+      const px = a.x + t * dx
+      const pz = a.z + t * dz
+      const distance = Math.hypot(world.x - px, world.z - pz)
+      if (distance < bestDistance) {
+        bestDistance = distance
+        bestIndex = i
+      }
+    }
     planner.checkpoint()
-    const existing = stage.turns?.[vehicleId] ?? []
-    planner.setVehicleTurns(vehicleId, [...existing, world])
+    planner.setVehicleTurns(vehicle.id, [
+      ...existing.slice(0, bestIndex),
+      world,
+      ...existing.slice(bestIndex),
+    ])
   }
 
   const updateVehicleTurn = (vehicleId: string, index: number, world: { x: number; z: number }) => {
@@ -1024,7 +1048,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           squadId,
           squadNumber: index + 1,
           squadColor: squad.color,
-          size: 0.032,
+          size: 0.012,
         } as DrawElement)
       }}
     >
@@ -1193,7 +1217,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                       }
                       const m = mapCoords()
                       const world = displayNormToWorld({ x: m.x / mapW, y: m.y / mapH }, layer.world)
-                      addVehicleTurn(v.id, world)
+                      addVehicleTurn(v, world)
                     }}
                   />
                 )}
