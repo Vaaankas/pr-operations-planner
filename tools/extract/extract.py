@@ -719,7 +719,7 @@ def _save_asset(im: Image.Image, path: Path, size: int = 64, color_key: bool = T
 def extract_assets() -> dict:
     """Copy PR's HUD flags and minimap glyphs into the static dataset."""
     archive = PR_ROOT / "content" / "menu_client.zip"
-    manifest: dict = {"factionFlags": {}, "cpFlags": {}, "scoreFlags": {}, "vehicles": {}, "markers": {}}
+    manifest: dict = {"factionFlags": {}, "cpFlags": {}, "scoreFlags": {}, "vehicles": {}, "markers": {}, "squads": {}}
     FLAGS_DIR.mkdir(parents=True, exist_ok=True)
     if not archive.exists():
         return manifest
@@ -765,6 +765,14 @@ def extract_assets() -> dict:
             out = ICONS_DIR / "vehicles" / f"{category}.webp"
             _save_asset(Image.open(io.BytesIO(z.read(name))), out, key_black=False, trim=True)
             manifest["vehicles"][category] = f"icons/vehicles/{out.name}"
+
+        for number in range(1, 10):
+            name = f"hud/texture/ingame/player/icons/minimap/mini_squad_{number}_small.dds"
+            if name not in names:
+                continue
+            out = ICONS_DIR / "squads" / f"{number}.webp"
+            _save_asset(Image.open(io.BytesIO(z.read(name))), out, trim=True)
+            manifest["squads"][str(number)] = f"icons/squads/{out.name}"
 
         for category, name in MARKER_ICONS.items():
             if name not in names:

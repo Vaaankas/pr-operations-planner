@@ -199,18 +199,21 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     case 'squad': {
       const [x, y] = normPoint(el.at, size)
       const r = (el.size * size) / 2
+      const icon = assets?.squads[String(el.squadNumber)]
       ctx.beginPath()
-      ctx.arc(x, y, r, 0, Math.PI * 2)
-      ctx.fillStyle = el.squadColor
-      ctx.fill()
-      ctx.strokeStyle = '#07110a'
-      ctx.lineWidth = Math.max(1, size * 0.0012)
-      ctx.stroke()
+      ctx.arc(x, y, r * 0.82, 0, Math.PI * 2)
       ctx.fillStyle = '#07110a'
-      ctx.font = `700 ${r * 1.25}px "Inter", "Segoe UI", sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(String(el.squadNumber), x, y)
+      ctx.fill()
+      if (icon) {
+        const img = tintedAssetImage(icon, el.squadColor)
+        if (img.complete) ctx.drawImage(img, x - r, y - r, r * 2, r * 2)
+      } else {
+        ctx.fillStyle = '#f8fafc'
+        ctx.font = `700 ${r * 1.1}px "Inter", "Segoe UI", sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(String(el.squadNumber), x, y)
+      }
       break
     }
     case 'icon': {
@@ -329,6 +332,10 @@ export async function renderStageCanvas(
     jobs.push(preloadAsset(path))
     jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
   }
+  plan.roster.squads.forEach((squad, index) => {
+    const icon = opts.assets.squads[String(index + 1)]
+    if (icon) jobs.push(preloadAsset(icon, squad.color))
+  })
   for (const path of Object.values(opts.assets.markers)) jobs.push(preloadAsset(path))
   for (const path of Object.values(opts.assets.orders)) jobs.push(preloadAsset(path))
   for (const el of stage.elements) {
@@ -443,20 +450,23 @@ export async function renderStageCanvas(
         const angle = ((displayRotation(pos.rotation) + 90) * Math.PI) / 180
         const bx = x - Math.sin(angle) * s * 0.42
         const by = y + Math.cos(angle) * s * 0.42
-        const r = size * 0.0055
+        const r = size * 0.0075
+        const icon = opts.assets.squads[String(squadIndex + 1)]
         ctx.save()
         ctx.beginPath()
-        ctx.arc(bx, by, r, 0, Math.PI * 2)
-        ctx.fillStyle = squad.color
-        ctx.fill()
-        ctx.strokeStyle = '#07110a'
-        ctx.lineWidth = size * 0.0015
-        ctx.stroke()
+        ctx.arc(bx, by, r * 0.82, 0, Math.PI * 2)
         ctx.fillStyle = '#07110a'
-        ctx.font = `700 ${size * 0.009}px "Inter", "Segoe UI", sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(String(squadIndex + 1), bx, by)
+        ctx.fill()
+        if (icon) {
+          const img = tintedAssetImage(icon, squad.color)
+          if (img.complete) ctx.drawImage(img, bx - r, by - r, r * 2, r * 2)
+        } else {
+          ctx.fillStyle = '#f8fafc'
+          ctx.font = `700 ${size * 0.009}px "Inter", "Segoe UI", sans-serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText(String(squadIndex + 1), bx, by)
+        }
         ctx.restore()
       }
     }

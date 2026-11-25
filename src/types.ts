@@ -123,6 +123,7 @@ export interface AssetManifest {
   cpFlags: Record<string, string>
   scoreFlags: Record<string, string>
   vehicles: Record<string, string>
+  squads: Record<string, string>
   markers: Record<string, string>
   orders: Record<string, string>
 }

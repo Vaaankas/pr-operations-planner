@@ -16,7 +16,7 @@ import { Timeline } from './components/Timeline'
 import { ExportDialog } from './components/ExportDialog'
 import { HelpDialog } from './components/HelpDialog'
 
-const EMPTY_ASSETS: AssetManifest = { factionFlags: {}, cpFlags: {}, scoreFlags: {}, vehicles: {}, markers: {}, orders: {} }
+const EMPTY_ASSETS: AssetManifest = { factionFlags: {}, cpFlags: {}, scoreFlags: {}, vehicles: {}, squads: {}, markers: {}, orders: {} }
 
 export function App() {
   const [assets, setAssets] = useState<AssetManifest>(EMPTY_ASSETS)

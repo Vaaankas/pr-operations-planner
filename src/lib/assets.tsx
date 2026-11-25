@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { AssetManifest } from '../types'
 
-const EMPTY: AssetManifest = { factionFlags: {}, cpFlags: {}, scoreFlags: {}, vehicles: {}, markers: {}, orders: {} }
+const EMPTY: AssetManifest = { factionFlags: {}, cpFlags: {}, scoreFlags: {}, vehicles: {}, squads: {}, markers: {}, orders: {} }
 
 export const AssetContext = createContext<AssetManifest>(EMPTY)
 

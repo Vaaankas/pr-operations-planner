@@ -10,7 +10,7 @@ import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { displayNormToWorld, displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from '../lib/coords'
-import { assetImage, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
+import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
 
@@ -144,6 +144,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       jobs.push(preloadAsset(path))
       jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
     }
+    plan.roster.squads.forEach((squad, index) => {
+      const icon = assets.squads[String(index + 1)]
+      if (icon) jobs.push(preloadAsset(icon, squad.color))
+    })
     for (const path of Object.values(assets.markers)) jobs.push(preloadAsset(path))
     for (const path of Object.values(assets.orders)) jobs.push(preloadAsset(path))
     for (const el of stage.elements) {
@@ -1271,21 +1275,26 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   const angle = ((displayRotation(pos.rotation) + 90) * Math.PI) / 180
                   const bx = p.x * mapW - Math.sin(angle) * s * 0.42
                   const by = p.y * mapH + Math.cos(angle) * s * 0.42
-                  const r = 7 * iconScale
+                  const r = 9 * iconScale
+                  const icon = assets.squads[String(index + 1)]
                   return (
                     <Group x={bx} y={by} listening={false}>
-                      <Circle radius={r} fill={sq.color} stroke="#07110a" strokeWidth={1.5 * iconScale} />
-                      <Text
-                        text={String(index + 1)}
-                        width={r * 2}
-                        x={-r}
-                        y={-r * 0.62}
-                        align="center"
-                        fontSize={8.5 * iconScale}
-                        fontFamily="Inter, Segoe UI, sans-serif"
-                        fontStyle="bold"
-                        fill="#07110a"
-                      />
+                      <Circle radius={r * 0.82} fill="#07110a" />
+                      {icon ? (
+                        <KonvaImage image={tintedAssetImage(icon, sq.color)} x={-r} y={-r} width={r * 2} height={r * 2} />
+                      ) : (
+                        <Text
+                          text={String(index + 1)}
+                          width={r * 2}
+                          x={-r}
+                          y={-r * 0.62}
+                          align="center"
+                          fontSize={8.5 * iconScale}
+                          fontFamily="Inter, Segoe UI, sans-serif"
+                          fontStyle="bold"
+                          fill="#f8fafc"
+                        />
+                      )}
                     </Group>
                   )
                 })()}
@@ -1397,11 +1406,12 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
               className="flex cursor-grab items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-200 active:cursor-grabbing"
               title="Drag onto the map to place a squad badge"
             >
-              <span
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-black/70 font-mono text-[10px] font-bold text-black"
-                style={{ background: s.color }}
-              >
-                {i + 1}
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#07110a]">
+                {assets.squads[String(i + 1)] ? (
+                  <GameIcon path={assets.squads[String(i + 1)]} tint={s.color} size={24} />
+                ) : (
+                  <span className="font-mono text-[10px] font-bold text-slate-100">{i + 1}</span>
+                )}
               </span>
               <span className="max-w-36 truncate">{s.name || `SQUAD ${i + 1}`}</span>
             </div>

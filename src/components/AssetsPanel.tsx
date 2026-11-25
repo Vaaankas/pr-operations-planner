@@ -3,9 +3,7 @@ import { Crosshair, Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { dataUrl, formatTime } from '../lib/utils'
-import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
-import { GameIcon } from '../lib/gameIcons'
 
 interface Props {
   layer: LayerData
@@ -48,7 +46,6 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
       .filter((g) => g.list.length > 0)
   }, [vehicles, plan.side])
 
-  const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
   const startCount = layer.vehicles.filter((v) => v.atStart).length
 
   return (
@@ -99,9 +96,10 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
             <div className="space-y-0.5">
               {list.map((v) => {
                 const selected = ui.selectedId === `veh_${v.id}`
-                const color = vehicleColor(v, plan, squadColors)
                 const moved = Boolean(stage.moves[v.id])
                 const squadId = plan.claims[v.id] ?? ''
+                const squadIndex = plan.roster.squads.findIndex((s) => s.id === squadId)
+                const prefix = squadIndex >= 0 ? `[${squadIndex + 1}] ` : ''
                 return (
                   <div
                     key={v.id}
@@ -113,12 +111,11 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                     className={`group flex cursor-pointer items-center gap-1.5 rounded border px-1.5 py-1 ${selected ? 'border-amber-400/60 bg-amber-400/10' : 'border-transparent hover:border-white/10 hover:bg-white/5'}`}
                     title={v.template}
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/40" style={{ border: `1px solid ${color}66` }}>
-                      <GameIcon path={assets.vehicles[v.icon] ?? assets.vehicles[v.category]} tint={color} size={24} />
-                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
-                        <span className="truncate text-[12.5px] font-medium text-slate-200">{v.label}</span>
+                        <span className="truncate text-[13px] font-medium text-slate-200">
+                          {prefix}{v.label}
+                        </span>
                         {!v.atStart && <span className="shrink-0 rounded bg-black/50 px-1 font-mono text-[9px] text-slate-400">{formatTime(v.respawn ?? 0)}</span>}
                       </div>
                       <div className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-wider text-slate-500">
