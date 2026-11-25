@@ -445,29 +445,8 @@ export async function renderStageCanvas(
       ctx.restore()
       const squadId = plan.claims[v.id]
       const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
-      const squad = plan.roster.squads[squadIndex]
-      if (squad) {
-        const angle = ((displayRotation(pos.rotation) + 90) * Math.PI) / 180
-        const bx = x - Math.sin(angle) * s * 0.42
-        const by = y + Math.cos(angle) * s * 0.42
-        const r = size * 0.0075
-        const icon = opts.assets.squads[String(squadIndex + 1)]
-        ctx.save()
-        ctx.beginPath()
-        ctx.arc(bx, by, r * 0.82, 0, Math.PI * 2)
-        ctx.fillStyle = '#07110a'
-        ctx.fill()
-        if (icon) {
-          const img = tintedAssetImage(icon, squad.color)
-          if (img.complete) ctx.drawImage(img, bx - r, by - r, r * 2, r * 2)
-        } else {
-          ctx.fillStyle = '#f8fafc'
-          ctx.font = `700 ${size * 0.009}px "Inter", "Segoe UI", sans-serif`
-          ctx.textAlign = 'center'
-          ctx.textBaseline = 'middle'
-          ctx.fillText(String(squadIndex + 1), bx, by)
-        }
-        ctx.restore()
+      if (squadIndex >= 0) {
+        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
       }
     }
   }

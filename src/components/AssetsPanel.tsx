@@ -152,8 +152,8 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                           title="Assign to squad"
                         >
                           <option value="">—</option>
-                          {plan.roster.squads.map((s) => (
-                            <option key={s.id} value={s.id}>{s.name}</option>
+                          {plan.roster.squads.map((s, i) => (
+                            <option key={s.id} value={s.id}>[{i + 1}] {s.name}</option>
                           ))}
                         </select>
                       </div>

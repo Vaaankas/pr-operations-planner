@@ -783,21 +783,26 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       case 'squad': {
         const at = normToScreen(el.at)
         const r = (el.size * mapW) / 2
+        const icon = assets.squads[String(el.squadNumber)]
         return (
           <Group key={el.id} {...common} x={at.x} y={at.y}>
-            <Circle radius={r} fill={el.squadColor} stroke={selected ? '#fbbf24' : '#07110a'} strokeWidth={2 * iconScale} />
-            <Text
-              text={String(el.squadNumber)}
-              x={-r}
-              y={-r * 0.66}
-              width={r * 2}
-              align="center"
-              fontSize={r * 1.25}
-              fontFamily="Inter, Segoe UI, sans-serif"
-              fontStyle="bold"
-              fill="#07110a"
-              listening={false}
-            />
+            <Circle radius={r * 0.82} fill="#07110a" stroke={selected ? '#fbbf24' : undefined} strokeWidth={2 * iconScale} />
+            {icon ? (
+              <KonvaImage image={tintedAssetImage(icon, el.squadColor)} x={-r} y={-r} width={r * 2} height={r * 2} listening={false} />
+            ) : (
+              <Text
+                text={String(el.squadNumber)}
+                x={-r}
+                y={-r * 0.66}
+                width={r * 2}
+                align="center"
+                fontSize={r * 1.1}
+                fontFamily="Inter, Segoe UI, sans-serif"
+                fontStyle="bold"
+                fill="#f8fafc"
+                listening={false}
+              />
+            )}
           </Group>
         )
       }
@@ -1156,6 +1161,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const s = (v.category === 'mbt' ? 32 : v.category === 'boat' || v.category === 'carrier' ? 34 : 30) * iconScale
             const nodeId = `veh_${v.id}`
             const selected = ui.selectedId === nodeId
+            const claimIndex = plan.roster.squads.findIndex((q) => q.id === plan.claims[v.id])
+            const claimPrefix = claimIndex >= 0 ? `[${claimIndex + 1}] ` : ''
             const turns = stage.turns?.[v.id] ?? []
             const base = baseVehiclePos(v)
             const route = move
@@ -1268,39 +1275,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     )
                   })()}
                 </Group>
-                {plan.claims[v.id] && (() => {
-                  const index = plan.roster.squads.findIndex((q) => q.id === plan.claims[v.id])
-                  const sq = plan.roster.squads[index]
-                  if (!sq) return null
-                  const angle = ((displayRotation(pos.rotation) + 90) * Math.PI) / 180
-                  const bx = p.x * mapW - Math.sin(angle) * s * 0.42
-                  const by = p.y * mapH + Math.cos(angle) * s * 0.42
-                  const r = 9 * iconScale
-                  const icon = assets.squads[String(index + 1)]
-                  return (
-                    <Group x={bx} y={by} listening={false}>
-                      <Circle radius={r * 0.82} fill="#07110a" />
-                      {icon ? (
-                        <KonvaImage image={tintedAssetImage(icon, sq.color)} x={-r} y={-r} width={r * 2} height={r * 2} />
-                      ) : (
-                        <Text
-                          text={String(index + 1)}
-                          width={r * 2}
-                          x={-r}
-                          y={-r * 0.62}
-                          align="center"
-                          fontSize={8.5 * iconScale}
-                          fontFamily="Inter, Segoe UI, sans-serif"
-                          fontStyle="bold"
-                          fill="#f8fafc"
-                        />
-                      )}
-                    </Group>
-                  )
-                })()}
-                {ui.showLabels && (view.scale >= 0.55 || selected) && (
+                {ui.showLabels && (view.scale >= 0.55 || selected || claimIndex >= 0) && (
                   <Text
-                    text={v.label}
+                    text={`${claimPrefix}${v.label}`}
                     fontSize={9 * iconScale}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
