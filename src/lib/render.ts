@@ -210,10 +210,14 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       ctx.lineWidth = Math.max(1, size * 0.0012)
       ctx.stroke()
       if (icon) {
-        const img = tintedAssetImage(icon, commander ? '#facc15' : el.squadColor)
-        if (img.complete) {
-          if (commander) ctx.drawImage(img, x - r * 0.7, y - r * 0.7, r * 1.4, r * 1.4)
-          else ctx.drawImage(img, x - r, y - r, r * 2, r * 2)
+        if (commander) {
+          const outline = tintedAssetImage(icon, '#07110a')
+          const fill = tintedAssetImage(icon, '#facc15')
+          if (outline.complete) ctx.drawImage(outline, x - r * 0.82, y - r * 0.82, r * 1.64, r * 1.64)
+          if (fill.complete) ctx.drawImage(fill, x - r * 0.7, y - r * 0.7, r * 1.4, r * 1.4)
+        } else {
+          const img = tintedAssetImage(icon, el.squadColor)
+          if (img.complete) ctx.drawImage(img, x - r, y - r, r * 2, r * 2)
         }
       } else {
         ctx.fillStyle = commander ? '#facc15' : '#f8fafc'
@@ -340,7 +344,10 @@ export async function renderStageCanvas(
     jobs.push(preloadAsset(path))
     jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
   }
-  if (opts.assets.commander) jobs.push(preloadAsset(opts.assets.commander, '#facc15'))
+  if (opts.assets.commander) {
+    jobs.push(preloadAsset(opts.assets.commander, '#07110a'))
+    jobs.push(preloadAsset(opts.assets.commander, '#facc15'))
+  }
   plan.roster.squads.forEach((squad, index) => {
     const icon = opts.assets.squads[String(index + 1)]
     if (icon) jobs.push(preloadAsset(icon, squad.color))

@@ -144,7 +144,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       jobs.push(preloadAsset(path))
       jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
     }
-    if (assets.commander) jobs.push(preloadAsset(assets.commander, '#facc15'))
+    if (assets.commander) {
+      jobs.push(preloadAsset(assets.commander, '#07110a'))
+      jobs.push(preloadAsset(assets.commander, '#facc15'))
+    }
     plan.roster.squads.forEach((squad, index) => {
       const icon = assets.squads[String(index + 1)]
       if (icon) jobs.push(preloadAsset(icon, squad.color))
@@ -796,7 +799,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             />
             {icon ? (
               commander ? (
-                <KonvaImage image={tintedAssetImage(icon, '#facc15')} x={-r * 0.7} y={-r * 0.7} width={r * 1.4} height={r * 1.4} listening={false} />
+                <>
+                  <KonvaImage image={tintedAssetImage(icon, '#07110a')} x={-r * 0.82} y={-r * 0.82} width={r * 1.64} height={r * 1.64} listening={false} />
+                  <KonvaImage image={tintedAssetImage(icon, '#facc15')} x={-r * 0.7} y={-r * 0.7} width={r * 1.4} height={r * 1.4} listening={false} />
+                </>
               ) : (
                 <KonvaImage image={tintedAssetImage(icon, el.squadColor)} x={-r} y={-r} width={r * 2} height={r * 2} listening={false} />
               )
@@ -1428,7 +1434,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           >
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-black/70 bg-[#2563eb]">
               {assets.commander ? (
-                <GameIcon path={assets.commander} tint="#facc15" size={17} />
+                <span className="relative flex h-[20px] w-[20px] items-center justify-center">
+                  <GameIcon path={assets.commander} tint="#07110a" size={19} className="absolute" />
+                  <GameIcon path={assets.commander} tint="#facc15" size={16} />
+                </span>
               ) : (
                 <span className="text-[13px] font-bold text-[#facc15]">★</span>
               )}
