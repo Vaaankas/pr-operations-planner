@@ -100,9 +100,6 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                 const selected = ui.selectedId === `veh_${v.id}`
                 const moved = Boolean(stage.moves[v.id])
                 const squadId = plan.claims[v.id] ?? ''
-                const isCommander = squadId === 'commander'
-                const squadIndex = plan.roster.squads.findIndex((s) => s.id === squadId)
-                const prefix = isCommander ? '★ CMD ' : squadIndex >= 0 ? `[${squadIndex + 1}] ` : ''
                 const color = vehicleColor(v, plan, plan.roster.squads.map((s) => ({ id: s.id, color: s.color })))
                 return (
                   <div
@@ -121,7 +118,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
                         <span className="truncate text-[13px] font-medium text-slate-200">
-                          {prefix}{v.label}
+                          {v.label}
                         </span>
                         {!v.atStart && <span className="shrink-0 rounded bg-black/50 px-1 font-mono text-[9px] text-slate-400">{formatTime(v.respawn ?? 0)}</span>}
                       </div>
