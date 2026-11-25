@@ -8,7 +8,7 @@ Static site. No accounts, no backend, no tracking. Plans live in the browser.
 
 ## What it does
 
-- **88 maps / 413 PvP layers** extracted from a local PR install: AAS (`gpm_cq`), Insurgency (`gpm_insurgency`) and Skirmish (`gpm_skirmish`). CNC is deliberately excluded.
+- **87 maps / 412 PvP layers** extracted from a local PR install: AAS (`gpm_cq`), Insurgency (`gpm_insurgency`) and Skirmish (`gpm_skirmish`). CNC is deliberately excluded.
 - **Accurate 2D map art** — the in-game 2048² minimap with its baked A–M / 1–13 grid, not a stretched screenshot. Overlays are mirrored vertically against the texture's axis so flags, vehicles and drawings land on the correct terrain while the grid stays upright.
 - **Opening vehicle manifest** — every spawner present at round start, with its team, localised English name, object template, spawn rotation and respawn delay, placed on its real world position. Delayed assets are dimmed with their timer. Icons are PR's own filled white vehicle silhouettes with black backing removed, tinted by team or claiming squad.
 - **AASv4 routes** — flags are ordered from each layer's SupplyGroupId (`ABC`: order, alternatives, route). Toggle any number of routes and individual flags, with route-coloured translucent lanes, parallel flags sharing one capture-order number, and real capture radii.

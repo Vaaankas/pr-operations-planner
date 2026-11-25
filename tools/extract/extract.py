@@ -52,6 +52,7 @@ LAYER_NAMES = {
 }
 
 ROUTE_COLORS = ["#38bdf8", "#fb923c", "#a78bfa", "#34d399"]
+EXCLUDED_LEVELS = {"saaremaa_winter"}
 
 FACTIONS = {
     "us": ("United States", "US"),
@@ -448,6 +449,22 @@ def parse_tickets(init_text: str, players: int, mode: str) -> dict:
     }
 
 
+def layer_init_candidates(mode: str, players: int) -> list[str]:
+    if mode == "gpm_cq":
+        sized = {
+            16: "init_cqinf.con",
+            32: "init_cqalt.con",
+            64: "init_cqstd.con",
+            128: "init_cqlrg.con",
+        }
+        return [sized[players], "init_aas.con", "init.con"]
+    if mode == "gpm_insurgency":
+        return ["init_insurgency.con", "init_ins.con", "init.con"]
+    if mode == "gpm_skirmish":
+        return ["init_skirmish.con", "init.con"]
+    return ["init.con"]
+
+
 def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None, flag_names: dict[str, str], vehicle_names: dict[str, str]) -> dict | None:
     layer_id = f"{level}__{mode.replace('gpm_', '')}__{players}"
     server_path = level_dir / "server.zip"
@@ -460,7 +477,17 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
                 return None
             parsed = parse_gpo(text)
             world = world_size(server)
-            factions = parse_factions(init_text)
+            factions = {}
+            for init_name in layer_init_candidates(mode, players):
+                layer_init = read_zip_text(server, init_name)
+                if not layer_init:
+                    continue
+                parsed_factions = parse_factions(layer_init)
+                if parsed_factions:
+                    factions = parsed_factions
+                    break
+            if not factions:
+                factions = parse_factions(init_text)
             tickets = parse_tickets(init_text, players, mode)
     except (zipfile.BadZipFile, FileNotFoundError):
         return None
@@ -826,7 +853,10 @@ def main() -> None:
         flush=True,
     )
 
-    level_dirs = sorted([d for d in LEVELS_DIR.iterdir() if d.is_dir()])
+    level_dirs = sorted([
+        d for d in LEVELS_DIR.iterdir()
+        if d.is_dir() and d.name not in EXCLUDED_LEVELS
+    ])
     if only:
         level_dirs = [d for d in level_dirs if d.name in only]
 
