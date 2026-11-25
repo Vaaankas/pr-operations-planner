@@ -3,7 +3,9 @@ import { Crosshair, Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { dataUrl, formatTime } from '../lib/utils'
+import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
+import { GameIcon } from '../lib/gameIcons'
 
 interface Props {
   layer: LayerData
@@ -101,6 +103,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                 const isCommander = squadId === 'commander'
                 const squadIndex = plan.roster.squads.findIndex((s) => s.id === squadId)
                 const prefix = isCommander ? '★ CMD ' : squadIndex >= 0 ? `[${squadIndex + 1}] ` : ''
+                const color = vehicleColor(v, plan, plan.roster.squads.map((s) => ({ id: s.id, color: s.color })))
                 return (
                   <div
                     key={v.id}
@@ -112,6 +115,9 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                     className={`group flex cursor-pointer items-center gap-1.5 rounded border px-1.5 py-1 ${selected ? 'border-amber-400/60 bg-amber-400/10' : 'border-transparent hover:border-white/10 hover:bg-white/5'}`}
                     title={v.template}
                   >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/40" style={{ border: `1px solid ${color}66` }}>
+                      <GameIcon path={assets.vehicles[v.icon] ?? assets.vehicles[v.category]} tint={color} size={24} />
+                    </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
                         <span className="truncate text-[13px] font-medium text-slate-200">
