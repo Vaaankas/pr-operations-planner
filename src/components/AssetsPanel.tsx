@@ -123,7 +123,25 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                       </div>
                       <div className="flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-wider text-slate-500">
                         <span>{v.team === plan.side ? 'friendly' : v.team ? 'enemy' : 'neutral'}</span>
-                        {moved && <span className="text-amber-400/80">· moved</span>}
+                        {moved && (
+                          <span className="flex items-center gap-0.5 text-amber-400/80">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); ui.toggleVehiclePath(v.id) }}
+                              className="text-slate-500 hover:text-amber-300"
+                              title={ui.hiddenVehiclePaths.includes(v.id) ? 'Show vehicle path' : 'Hide vehicle path'}
+                            >
+                              {ui.hiddenVehiclePaths.includes(v.id) ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            </button>
+                            <span>moved</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); planner.clearVehicleMove(v.id) }}
+                              className="text-slate-500 hover:text-amber-300"
+                              title="Return to previous stage (first stage: spawn)"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </button>
+                          </span>
+                        )}
                       </div>
                     </div>
                     {v.team === plan.side && (
@@ -143,18 +161,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                         </select>
                       </div>
                     )}
-                    {moved && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          planner.clearVehicleMove(v.id)
-                        }}
-                        title="Return to spawn"
-                        className="text-slate-500 hover:text-amber-300"
-                      >
-                        <RotateCcw className="h-3 w-3" />
-                      </button>
-                    )}
+
                   </div>
                 )
               })}

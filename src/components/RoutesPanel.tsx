@@ -2,7 +2,8 @@ import { usePlanner, useUI } from '../store'
 import type { LayerData, Plan } from '../types'
 import { Route } from 'lucide-react'
 import { cpFlag, useAssets } from '../lib/assets'
-import { captureTeam, cycleTeam, teamName } from '../lib/flags'
+import { captureTeam, teamName } from '../lib/flags'
+import { groupRoute } from '../lib/routes'
 
 export const ROUTE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
 
@@ -15,7 +16,6 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
   const planner = usePlanner()
   const assets = useAssets()
   const routes = layer.routes ?? []
-  const cps = new Map(layer.controlPoints.map((c) => [c.id, c]))
   const visible = routes.filter((r) => ui.visibleRoutes.includes(r.id))
   const allVisible = routes.length > 0 && visible.length === routes.length
 
@@ -70,38 +70,39 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                 {r.label}
               </div>
               <div className="space-y-1">
-                {r.cps.map((id, i) => {
-                  const cp = cps.get(id)
-                  if (!cp) return null
-                  const shown = !ui.hiddenCps.includes(id)
-                  const team = captureTeam(plan, cp)
-                  const faction = team ? layer.factions[String(team)] : null
-                  const bleed = team === 1 ? (layer.tickets?.bleed1 ?? 10) : team === 2 ? (layer.tickets?.bleed2 ?? 10) : null
-                  const flag = cpFlag(assets, faction?.key)
-                  return (
-                    <div key={`${r.id}-${id}-${i}`} className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                      <input
-                        type="checkbox"
-                        checked={shown}
-                        onChange={() => ui.toggleCp(id)}
-                        className="h-3 w-3 shrink-0 accent-amber-400"
-                        title="Render this flag on the map"
-                      />
-                      <span className="w-4 shrink-0 text-right font-mono text-[10px] text-slate-600">{i + 1}</span>
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: routeColor(index) }} />
-                      <span className={`min-w-0 flex-1 truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
-                      <button
-                        onClick={() => planner.setFlagTeam(cp.id, cycleTeam(team))}
-                        className="flex shrink-0 items-center gap-1 rounded border border-white/10 px-1 py-0.5 text-[9px] text-slate-400 hover:border-amber-400/40 hover:text-amber-300"
-                        title={`${cp.name}: ${teamName(layer, team)}. Loss ${layer.tickets?.loss ?? 30} tickets · bleed ${bleed === null ? '—' : `${bleed}/min`}. Click to cycle faction/neutral.`}
-                      >
-                        {flag ? <img src={`./data/${flag}`} alt="" className="h-3 w-4 object-contain" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
-                        <span className="max-w-14 truncate">{faction?.short ?? 'NEU'}</span>
-                      </button>
-                      {cp.radius > 0 && <span className="shrink-0 font-mono text-[9px] text-slate-600">{Math.round(cp.radius)}m</span>}
-                    </div>
-                  )
-                })}
+                {groupRoute(layer, r).flatMap((group) =>
+                  group.cps.map((cp) => {
+                    const id = cp.id
+                    const shown = !ui.hiddenCps.includes(id)
+                    const team = captureTeam(plan, cp)
+                    const faction = team ? layer.factions[String(team)] : null
+                    const bleed = team === 1 ? (layer.tickets?.bleed1 ?? 10) : team === 2 ? (layer.tickets?.bleed2 ?? 10) : null
+                    const flag = cpFlag(assets, faction?.key)
+                    return (
+                      <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                        <input
+                          type="checkbox"
+                          checked={shown}
+                          onChange={() => ui.toggleCp(id)}
+                          className="h-3 w-3 shrink-0 accent-amber-400"
+                          title="Render this flag on the map"
+                        />
+                        <span className="w-4 shrink-0 text-right font-mono text-[10px] text-slate-600">{group.number}</span>
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: routeColor(index) }} />
+                        <span className={`max-w-[128px] truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
+                        {cp.radius > 0 && <span className="shrink-0 font-mono text-[9px] text-slate-500">{Math.round(cp.radius)}m</span>}
+                        <button
+                          onClick={() => planner.cycleFlagTeam(cp.id, team)}
+                          className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/10 px-1 py-0.5 text-[9px] text-slate-400 hover:border-amber-400/40 hover:text-amber-300"
+                          title={`${cp.name}: ${teamName(layer, team)}. Loss ${layer.tickets?.loss ?? 30} tickets · base bleed ${bleed === null ? '—' : `${bleed}/min`}, only after your last flag is captured. Click to cycle neutral/faction.`}
+                        >
+                          {flag ? <img src={`./data/${flag}`} alt="" className="h-3 w-4 object-contain" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
+                          <span className="max-w-14 truncate">{faction?.short ?? 'NEU'}</span>
+                        </button>
+                      </div>
+                    )
+                  }),
+                )}
               </div>
             </div>
           )

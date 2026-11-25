@@ -4,6 +4,7 @@ import { iconImage, glyphFor } from '../icons'
 import { cpFlag } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
 import { displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from './coords'
+import { routeSegments } from './routes'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
   const r = mirrorNorm(p)
@@ -76,7 +77,7 @@ function drawArrowHead(ctx: CanvasRenderingContext2D, x: number, y: number, angl
   ctx.restore()
 }
 
-export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number, assets?: AssetManifest): void {
+export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number, assets?: AssetManifest, world?: number): void {
   const lw = Math.max(1, (el.width * size) / 1000)
   ctx.save()
   ctx.globalAlpha = el.opacity
@@ -112,6 +113,28 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       const angle = Math.atan2(y2 - y1, x2 - x1)
       if (el.arrow === 'end' || el.arrow === 'both') drawArrowHead(ctx, x2, y2, angle, lw * 5.5, el.color)
       if (el.arrow === 'both') drawArrowHead(ctx, x1, y1, angle + Math.PI, lw * 5.5, el.color)
+      break
+    }
+    case 'ruler': {
+      const [x1, y1] = normPoint(el.a, size)
+      const [x2, y2] = normPoint(el.b, size)
+      const dx = x2 - x1
+      const dy = y2 - y1
+      const len = Math.hypot(dx, dy) || 1
+      const nx = (-dy / len) * lw * 4
+      const ny = (dx / len) * lw * 4
+      ctx.beginPath()
+      ctx.moveTo(x1, y1)
+      ctx.lineTo(x2, y2)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(x1 - nx, y1 - ny)
+      ctx.lineTo(x1 + nx, y1 + ny)
+      ctx.moveTo(x2 - nx, y2 - ny)
+      ctx.lineTo(x2 + nx, y2 + ny)
+      ctx.stroke()
+      const meters = Math.round(Math.hypot(el.b.x - el.a.x, el.b.y - el.a.y) * (world ?? 0))
+      label(ctx, `${meters} m`, (x1 + x2) / 2, (y1 + y2) / 2 - lw * 6, Math.max(11, lw * 3), el.color)
       break
     }
     case 'rect': {
@@ -179,7 +202,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       const path = el.icon.startsWith('order_') ? assets?.orders[el.icon.slice(6)] : assets?.markers[el.icon]
       const img = path ? assetImage(path) : iconImage(glyphFor('marker', el.icon), el.color)
       ctx.translate(x, y)
-      ctx.rotate((displayRotation(el.rotation) * Math.PI) / 180)
+      ctx.rotate((el.rotation * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       break
     }
@@ -322,32 +345,23 @@ export async function renderStageCanvas(
   const routes = layer.routes ?? []
   const visibleRoutes = routes.filter((r) => opts.visibleRoutes.includes(r.id))
   const cpsById = new Map(layer.controlPoints.map((cp) => [cp.id, cp]))
-  const routeLane = (ids: number[]) => {
-    const pts: [number, number][] = []
-    for (const id of ids) {
-      const cp = cpsById.get(id)
-      if (!cp) continue
-      const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
-      pts.push([p.x * size, p.y * size])
-    }
-    return pts
-  }
-
   if (opts.showFlags) {
     for (const route of visibleRoutes) {
       const index = routes.findIndex((r) => r.id === route.id)
-      const pts = routeLane(route.cps)
-      if (pts.length < 2) continue
       ctx.save()
-      ctx.beginPath()
-      ctx.moveTo(pts[0][0], pts[0][1])
-      for (const [x, y] of pts.slice(1)) ctx.lineTo(x, y)
       ctx.strokeStyle = laneColor(index)
       ctx.globalAlpha = 0.45
       ctx.lineWidth = size * 0.002
       ctx.lineJoin = 'round'
       ctx.lineCap = 'round'
-      ctx.stroke()
+      for (const [from, to] of routeSegments(layer, route)) {
+        const a = worldToDisplayNorm(from.x, from.z, layer.world)
+        const b = worldToDisplayNorm(to.x, to.z, layer.world)
+        ctx.beginPath()
+        ctx.moveTo(a.x * size, a.y * size)
+        ctx.lineTo(b.x * size, b.y * size)
+        ctx.stroke()
+      }
       ctx.restore()
     }
     const visibleIds = [...new Set(visibleRoutes.flatMap((r) => r.cps))]
@@ -402,7 +416,7 @@ export async function renderStageCanvas(
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
       ctx.translate(x, y)
-      ctx.rotate((displayRotation(pos.rotation) * Math.PI) / 180)
+      ctx.rotate(((displayRotation(pos.rotation) + 90) * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const squadId = plan.claims[v.id]
@@ -428,7 +442,7 @@ export async function renderStageCanvas(
     }
   }
 
-  for (const el of stage.elements) drawElement(ctx, el, size, opts.assets)
+  for (const el of stage.elements) drawElement(ctx, el, size, opts.assets, layer.world)
 
   // footer
   const bar = size * 0.036

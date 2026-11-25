@@ -85,7 +85,7 @@ interface PlannerStore {
   reorderSquads: (fromId: string, toId: string) => void
   cycleConfirmation: (memberId: string) => void
   claimVehicle: (vehicleId: string, squadId: string | null) => void
-  setFlagTeam: (cpId: number, team: number) => void
+  cycleFlagTeam: (cpId: number, current: number) => void
   setRoster: (roster: Roster) => void
   resetAll: () => void
 }
@@ -224,7 +224,10 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
   clearVehicleMove: (vehicleId) =>
     get().mutate((plan) => {
       const stage = plan.stages.find((s) => s.id === plan.activeStageId)
-      if (stage) delete stage.moves[vehicleId]
+      if (stage) {
+        delete stage.moves[vehicleId]
+        if (stage.turns) delete stage.turns[vehicleId]
+      }
     }),
 
   addStage: () => {
@@ -376,9 +379,19 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       else delete plan.claims[vehicleId]
     }),
 
-  setFlagTeam: (cpId, team) =>
+  cycleFlagTeam: (cpId, current) =>
     get().mutate((plan) => {
-      plan.flagTeams = { ...(plan.flagTeams ?? {}), [String(cpId)]: team }
+      const key = String(cpId)
+      plan.flagNext = { ...(plan.flagNext ?? {}) }
+      plan.flagTeams = { ...(plan.flagTeams ?? {}) }
+      if (current === 1 || current === 2) {
+        plan.flagTeams[key] = 0
+        plan.flagNext[key] = current === 1 ? 2 : 1
+      } else {
+        const next = plan.flagNext[key] ?? 1
+        plan.flagTeams[key] = next
+        plan.flagNext[key] = next === 1 ? 2 : 1
+      }
     }),
 
   setRoster: (roster) => get().mutate((plan) => { plan.roster = roster }),
@@ -408,7 +421,8 @@ export const useUI = create<UIState & {
   setAffiliation: (a: UIState['unitAffiliation']) => void
   setSelected: (id: string | null, kind: UIState['selectedKind']) => void
   setRightTab: (tab: UIState['rightTab']) => void
-  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels') => void
+  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels' | 'showVehiclePaths') => void
+  toggleVehiclePath: (vehicleId: string) => void
   setExportOpen: (open: boolean) => void
   setHelpOpen: (open: boolean) => void
   setLayerPickerOpen: (open: boolean) => void
@@ -435,6 +449,8 @@ export const useUI = create<UIState & {
   showFlags: true,
   showAssets: true,
   showLabels: true,
+  showVehiclePaths: true,
+  hiddenVehiclePaths: [],
   exportOpen: false,
   helpOpen: false,
   layerPickerOpen: false,
@@ -466,6 +482,11 @@ export const useUI = create<UIState & {
   setSelected: (selectedId, selectedKind) => set({ selectedId, selectedKind }),
   setRightTab: (rightTab) => set({ rightTab }),
   toggle: (key) => set((s) => ({ [key]: !s[key] }) as Partial<UIState>),
+  toggleVehiclePath: (vehicleId) => set((s) => ({
+    hiddenVehiclePaths: s.hiddenVehiclePaths.includes(vehicleId)
+      ? s.hiddenVehiclePaths.filter((id) => id !== vehicleId)
+      : [...s.hiddenVehiclePaths, vehicleId],
+  })),
   setExportOpen: (exportOpen) => set({ exportOpen }),
   setHelpOpen: (helpOpen) => set({ helpOpen }),
   setLayerPickerOpen: (layerPickerOpen) => set({ layerPickerOpen }),

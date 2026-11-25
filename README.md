@@ -14,7 +14,7 @@ Static site. No accounts, no backend, no tracking. Plans live in the browser.
 - **AASv4 routes** — flags are ordered from each layer's SupplyGroupId (`ABC`: order, alternatives, route). Toggle any number of routes and individual flags, with route-coloured translucent lanes and real capture radii.
 - **Localised flags and ticket data** — English control-point names from `prmaps.utxt`, rectangular in-game capture-point flag sprites matching the neutral flag, ticket loss on capture and bleed rate from the layer's `init.con`. Hover a flag to inspect; click to cycle owner between faction 1, faction 2 and neutral. The same owner state appears in Routes.
 - **50-player target roster** — starts with five phonetically named squads (ALPHA–ECHO), fixed ordinal numbers and freeform names; up to ten squads. Drag grip handles to move players or reorder squads, reserve pool, soft 8-player warning (`!`). Each player cycles blank → green `✓` confirmed → amber `?` unconfirmed; blank counts as unconfirmed.
-- **Tactical drawing** — draw, line, arrow (one or both heads, solid or dashed), rectangle, ellipse, zone polygon with separate fill opacity, labels, in-game markers and commander-order glyphs, NATO unit symbols.
+- **Tactical drawing** — draw, line, arrow (one or both heads, solid or dashed), ruler with distance label, rectangle, ellipse, zone polygon with separate fill opacity, labels, in-game markers and commander-order glyphs, NATO unit symbols.
 - **Vehicle trails** — vehicles inherit their previous stage position; the current stage draws a vehicle-coloured trail from that point. Select the vehicle, then click its trail to add a turning point; drag the amber point to move it, right-click to remove it.
 - **Stage timeline** — each stage has a mission clock, commander intent and its own drawings plus vehicle moves. A new stage inherits the previous stage's drawings and vehicle positions. Play through the stages during a briefing.
 - **Exports** — 16:9 PPTX with title, roster table and one slide per stage; print-ready PDF; ZIP of stage PNGs at 2048 or 3072 px; roster-only PPTX/PDF. PPTX stage notes also go into speaker notes.
@@ -99,7 +99,7 @@ Repository weight: ~58 MB of map data plus normal source and dependencies (depen
 | --- | --- |
 | `V` | Select / move (drag empty map to pan) |
 | Middle drag | Pan with any tool |
-| `P` `L` `A` `D` | Draw, line, arrow, dashed line |
+| `P` `L` `A` `D` | Draw, line, arrow, ruler |
 | `R` `O` `G` | Rectangle, ellipse, zone polygon |
 | `T` `M` `U` | Text, marker, unit symbol |
 | `E` | Erase |

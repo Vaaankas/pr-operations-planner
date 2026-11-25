@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight, Pause, Play, Plus } from 'lucide-react'
 import type { Plan, Stage } from '../types'
-import { usePlanner } from '../store'
+import { usePlanner, useUI } from '../store'
 import { formatTime } from '../lib/utils'
 
 export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
@@ -62,9 +62,12 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
           return (
             <button
               key={s.id}
-              onClick={() => planner.setActiveStage(s.id)}
+              onClick={() => {
+                planner.setActiveStage(s.id)
+                useUI.getState().setRightTab('stage')
+              }}
               className={`relative z-10 flex h-[64px] w-[168px] shrink-0 flex-col justify-center rounded border px-2 text-left transition ${
-                active ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
+                active ? 'border-amber-400/70 bg-[#221b07]' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
               }`}
             >
               <div className="flex items-center gap-1.5">

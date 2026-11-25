@@ -29,7 +29,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
               <span>Drag empty map</span><span>Pan (Select tool)</span>
               <span>Middle mouse drag</span><span>Pan with any tool</span>
               <span>Click / drag</span><span>Draw lines, arrows and areas</span>
-              <span>V / P / L / A / D</span><span>Select, pen, line, arrow, dashed</span>
+              <span>V / P / L / A / D</span><span>Select, draw, line, arrow, ruler</span>
               <span>R / O / G / T / M / U</span><span>Rect, ellipse, zone, text, marker, unit</span>
               <span>Ctrl+Z / Ctrl+Y</span><span>Undo / redo</span>
               <span>Delete</span><span>Remove selection</span>

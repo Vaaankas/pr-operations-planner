@@ -2,17 +2,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import { Boxes, Flag, Shield, Tag, Truck } from 'lucide-react'
 import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
 import { affiliationColor, clamp, dataUrl, SQUAD_COLORS } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
-import { captureTeam, cycleTeam, teamName } from '../lib/flags'
+import { captureTeam, teamName } from '../lib/flags'
 import { displayNormToWorld, displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
+import { routeSegments } from '../lib/routes'
 
 interface Props {
   map: MapMeta
@@ -26,7 +26,7 @@ interface Draft {
   points: Point[]
 }
 
-type ShapeKind = 'line' | 'rect' | 'ellipse'
+type ShapeKind = 'line' | 'ruler' | 'rect' | 'ellipse'
 
 interface ShapeDraft {
   kind: ShapeKind
@@ -226,14 +226,16 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
   const commitShape = (kind: ShapeKind, a: Point, b: Point) => {
     const state = useUI.getState()
-    if (kind === 'line') {
+    if (kind === 'ruler') {
+      commit({ ...base(), type: 'ruler', a, b } as DrawElement)
+    } else if (kind === 'line') {
       commit({
         ...base(),
         type: 'line',
         a,
         b,
         arrow: state.tool === 'arrow' ? (state.arrowBoth ? 'both' : 'end') : 'none',
-        dash: state.tool === 'dashed' || state.dash,
+        dash: state.dash,
       } as DrawElement)
     } else {
       commit({
@@ -248,6 +250,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }
 
   const onStageDown = (e: KonvaEventObject<MouseEvent>) => {
+    if (e.evt.button === 2) return
     const st = stageRef.current
     if (!st) return
     if (e.evt.button === 1) {
@@ -309,8 +312,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       pointerDown.current = true
       return
     }
-    if (['line', 'arrow', 'dashed', 'rect', 'ellipse'].includes(tool)) {
-      const kind: ShapeKind = tool === 'rect' ? 'rect' : tool === 'ellipse' ? 'ellipse' : 'line'
+    if (['line', 'arrow', 'ruler', 'rect', 'ellipse'].includes(tool)) {
+      const kind: ShapeKind = tool === 'rect' ? 'rect' : tool === 'ellipse' ? 'ellipse' : tool === 'ruler' ? 'ruler' : 'line'
       const current = pendingRef.current
       if (current) {
         const a = current.points[0]
@@ -518,8 +521,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     if (!el || !selectedVehiclePos) return 0
     const rect = el.getBoundingClientRect()
     const p = worldToDisplayNorm(selectedVehiclePos.x, selectedVehiclePos.z, layer.world)
-    const cx = rect.left + p.x * mapW * view.scale + view.x
-    const cy = rect.top + p.y * mapH * view.scale + view.y
+    // The app shell is CSS-scaled; convert internal view coordinates to client pixels.
+    const k = rect.width / (el.clientWidth || rect.width)
+    const cx = rect.left + (p.x * mapW * view.scale + view.x) * k
+    const cy = rect.top + (p.y * mapH * view.scale + view.y) * k
     return (Math.atan2(clientY - cy, clientX - cx) * 180) / Math.PI + 90
   }, [selectedVehiclePos, layer.world, mapW, mapH, view])
 
@@ -569,8 +574,18 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     const common = {
       id: el.id,
       draggable: ui.tool === 'select',
-      listening: ui.tool === 'select' || ui.tool === 'erase',
+      listening: ui.tool === 'select' || ui.tool === 'erase' || (ui.tool === 'marker' && el.type === 'icon'),
       opacity: el.opacity,
+      onMouseDown: (e: KonvaEventObject<MouseEvent>) => {
+        if (ui.tool === 'marker' && el.type === 'icon') e.cancelBubble = true
+      },
+      onContextMenu: (e: KonvaEventObject<MouseEvent>) => {
+        if (ui.tool === 'marker' && el.type === 'icon') {
+          e.evt.preventDefault()
+          e.cancelBubble = true
+          planner.removeElement(el.id)
+        }
+      },
       onClick: (e: KonvaEventObject<MouseEvent>) => {
         if (ui.tool !== 'select' && ui.tool !== 'erase') return
         e.cancelBubble = true
@@ -584,15 +599,30 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       onDragStart: () => planner.checkpoint(),
       onDragEnd: (e: KonvaEventObject<DragEvent>) => {
         const node = e.target
-        const dx = node.x() / mapW
-        const dy = node.y() / mapH
+        let dx = node.x() / mapW
+        let dy = node.y() / mapH
+        if (el.type === 'text' || el.type === 'icon' || el.type === 'unit') {
+          const at = normToScreen(el.at)
+          dx = (node.x() - at.x) / mapW
+          dy = (node.y() - at.y) / mapH
+        } else if (el.type === 'rect') {
+          const a = normToScreen(el.a)
+          const b = normToScreen(el.b)
+          dx = (node.x() - Math.min(a.x, b.x)) / mapW
+          dy = (node.y() - Math.min(a.y, b.y)) / mapH
+        } else if (el.type === 'ellipse') {
+          const a = normToScreen(el.a)
+          const b = normToScreen(el.b)
+          dx = (node.x() - (a.x + b.x) / 2) / mapW
+          dy = (node.y() - (a.y + b.y) / 2) / mapH
+        }
         const worldDx = dx
         const worldDy = -dy
         const patch = (() => {
           if (el.type === 'text' || el.type === 'icon' || el.type === 'unit') {
             return { at: { x: el.at.x + worldDx, y: el.at.y + worldDy } }
           }
-          if (el.type === 'line' || el.type === 'rect' || el.type === 'ellipse') {
+          if (el.type === 'line' || el.type === 'ruler' || el.type === 'rect' || el.type === 'ellipse') {
             return {
               a: { x: el.a.x + worldDx, y: el.a.y + worldDy },
               b: { x: el.b.x + worldDx, y: el.b.y + worldDy },
@@ -641,6 +671,38 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
             hitStrokeWidth={16}
           />
+        )
+      }
+      case 'ruler': {
+        const a = normToScreen(el.a)
+        const b = normToScreen(el.b)
+        const dx = b.x - a.x
+        const dy = b.y - a.y
+        const len = Math.hypot(dx, dy) || 1
+        const nx = (-dy / len) * 7
+        const ny = (dx / len) * 7
+        const meters = Math.round(Math.hypot(el.b.x - el.a.x, el.b.y - el.a.y) * layer.world)
+        return (
+          <Group key={el.id} {...common}>
+            <Line points={[a.x, a.y, b.x, b.y]} stroke={color} strokeWidth={Math.max(1, sw * 0.8)} />
+            <Line points={[a.x - nx, a.y - ny, a.x + nx, a.y + ny]} stroke={color} strokeWidth={sw} />
+            <Line points={[b.x - nx, b.y - ny, b.x + nx, b.y + ny]} stroke={color} strokeWidth={sw} />
+            <Text
+              x={(a.x + b.x) / 2 - 50 * iconScale}
+              y={(a.y + b.y) / 2 - 18 * iconScale}
+              width={100 * iconScale}
+              align="center"
+              text={`${meters} m`}
+              fontSize={10 * iconScale}
+              fontFamily="Inter, Segoe UI, sans-serif"
+              fontStyle="bold"
+              fill={color}
+              stroke="rgba(2,6,4,0.92)"
+              strokeWidth={3 * iconScale}
+              fillAfterStrokeEnabled
+              listening={false}
+            />
+          </Group>
         )
       }
       case 'rect': {
@@ -722,10 +784,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             {...common}
             x={at.x}
             y={at.y}
-            rotation={displayRotation(el.rotation)}
+            rotation={el.rotation}
             onTransformEnd={(e) => {
               const node = e.target
-              const rotation = (180 - node.rotation() + 360) % 360
+              const rotation = node.rotation()
               node.rotation(0)
               node.scaleX(1)
               node.scaleY(1)
@@ -781,7 +843,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           pointerLength={ui.tool === 'arrow' ? 12 : 0}
           pointerWidth={ui.tool === 'arrow' ? 10 : 0}
           pointerAtBeginning={ui.tool === 'arrow' && ui.arrowBoth}
-          dash={ui.tool === 'dashed' ? [sw * 3, sw * 2] : undefined}
+          dash={ui.dash ? [sw * 3, sw * 2] : undefined}
           opacity={0.85}
         />
       )
@@ -830,10 +892,29 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           pointerLength={ui.tool === 'arrow' ? 12 : 0}
           pointerWidth={ui.tool === 'arrow' ? 10 : 0}
           pointerAtBeginning={ui.tool === 'arrow' && ui.arrowBoth}
-          dash={ui.tool === 'dashed' || ui.dash ? [sw * 3, sw * 2] : undefined}
+          dash={ui.dash ? [sw * 3, sw * 2] : undefined}
           opacity={0.85}
           listening={false}
         />
+      )
+    }
+    if (pending.kind === 'ruler') {
+      return (
+        <Group listening={false}>
+          <Line points={[a.x, a.y, b.x, b.y]} stroke={ui.color} strokeWidth={sw} opacity={0.85} />
+          <Text
+            x={(a.x + b.x) / 2 - 50 * iconScale}
+            y={(a.y + b.y) / 2 - 18 * iconScale}
+            width={100 * iconScale}
+            align="center"
+            text={`${Math.round(Math.hypot(b0.x - a0.x, b0.y - a0.y) * layer.world)} m`}
+            fontSize={10 * iconScale}
+            fontFamily="Inter, Segoe UI, sans-serif"
+            fontStyle="bold"
+            fill={ui.color}
+            listening={false}
+          />
+        </Group>
       )
     }
     if (pending.kind === 'rect') {
@@ -869,16 +950,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }
 
   const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
-  const routePoints = (ids: number[]) => {
-    const pts: number[] = []
-    for (const id of ids) {
-      const cp = layer.controlPoints.find((c) => c.id === id)
-      if (!cp) continue
-      const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
-      pts.push(p.x * mapW, p.y * mapH)
-    }
-    return pts
-  }
+
 
   const addVehicleTurn = (vehicleId: string, world: { x: number; z: number }) => {
     planner.checkpoint()
@@ -920,20 +992,24 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
 
         <Layer listening={ui.tool === 'select'}>
-          {ui.showFlags && visibleRoutes.map((r) => {
+          {ui.showFlags && visibleRoutes.flatMap((r) => {
             const index = routes.findIndex((x) => x.id === r.id)
-            return (
-              <Line
-                key={`lane-${r.id}`}
-                points={routePoints(r.cps)}
-                stroke={routeColor(index)}
-                strokeWidth={2.5 * iconScale}
-                opacity={0.45}
-                lineJoin="round"
-                lineCap="round"
-                listening={false}
-              />
-            )
+            return routeSegments(layer, r).map(([from, to], i) => {
+              const a = worldToDisplayNorm(from.x, from.z, layer.world)
+              const b = worldToDisplayNorm(to.x, to.z, layer.world)
+              return (
+                <Line
+                  key={`lane-${r.id}-${i}`}
+                  points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
+                  stroke={routeColor(index)}
+                  strokeWidth={2.5 * iconScale}
+                  opacity={0.45}
+                  lineJoin="round"
+                  lineCap="round"
+                  listening={false}
+                />
+              )
+            })
           })}
           {ui.showFlags && activeCps.map((cp) => {
             if (!cp || ui.hiddenCps.includes(cp.id)) return null
@@ -956,7 +1032,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 onClick={(e) => {
                   if (ui.tool !== 'select') return
                   e.cancelBubble = true
-                  planner.setFlagTeam(cp.id, cycleTeam(team))
+                  planner.cycleFlagTeam(cp.id, team)
                 }}
                 onMouseEnter={() => {
                   setHoverFlag({
@@ -1033,7 +1109,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
               : []
             return (
               <Group key={v.id}>
-                {route.length > 1 && (
+                {route.length > 1 && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && (
                   <Line
                     points={route.flatMap(([x, y]) => [x, y])}
                     stroke={color}
@@ -1057,7 +1133,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     }}
                   />
                 )}
-                {selected && turns.map((turn, i) => {
+                {selected && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && turns.map((turn, i) => {
                   const d = worldToDisplayNorm(turn.x, turn.z, layer.world)
                   return (
                     <Circle
@@ -1087,7 +1163,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   id={nodeId}
                   x={p.x * mapW}
                   y={p.y * mapH}
-                  rotation={displayRotation(pos.rotation)}
+                  rotation={(displayRotation(pos.rotation) + 90) % 360}
                   draggable={ui.tool === 'select'}
                   listening={ui.tool === 'select' || ui.tool === 'erase'}
                   opacity={v.atStart ? 1 : 0.78}
@@ -1110,7 +1186,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   }}
                   onTransformEnd={(e) => {
                     const node = e.target
-                    const rotation = (180 - node.rotation() + 360) % 360
+                    const rotation = (270 - node.rotation() + 360) % 360
                     node.rotation(0)
                     node.scaleX(1)
                     node.scaleY(1)
@@ -1248,14 +1324,6 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
-      <div className="absolute bottom-3 left-3 flex flex-col gap-1 rounded border border-white/10 bg-black/70 p-1">
-        <MapLayerToggle icon={<Truck className="h-3.5 w-3.5" />} active={ui.showVehicles} title="Vehicles" onClick={() => ui.toggle('showVehicles')} />
-        <MapLayerToggle icon={<Shield className="h-3.5 w-3.5" />} active={ui.showEnemy} title="Enemy assets" onClick={() => ui.toggle('showEnemy')} />
-        <MapLayerToggle icon={<Flag className="h-3.5 w-3.5" />} active={ui.showFlags} title="Flags and capture radii" onClick={() => ui.toggle('showFlags')} />
-        <MapLayerToggle icon={<Boxes className="h-3.5 w-3.5" />} active={ui.showAssets} title="Static assets and emplacements" onClick={() => ui.toggle('showAssets')} />
-        <MapLayerToggle icon={<Tag className="h-3.5 w-3.5" />} active={ui.showLabels} title="Map labels" onClick={() => ui.toggle('showLabels')} />
-      </div>
-
       {plan.roster.squads.length > 0 && (
         <div className="absolute bottom-14 right-3 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2 py-1.5">
           {plan.roster.squads.map((s, i) => (
@@ -1287,7 +1355,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             <div className="text-[12px] font-semibold text-slate-100">{hoverFlag.cp.name}</div>
             <div className="mt-1 font-mono uppercase tracking-wider text-slate-500">Owner · {teamName(layer, team)}</div>
             <div className="mt-1 text-slate-300">Ticket loss on capture: <span className="font-mono text-amber-300">{layer.tickets?.loss ?? 30}</span></div>
-            <div className="text-slate-300">Ticket bleed: <span className="font-mono text-amber-300">{bleed === null ? '—' : `${bleed}/min`}</span></div>
+            <div className="mt-1 text-slate-300">Bleed starts only after your last flag is captured.</div>
+            <div className="text-slate-300">Base bleed: <span className="font-mono text-amber-300">{bleed === null ? '—' : `${bleed}/min`}</span> <span className="text-slate-500">(scales with flag area value)</span></div>
             <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-600">Click to cycle faction / neutral</div>
           </div>
         )
@@ -1319,14 +1388,4 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   )
 }
 
-function MapLayerToggle({ icon, active, title, onClick }: { icon: React.ReactNode; active: boolean; title: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className={`flex h-7 w-7 items-center justify-center rounded ${active ? 'bg-white/10 text-slate-200' : 'text-slate-600 hover:text-slate-400'}`}
-    >
-      {icon}
-    </button>
-  )
-}
+

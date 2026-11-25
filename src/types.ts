@@ -144,6 +144,7 @@ export interface ElementBase {
 export type DrawElement =
   | (ElementBase & { type: 'pen'; points: Point[] })
   | (ElementBase & { type: 'line'; a: Point; b: Point; arrow: 'none' | 'end' | 'both' })
+  | (ElementBase & { type: 'ruler'; a: Point; b: Point })
   | (ElementBase & { type: 'rect'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'ellipse'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'polygon'; points: Point[]; fill: boolean })
@@ -217,11 +218,12 @@ export interface Plan {
   activeStageId: string
   claims: Record<string, string>
   flagTeams?: Record<string, number>
+  flagNext?: Record<string, number>
   notes: string
 }
 
 export type Tool =
-  | 'select' | 'pen' | 'line' | 'arrow' | 'dashed' | 'rect' | 'ellipse'
+  | 'select' | 'pen' | 'line' | 'arrow' | 'ruler' | 'rect' | 'ellipse'
   | 'polygon' | 'text' | 'marker' | 'unit' | 'erase'
 
 export interface UIState {
@@ -247,6 +249,8 @@ export interface UIState {
   showFlags: boolean
   showAssets: boolean
   showLabels: boolean
+  showVehiclePaths: boolean
+  hiddenVehiclePaths: string[]
   exportOpen: boolean
   helpOpen: boolean
   layerPickerOpen: boolean

@@ -14,7 +14,7 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'pen', icon: Pencil, label: 'Draw', key: 'P' },
   { tool: 'line', icon: Minus, label: 'Line', key: 'L' },
   { tool: 'arrow', icon: MoveUpRight, label: 'Arrow', key: 'A' },
-  { tool: 'dashed', icon: Ruler, label: 'Dashed line', key: 'D' },
+  { tool: 'ruler', icon: Ruler, label: 'Ruler', key: 'D' },
   { tool: 'rect', icon: Square, label: 'Rectangle', key: 'R' },
   { tool: 'ellipse', icon: Circle, label: 'Ellipse', key: 'O' },
   { tool: 'polygon', icon: Pentagon, label: 'Zone polygon', key: 'G' },
@@ -58,7 +58,7 @@ export function OptionsBar() {
   const ui = useUI()
   const assets = useAssets()
   const tool = ui.tool
-  const isDraw = ['pen', 'line', 'arrow', 'dashed', 'rect', 'ellipse', 'polygon', 'text'].includes(tool)
+  const isDraw = ['pen', 'line', 'arrow', 'ruler', 'rect', 'ellipse', 'polygon', 'text'].includes(tool)
   return (
     <div className="flex h-10 shrink-0 items-center gap-3 border-b border-white/10 bg-[#0a100c] px-3">
       <span className="w-24 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/90">
