@@ -200,7 +200,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     case 'squad': {
       const [x, y] = normPoint(el.at, size)
       const r = size * 0.006
-      const icon = assets?.squads[String(el.squadNumber)]
+      const icon = el.squadNumber === 0 ? assets?.commander : assets?.squads[String(el.squadNumber)]
       ctx.beginPath()
       ctx.arc(x, y, r * 0.82, 0, Math.PI * 2)
       ctx.fillStyle = '#07110a'
@@ -213,7 +213,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
         ctx.font = `700 ${r * 1.1}px "Inter", "Segoe UI", sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(String(el.squadNumber), x, y)
+        ctx.fillText(el.squadNumber === 0 ? '★' : String(el.squadNumber), x, y)
       }
       break
     }
@@ -333,6 +333,7 @@ export async function renderStageCanvas(
     jobs.push(preloadAsset(path))
     jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
   }
+  if (opts.assets.commander) jobs.push(preloadAsset(opts.assets.commander, '#facc15'))
   plan.roster.squads.forEach((squad, index) => {
     const icon = opts.assets.squads[String(index + 1)]
     if (icon) jobs.push(preloadAsset(icon, squad.color))

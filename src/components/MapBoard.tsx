@@ -144,6 +144,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       jobs.push(preloadAsset(path))
       jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
     }
+    if (assets.commander) jobs.push(preloadAsset(assets.commander, '#facc15'))
     plan.roster.squads.forEach((squad, index) => {
       const icon = assets.squads[String(index + 1)]
       if (icon) jobs.push(preloadAsset(icon, squad.color))
@@ -783,7 +784,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       case 'squad': {
         const at = normToScreen(el.at)
         const r = 12 * iconScale
-        const icon = assets.squads[String(el.squadNumber)]
+        const icon = el.squadNumber === 0 ? assets.commander : assets.squads[String(el.squadNumber)]
         return (
           <Group key={el.id} {...common} x={at.x} y={at.y}>
             <Circle radius={r * 0.82} fill="#07110a" stroke={selected ? '#fbbf24' : undefined} strokeWidth={2 * iconScale} />
@@ -1037,9 +1038,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         if (!squadId) return
         e.preventDefault()
         const st = stageRef.current
+        const commander = squadId === 'commander'
         const index = plan.roster.squads.findIndex((s) => s.id === squadId)
-        const squad = plan.roster.squads[index]
-        if (!st || !squad) return
+        const squad = commander ? null : plan.roster.squads[index]
+        if (!st || (!commander && !squad)) return
         st.setPointersPositions(e.nativeEvent)
         const pointer = st.getPointerPosition()
         if (!pointer) return
@@ -1052,8 +1054,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           type: 'squad',
           at: norm,
           squadId,
-          squadNumber: index + 1,
-          squadColor: squad.color,
+          squadNumber: commander ? 0 : index + 1,
+          squadColor: commander ? '#facc15' : squad!.color,
           size: 0.012,
         } as DrawElement
         planner.addElement(el)
@@ -1405,6 +1407,24 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
       {plan.roster.squads.length > 0 && (
         <div className="absolute bottom-16 right-3 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2.5 py-2">
+          <div
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/pr-squad', 'commander')
+              e.dataTransfer.effectAllowed = 'copy'
+            }}
+            className="flex cursor-grab items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-200 active:cursor-grabbing"
+            title="Drag onto the map to place a commander marker"
+          >
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#07110a]">
+              {assets.commander ? (
+                <GameIcon path={assets.commander} tint="#facc15" size={24} />
+              ) : (
+                <span className="text-[12px] text-amber-300">★</span>
+              )}
+            </span>
+            <span>CMD</span>
+          </div>
           {plan.roster.squads.map((s, i) => (
             <div
               key={s.id}
