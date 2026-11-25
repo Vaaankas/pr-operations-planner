@@ -89,6 +89,8 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
         </div>
       </div>
 
+      <div className="hidden h-7 w-px bg-white/10 lg:block" />
+
       <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
         {side && cpFlag(assets, side.key) ? (
           <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-4 object-contain" />
@@ -100,16 +102,16 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
 
       <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
         <button
-          onClick={() => ui.setView('roster')}
-          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Roster
-        </button>
-        <button
           onClick={() => ui.setView('plan')}
           className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
         >
           Battle Plan
+        </button>
+        <button
+          onClick={() => ui.setView('roster')}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Roster
         </button>
       </div>
 

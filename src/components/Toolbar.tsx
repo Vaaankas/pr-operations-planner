@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import {
   MousePointer2, Pencil, Minus, MoveUpRight, Square, Circle, Pentagon,
-  Type, MapPin, Shield, Eraser, Ruler,
+  Type, MapPin, Shield, Eraser, Ruler, Boxes, Flag, Route as RouteIcon, Tag, Truck,
 } from 'lucide-react'
 import { useUI } from '../store'
 import type { Tool } from '../types'
@@ -50,7 +50,27 @@ export function ToolbarRail() {
           {ui.tool === tool && <span className="absolute -right-0.5 -top-0.5 rounded bg-black px-0.5 font-mono text-[8px] text-amber-300">{key}</span>}
         </button>
       ))}
+      <div className="mt-auto flex flex-col gap-0.5 border-t border-white/10 pt-1.5">
+        <VisibilityButton icon={<Truck className="h-3.5 w-3.5" />} active={ui.showVehicles} title="Vehicles" onClick={() => ui.toggle('showVehicles')} />
+        <VisibilityButton icon={<Shield className="h-3.5 w-3.5" />} active={ui.showEnemy} title="Enemy assets" onClick={() => ui.toggle('showEnemy')} />
+        <VisibilityButton icon={<Flag className="h-3.5 w-3.5" />} active={ui.showFlags} title="Flags and capture radii" onClick={() => ui.toggle('showFlags')} />
+        <VisibilityButton icon={<Boxes className="h-3.5 w-3.5" />} active={ui.showAssets} title="Static assets and emplacements" onClick={() => ui.toggle('showAssets')} />
+        <VisibilityButton icon={<Tag className="h-3.5 w-3.5" />} active={ui.showLabels} title="Map labels" onClick={() => ui.toggle('showLabels')} />
+        <VisibilityButton icon={<RouteIcon className="h-3.5 w-3.5" />} active={ui.showVehiclePaths} title="Vehicle paths" onClick={() => ui.toggle('showVehiclePaths')} />
+      </div>
     </div>
+  )
+}
+
+function VisibilityButton({ icon, active, title, onClick }: { icon: React.ReactNode; active: boolean; title: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className={`flex h-7 w-7 items-center justify-center rounded ${active ? 'bg-white/10 text-slate-200' : 'text-slate-600 hover:text-slate-400'}`}
+    >
+      {icon}
+    </button>
   )
 }
 

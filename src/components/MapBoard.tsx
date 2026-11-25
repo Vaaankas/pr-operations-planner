@@ -8,7 +8,7 @@ import { affiliationColor, clamp, dataUrl, SQUAD_COLORS } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
-import { captureTeam, teamName } from '../lib/flags'
+import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { displayNormToWorld, displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
@@ -601,7 +601,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         const node = e.target
         let dx = node.x() / mapW
         let dy = node.y() / mapH
-        if (el.type === 'text' || el.type === 'icon' || el.type === 'unit') {
+        if (el.type === 'text' || el.type === 'icon' || el.type === 'unit' || el.type === 'squad') {
           const at = normToScreen(el.at)
           dx = (node.x() - at.x) / mapW
           dy = (node.y() - at.y) / mapH
@@ -619,7 +619,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         const worldDx = dx
         const worldDy = -dy
         const patch = (() => {
-          if (el.type === 'text' || el.type === 'icon' || el.type === 'unit') {
+          if (el.type === 'text' || el.type === 'icon' || el.type === 'unit' || el.type === 'squad') {
             return { at: { x: el.at.x + worldDx, y: el.at.y + worldDy } }
           }
           if (el.type === 'line' || el.type === 'ruler' || el.type === 'rect' || el.type === 'ellipse') {
@@ -774,6 +774,27 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             offsetY={(el.fontSize * mapW) / 2}
             perfectDrawEnabled={false}
           />
+        )
+      }
+      case 'squad': {
+        const at = normToScreen(el.at)
+        const r = (el.size * mapW) / 2
+        return (
+          <Group key={el.id} {...common} x={at.x} y={at.y}>
+            <Circle radius={r} fill={el.squadColor} stroke={selected ? '#fbbf24' : '#07110a'} strokeWidth={2 * iconScale} />
+            <Text
+              text={String(el.squadNumber)}
+              x={-r}
+              y={-r * 0.66}
+              width={r * 2}
+              align="center"
+              fontSize={r * 1.25}
+              fontFamily="Inter, Segoe UI, sans-serif"
+              fontStyle="bold"
+              fill="#07110a"
+              listening={false}
+            />
+          </Group>
         )
       }
       case 'icon': {
@@ -965,7 +986,39 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }
 
   return (
-    <div ref={wrapRef} className="relative h-full w-full overflow-hidden bg-[#080c0a]" style={{ cursor: stageCursor }}>
+    <div
+      ref={wrapRef}
+      className="relative h-full w-full overflow-hidden bg-[#080c0a]"
+      style={{ cursor: stageCursor }}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('text/pr-squad')) {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+        }
+      }}
+      onDrop={(e) => {
+        const squadId = e.dataTransfer.getData('text/pr-squad')
+        if (!squadId) return
+        e.preventDefault()
+        const st = stageRef.current
+        const index = plan.roster.squads.findIndex((s) => s.id === squadId)
+        const squad = plan.roster.squads[index]
+        if (!st || !squad) return
+        const rect = st.container().getBoundingClientRect()
+        const x = ((e.clientX - rect.left) / rect.width) * st.width()
+        const y = ((e.clientY - rect.top) / rect.height) * st.height()
+        const norm = toNorm({ x: (x - view.x) / view.scale, y: (y - view.y) / view.scale })
+        planner.addElement({
+          ...base(),
+          type: 'squad',
+          at: norm,
+          squadId,
+          squadNumber: index + 1,
+          squadColor: squad.color,
+          size: 0.032,
+        } as DrawElement)
+      }}
+    >
       <Stage
         ref={stageRef}
         width={box.w}
@@ -1030,7 +1083,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 x={p.x * mapW}
                 y={p.y * mapH}
                 onClick={(e) => {
-                  if (ui.tool !== 'select') return
+                  if (ui.tool !== 'select' || !isCapturable(cp)) return
                   e.cancelBubble = true
                   planner.cycleFlagTeam(cp.id, team)
                 }}
@@ -1212,19 +1265,26 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   })()}
                 </Group>
                 {plan.claims[v.id] && (() => {
-                  const sq = plan.roster.squads.find((q) => q.id === plan.claims[v.id])
+                  const index = plan.roster.squads.findIndex((q) => q.id === plan.claims[v.id])
+                  const sq = plan.roster.squads[index]
                   if (!sq) return null
+                  const angle = ((displayRotation(pos.rotation) + 90) * Math.PI) / 180
+                  const bx = p.x * mapW - Math.sin(angle) * s * 0.42
+                  const by = p.y * mapH + Math.cos(angle) * s * 0.42
+                  const r = 7 * iconScale
                   return (
-                    <Group x={p.x * mapW} y={p.y * mapH} listening={false}>
-                      <Rect x={s * 0.26} y={-s * 0.44} width={14 * iconScale} height={10 * iconScale} cornerRadius={1.5 * iconScale} fill={sq.color} stroke="#0b110d" strokeWidth={1.5 * iconScale} />
+                    <Group x={bx} y={by} listening={false}>
+                      <Circle radius={r} fill={sq.color} stroke="#07110a" strokeWidth={1.5 * iconScale} />
                       <Text
-                        text={sq.name}
-                        fontSize={7 * iconScale}
+                        text={String(index + 1)}
+                        width={r * 2}
+                        x={-r}
+                        y={-r * 0.62}
+                        align="center"
+                        fontSize={8.5 * iconScale}
                         fontFamily="Inter, Segoe UI, sans-serif"
                         fontStyle="bold"
                         fill="#07110a"
-                        x={s * 0.26 + 2 * iconScale}
-                        y={-s * 0.44 + 2 * iconScale}
                       />
                     </Group>
                   )
@@ -1325,11 +1385,24 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       })()}
 
       {plan.roster.squads.length > 0 && (
-        <div className="absolute bottom-14 right-3 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2 py-1.5">
+        <div className="absolute bottom-16 right-3 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2.5 py-2">
           {plan.roster.squads.map((s, i) => (
-            <div key={s.id} className="flex items-center gap-1.5 whitespace-nowrap text-[9px] text-slate-300">
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color }} />
-              <span className="font-mono text-[9px] text-slate-500">{i + 1}</span>
+            <div
+              key={s.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/pr-squad', s.id)
+                e.dataTransfer.effectAllowed = 'copy'
+              }}
+              className="flex cursor-grab items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-200 active:cursor-grabbing"
+              title="Drag onto the map to place a squad badge"
+            >
+              <span
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-black/70 font-mono text-[10px] font-bold text-black"
+                style={{ background: s.color }}
+              >
+                {i + 1}
+              </span>
               <span className="max-w-36 truncate">{s.name || `SQUAD ${i + 1}`}</span>
             </div>
           ))}
@@ -1346,7 +1419,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
       {hoverFlag && (() => {
         const team = captureTeam(plan, hoverFlag.cp)
-        const bleed = team === 1 ? (layer.tickets?.bleed1 ?? 10) : team === 2 ? (layer.tickets?.bleed2 ?? 10) : null
+        const capturable = isCapturable(hoverFlag.cp)
         return (
           <div
             className="pointer-events-none absolute z-30 w-52 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
@@ -1354,10 +1427,14 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           >
             <div className="text-[12px] font-semibold text-slate-100">{hoverFlag.cp.name}</div>
             <div className="mt-1 font-mono uppercase tracking-wider text-slate-500">Owner · {teamName(layer, team)}</div>
-            <div className="mt-1 text-slate-300">Ticket loss on capture: <span className="font-mono text-amber-300">{layer.tickets?.loss ?? 30}</span></div>
-            <div className="mt-1 text-slate-300">Bleed starts only after your last flag is captured.</div>
-            <div className="text-slate-300">Base bleed: <span className="font-mono text-amber-300">{bleed === null ? '—' : `${bleed}/min`}</span> <span className="text-slate-500">(scales with flag area value)</span></div>
-            <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-600">Click to cycle faction / neutral</div>
+            {capturable ? (
+              <>
+                <div className="mt-1 text-slate-300">Ticket loss on capture: <span className="font-mono text-amber-300">{layer.tickets?.loss ?? 30}</span></div>
+                <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-600">Click to cycle neutral / faction</div>
+              </>
+            ) : (
+              <div className="mt-1 text-slate-400">Deployment flag · cannot be captured or switched.</div>
+            )}
           </div>
         )
       })()}

@@ -1,6 +1,11 @@
 import type { ControlPoint, LayerData, Plan } from '../types'
 
+export function isCapturable(cp: ControlPoint): boolean {
+  return cp.order < 900
+}
+
 export function captureTeam(plan: Plan, cp: ControlPoint): number {
+  if (!isCapturable(cp)) return cp.team
   return plan.flagTeams?.[String(cp.id)] ?? cp.team
 }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Boxes, Crosshair, Flag, Loader2, Map as MapIcon, AlertTriangle, Route as RouteIcon, Shield, Tag, Truck } from 'lucide-react'
+import { Boxes, Crosshair, Loader2, Map as MapIcon, AlertTriangle, Route as RouteIcon } from 'lucide-react'
 import type { AssetManifest, LayerData, LayerRef, MapIndex, MapMeta, Team } from './types'
 import { makePlan, loadStoredPlan, storePlan, usePlanner, useUI } from './store'
 import { dataUrl } from './lib/utils'
@@ -271,14 +271,6 @@ function AppInner() {
               {ui.rightTab === 'stage' && <StagePanel layer={layer} plan={plan} stage={stage} />}
               {ui.rightTab === 'routes' && <RoutesPanel layer={layer} plan={plan} />}
             </div>
-            <div className="flex shrink-0 items-center justify-center gap-1 border-t border-white/10 bg-[#0a100c] px-2 py-1">
-              <LayerButton icon={<Truck className="h-3.5 w-3.5" />} active={ui.showVehicles} title="Vehicles" onClick={() => ui.toggle('showVehicles')} />
-              <LayerButton icon={<Shield className="h-3.5 w-3.5" />} active={ui.showEnemy} title="Enemy assets" onClick={() => ui.toggle('showEnemy')} />
-              <LayerButton icon={<Flag className="h-3.5 w-3.5" />} active={ui.showFlags} title="Flags and capture radii" onClick={() => ui.toggle('showFlags')} />
-              <LayerButton icon={<Boxes className="h-3.5 w-3.5" />} active={ui.showAssets} title="Static assets and emplacements" onClick={() => ui.toggle('showAssets')} />
-              <LayerButton icon={<Tag className="h-3.5 w-3.5" />} active={ui.showLabels} title="Map labels" onClick={() => ui.toggle('showLabels')} />
-              <LayerButton icon={<RouteIcon className="h-3.5 w-3.5" />} active={ui.showVehiclePaths} title="Vehicle paths" onClick={() => ui.toggle('showVehiclePaths')} />
-            </div>
           </aside>
         </div>
       )}
@@ -299,14 +291,4 @@ function AppInner() {
   )
 }
 
-function LayerButton({ icon, active, title, onClick }: { icon: React.ReactNode; active: boolean; title: string; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      className={`flex h-7 w-7 items-center justify-center rounded ${active ? 'bg-white/10 text-slate-200' : 'text-slate-600 hover:text-slate-400'}`}
-    >
-      {icon}
-    </button>
-  )
-}
+

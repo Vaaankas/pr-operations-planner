@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Crosshair, Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
-import { formatTime } from '../lib/utils'
+import { dataUrl, formatTime } from '../lib/utils'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
@@ -91,7 +91,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
           return (
           <div key={`${team ?? 'neutral'}-${groupIndex}`} className="mb-3">
             <div className="mb-1 flex items-center gap-1.5 border-b border-white/10 px-1 pb-1">
-              {flag ? <img src={`./data/${flag}`} alt="" className="h-3 w-4 object-contain" /> : <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />}
+              {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-contain" /> : <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />}
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>{label}</span>
               {faction && <span className="text-[10px] text-slate-500">{faction.name}</span>}
               <span className="ml-auto font-mono text-[10px] text-slate-600">{list.length}</span>

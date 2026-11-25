@@ -149,6 +149,14 @@ export type DrawElement =
   | (ElementBase & { type: 'ellipse'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'polygon'; points: Point[]; fill: boolean })
   | (ElementBase & { type: 'text'; at: Point; text: string; fontSize: number })
+  | (ElementBase & {
+      type: 'squad'
+      at: Point
+      squadId: string
+      squadNumber: number
+      squadColor: string
+      size: number
+    })
   | (ElementBase & { type: 'icon'; at: Point; icon: string; rotation: number; size: number })
   | (ElementBase & {
       type: 'unit'

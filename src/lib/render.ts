@@ -196,6 +196,23 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       ctx.fillText(el.text, x, y)
       break
     }
+    case 'squad': {
+      const [x, y] = normPoint(el.at, size)
+      const r = (el.size * size) / 2
+      ctx.beginPath()
+      ctx.arc(x, y, r, 0, Math.PI * 2)
+      ctx.fillStyle = el.squadColor
+      ctx.fill()
+      ctx.strokeStyle = '#07110a'
+      ctx.lineWidth = Math.max(1, size * 0.0012)
+      ctx.stroke()
+      ctx.fillStyle = '#07110a'
+      ctx.font = `700 ${r * 1.25}px "Inter", "Segoe UI", sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(String(el.squadNumber), x, y)
+      break
+    }
     case 'icon': {
       const [x, y] = normPoint(el.at, size)
       const s = Math.max(10, el.size * size)
@@ -420,23 +437,26 @@ export async function renderStageCanvas(
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const squadId = plan.claims[v.id]
-      const squad = plan.roster.squads.find((sq) => sq.id === squadId)
+      const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
+      const squad = plan.roster.squads[squadIndex]
       if (squad) {
+        const angle = ((displayRotation(pos.rotation) + 90) * Math.PI) / 180
+        const bx = x - Math.sin(angle) * s * 0.42
+        const by = y + Math.cos(angle) * s * 0.42
+        const r = size * 0.0055
         ctx.save()
-        const bx = x + s * 0.26
-        const by = y - s * 0.44
-        const bw = size * 0.016
-        const bh = size * 0.011
+        ctx.beginPath()
+        ctx.arc(bx, by, r, 0, Math.PI * 2)
         ctx.fillStyle = squad.color
-        ctx.fillRect(bx, by, bw, bh)
-        ctx.strokeStyle = '#08110c'
-        ctx.lineWidth = size * 0.0014
-        ctx.strokeRect(bx, by, bw, bh)
+        ctx.fill()
+        ctx.strokeStyle = '#07110a'
+        ctx.lineWidth = size * 0.0015
+        ctx.stroke()
         ctx.fillStyle = '#07110a'
-        ctx.font = `700 ${size * 0.008}px "Inter", "Segoe UI", sans-serif`
-        ctx.textAlign = 'left'
+        ctx.font = `700 ${size * 0.009}px "Inter", "Segoe UI", sans-serif`
+        ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(squad.name, bx + size * 0.002, by + bh / 2)
+        ctx.fillText(String(squadIndex + 1), bx, by)
         ctx.restore()
       }
     }
