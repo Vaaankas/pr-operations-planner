@@ -1436,7 +1436,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
               {assets.commander ? (
                 <span className="relative flex h-[20px] w-[20px] items-center justify-center">
                   <GameIcon path={assets.commander} tint="#07110a" size={19} className="absolute" />
-                  <GameIcon path={assets.commander} tint="#facc15" size={16} />
+                  <GameIcon path={assets.commander} tint="#facc15" size={16} className="relative z-10" />
                 </span>
               ) : (
                 <span className="text-[13px] font-bold text-[#facc15]">★</span>
