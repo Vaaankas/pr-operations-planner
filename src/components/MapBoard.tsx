@@ -804,7 +804,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
               />
             )}
             {selected && (
-              <Circle radius={r + 2 * iconScale} stroke="#fbbf24" strokeWidth={3 * iconScale} listening={false} />
+              <Circle radius={r} stroke="#fbbf24" strokeWidth={3 * iconScale} listening={false} />
             )}
           </Group>
         )
