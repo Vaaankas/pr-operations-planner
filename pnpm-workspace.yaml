@@ -1,0 +1,6 @@
+minimumReleaseAgeExclude:
+  - lucide-react@1.80.0
+allowBuilds:
+  core-js: true
+  esbuild: true
+nodeLinker: hoisted

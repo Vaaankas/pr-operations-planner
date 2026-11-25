@@ -1,0 +1,251 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Boxes, ClipboardList, Crosshair, Loader2, Map as MapIcon, AlertTriangle } from 'lucide-react'
+import type { LayerData, LayerRef, MapIndex, MapMeta, Team } from './types'
+import { makePlan, loadStoredPlan, storePlan, usePlanner, useUI } from './store'
+import { dataUrl } from './lib/utils'
+import { Picker } from './components/Picker'
+import { Header } from './components/Header'
+import { ToolbarRail, OptionsBar, useToolHotkeys } from './components/Toolbar'
+import { MapBoard } from './components/MapBoard'
+import { RosterPanel } from './components/RosterPanel'
+import { AssetsPanel } from './components/AssetsPanel'
+import { StagePanel } from './components/StagePanel'
+import { Timeline } from './components/Timeline'
+import { ExportDialog } from './components/ExportDialog'
+import { HelpDialog } from './components/HelpDialog'
+
+export function App() {
+  const [index, setIndex] = useState<MapIndex | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [layer, setLayer] = useState<LayerData | null>(null)
+  const [layerLoading, setLayerLoading] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const plan = usePlanner((s) => s.plan)
+  const ui = useUI()
+  const cache = useRef(new Map<string, LayerData>())
+  const booted = useRef(false)
+
+  useToolHotkeys()
+
+  useEffect(() => {
+    if (booted.current) return
+    booted.current = true
+    const stored = loadStoredPlan()
+    if (stored) usePlanner.getState().setPlan(stored)
+  }, [])
+
+  useEffect(() => {
+    fetch(dataUrl('index.json'))
+      .then((r) => {
+        if (!r.ok) throw new Error(`index.json ${r.status}`)
+        return r.json()
+      })
+      .then(setIndex)
+      .catch((err) => setLoadError(`Map data could not be loaded. ${err instanceof Error ? err.message : ''}`))
+  }, [])
+
+  const map = index && plan ? index.maps.find((m) => m.id === plan.mapId) ?? null : null
+
+  useEffect(() => {
+    if (!index || !plan) return
+    const entry = index.maps.find((m) => m.id === plan.mapId)
+    if (!entry) {
+      setLoadError(`Map "${plan.mapId}" is not in this build.`)
+      return
+    }
+    const ref = entry.layers.find((l) => l.id === plan.layerId)
+    if (!ref?.file) {
+      setLoadError(`Layer "${plan.layerId}" is not in this build.`)
+      return
+    }
+    if (cache.current.has(plan.layerId)) {
+      setLayer(cache.current.get(plan.layerId)!)
+      return
+    }
+    setLayerLoading(true)
+    fetch(dataUrl(`layers/${ref.file}`))
+      .then((r) => {
+        if (!r.ok) throw new Error(`layer ${r.status}`)
+        return r.json()
+      })
+      .then((data: LayerData) => {
+        cache.current.set(data.id, data)
+        setLayer(data)
+        setLayerLoading(false)
+      })
+      .catch((err) => {
+        setLayerLoading(false)
+        setLoadError(`Layer data could not be loaded. ${err instanceof Error ? err.message : ''}`)
+      })
+  }, [index, plan?.mapId, plan?.layerId])
+
+  useEffect(() => {
+    if (!plan) return
+    const timer = setTimeout(() => storePlan(plan), 350)
+    return () => clearTimeout(timer)
+  }, [plan])
+
+  useEffect(() => {
+    if (!plan) return
+    if (!plan.stages.some((s) => s.id === plan.activeStageId) && plan.stages[0]) {
+      usePlanner.getState().setActiveStage(plan.stages[0].id)
+    }
+  }, [plan])
+
+  const startPlan = useCallback(async (nextMap: MapMeta, ref: LayerRef, side: Team) => {
+    if (plan) {
+      const ok = window.confirm(`Start a new operation on ${nextMap.name}? The current plan "${plan.operation}" will be replaced.`)
+      if (!ok) return
+    }
+    if (!ref.file) return
+    try {
+      let data = cache.current.get(ref.id)
+      if (!data) {
+        const res = await fetch(dataUrl(`layers/${ref.file}`))
+        if (!res.ok) throw new Error(`layer ${res.status}`)
+        data = (await res.json()) as LayerData
+        cache.current.set(data.id, data)
+      }
+      const next = makePlan(nextMap, data, side)
+      setLayer(data)
+      usePlanner.getState().setPlan(next)
+      setPickerOpen(false)
+      setLoadError(null)
+    } catch (err) {
+      setLoadError(`Could not open ${nextMap.name}. ${err instanceof Error ? err.message : ''}`)
+    }
+  }, [plan])
+
+  const reset = () => {
+    if (!window.confirm('Discard the current operation? This removes it from this browser.')) return
+    usePlanner.getState().resetAll()
+    setLayer(null)
+    setPickerOpen(false)
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex h-dvh items-center justify-center bg-[#070b08] p-6">
+        <div className="max-w-lg rounded-lg border border-rose-500/30 bg-rose-500/5 p-6">
+          <div className="flex items-center gap-2 text-rose-300">
+            <AlertTriangle className="h-5 w-5" />
+            <span className="font-mono text-xs font-bold uppercase tracking-widest">Load failure</span>
+          </div>
+          <p className="mt-3 text-sm text-slate-300">{loadError}</p>
+          <div className="mt-5 flex gap-2">
+            <button onClick={() => window.location.reload()} className="rounded bg-amber-400 px-3 py-1.5 text-xs font-bold text-black">Reload</button>
+            <button
+              onClick={() => {
+                usePlanner.getState().setPlan(null)
+                setLoadError(null)
+              }}
+              className="rounded border border-white/15 px-3 py-1.5 text-xs text-slate-300"
+            >
+              Dismiss plan
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!index) {
+    return (
+      <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-[#070b08]">
+        <Crosshair className="h-8 w-8 animate-pulse text-amber-400" />
+        <div className="font-mono text-[11px] uppercase tracking-[0.3em] text-slate-500">Loading theatre data</div>
+        <div className="h-0.5 w-40 overflow-hidden rounded bg-white/10">
+          <div className="scanline h-full w-1/2 bg-amber-400" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!plan) {
+    return <Picker index={index} onStart={startPlan} />
+  }
+
+  if (!map) {
+    return (
+      <div className="flex h-dvh items-center justify-center p-6">
+        <div className="text-sm text-slate-400">Map data missing. <button className="text-amber-400 underline" onClick={reset}>Discard plan</button></div>
+      </div>
+    )
+  }
+
+  if (layerLoading || !layer) {
+    return (
+      <div className="flex h-dvh flex-col items-center justify-center gap-3 bg-[#070b08]">
+        <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
+        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-slate-500">Loading {map.name} layer</div>
+      </div>
+    )
+  }
+
+  const stage = plan.stages.find((s) => s.id === plan.activeStageId) ?? plan.stages[0]
+
+  return (
+    <div className="flex h-dvh min-w-[960px] flex-col bg-[#070b08]">
+      <Header
+        plan={plan}
+        map={map}
+        layer={layer}
+        onOpenPicker={() => setPickerOpen(true)}
+        onExport={() => ui.setExportOpen(true)}
+        onHelp={() => setHelpOpen(true)}
+        onReset={reset}
+      />
+
+      <div className="flex min-h-0 flex-1">
+        <ToolbarRail />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <OptionsBar />
+          <div className="min-h-0 flex-1">
+            <MapBoard key={`${map.id}:${layer.id}`} map={map} layer={layer} plan={plan} stage={stage} />
+          </div>
+          <Timeline plan={plan} stage={stage} />
+        </div>
+
+        <aside className="flex w-[352px] shrink-0 flex-col border-l border-white/10 bg-[#080d0a]">
+          <div className="flex h-10 shrink-0 items-center border-b border-white/10">
+            {([
+              { id: 'roster' as const, label: 'Roster', icon: ClipboardList },
+              { id: 'assets' as const, label: 'Assets', icon: Boxes },
+              { id: 'stage' as const, label: 'Stage', icon: MapIcon },
+            ]).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => ui.setRightTab(id)}
+                className={`flex h-full flex-1 items-center justify-center gap-1.5 border-b-2 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                  ui.rightTab === id ? 'border-amber-400 text-amber-300' : 'border-transparent text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" /> {label}
+              </button>
+            ))}
+          </div>
+          <div className="min-h-0 flex-1">
+            {ui.rightTab === 'roster' && <RosterPanel />}
+            {ui.rightTab === 'assets' && <AssetsPanel layer={layer} plan={plan} stage={stage} />}
+            {ui.rightTab === 'stage' && <StagePanel layer={layer} plan={plan} stage={stage} />}
+          </div>
+        </aside>
+      </div>
+
+      {pickerOpen && (
+        <Picker
+          index={index}
+          currentMapId={plan.mapId}
+          currentLayerId={plan.layerId}
+          onStart={startPlan}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+
+      {ui.exportOpen && <ExportDialog plan={plan} map={map} layer={layer} />}
+      {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
+    </div>
+  )
+}

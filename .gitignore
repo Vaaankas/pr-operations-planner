@@ -1,0 +1,11 @@
+node_modules/
+dist/
+_recon/
+_tmp/
+.pnpm-store/
+.pnpm/
+*.log
+__pycache__/
+*.pyc
+tools/*.mjs
+tools/.shot*

@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --board-bg: #070b08;
+  --panel-bg: #080d0a;
+  --line: rgba(255, 255, 255, 0.08);
+  --amber: #fbbf24;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--board-bg);
+  color: #e2e8f0;
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #27352c transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #27352c;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::selection {
+  background: rgba(251, 191, 36, 0.35);
+  color: #fff;
+}
+
+input[type="range"] {
+  appearance: none;
+  background: #243028;
+  border-radius: 999px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--amber);
+  cursor: pointer;
+}
+
+select option {
+  background: #0d1410;
+  color: #e2e8f0;
+}
+
+@keyframes pulse-line {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.scanline {
+  animation: pulse-line 2.4s ease-in-out infinite;
+}
