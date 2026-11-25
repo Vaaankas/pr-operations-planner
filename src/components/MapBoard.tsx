@@ -102,8 +102,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         colors.map((c) => {
           const img = iconImage(n, c)
           return img.complete ? Promise.resolve() : new Promise<void>((res) => {
-            img.onload = () => res()
-            img.onerror = () => res()
+            img.addEventListener('load', () => res(), { once: true })
+            img.addEventListener('error', () => res(), { once: true })
           })
         }),
       ),

@@ -235,13 +235,14 @@ export async function renderStageCanvas(
     if (el.type === 'icon') glyphs.push({ name: glyphFor('marker', el.icon), color: el.color })
     if (el.type === 'unit') glyphs.push({ name: glyphFor('marker', el.unit), color: affiliationColor(el.affiliation) })
   }
+  const uniqueGlyphs = [...new Map(glyphs.map((g) => [`${g.name}|${g.color}`, g])).values()]
   await Promise.all(
-    glyphs.map(({ name, color }) => {
+    uniqueGlyphs.map(({ name, color }) => {
       const img = iconImage(name, color)
       if (img.complete) return Promise.resolve()
       return new Promise<void>((resolve) => {
-        img.onload = () => resolve()
-        img.onerror = () => resolve()
+        img.addEventListener('load', () => resolve(), { once: true })
+        img.addEventListener('error', () => resolve(), { once: true })
       })
     }),
   )
