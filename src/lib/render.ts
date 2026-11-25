@@ -447,7 +447,7 @@ export async function renderStageCanvas(
       const squadId = plan.claims[v.id]
       const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
       if (squadId === 'commander') {
-        label(ctx, `★ CMD ${v.label}`, x, y + s * 0.62, size * 0.009, color)
+        label(ctx, `[★] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
       } else if (squadIndex >= 0) {
         label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
       }

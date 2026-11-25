@@ -1195,7 +1195,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const selected = ui.selectedId === nodeId
             const commanderClaim = plan.claims[v.id] === 'commander'
             const claimIndex = plan.roster.squads.findIndex((q) => q.id === plan.claims[v.id])
-            const claimPrefix = commanderClaim ? '★ CMD ' : claimIndex >= 0 ? `[${claimIndex + 1}] ` : ''
+            const claimPrefix = commanderClaim ? '[★] ' : claimIndex >= 0 ? `[${claimIndex + 1}] ` : ''
             const turns = stage.turns?.[v.id] ?? []
             const base = baseVehiclePos(v)
             const route = move
