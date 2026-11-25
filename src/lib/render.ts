@@ -200,20 +200,27 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     case 'squad': {
       const [x, y] = normPoint(el.at, size)
       const r = size * 0.006
-      const icon = el.squadNumber === 0 ? assets?.commander : assets?.squads[String(el.squadNumber)]
+      const commander = el.squadNumber === 0
+      const icon = commander ? assets?.commander : assets?.squads[String(el.squadNumber)]
       ctx.beginPath()
       ctx.arc(x, y, r * 0.82, 0, Math.PI * 2)
-      ctx.fillStyle = '#07110a'
+      ctx.fillStyle = commander ? '#2563eb' : '#07110a'
       ctx.fill()
+      ctx.strokeStyle = '#07110a'
+      ctx.lineWidth = Math.max(1, size * 0.0012)
+      ctx.stroke()
       if (icon) {
-        const img = tintedAssetImage(icon, el.squadColor)
-        if (img.complete) ctx.drawImage(img, x - r, y - r, r * 2, r * 2)
+        const img = tintedAssetImage(icon, commander ? '#facc15' : el.squadColor)
+        if (img.complete) {
+          if (commander) ctx.drawImage(img, x - r * 0.7, y - r * 0.7, r * 1.4, r * 1.4)
+          else ctx.drawImage(img, x - r, y - r, r * 2, r * 2)
+        }
       } else {
-        ctx.fillStyle = '#f8fafc'
+        ctx.fillStyle = commander ? '#facc15' : '#f8fafc'
         ctx.font = `700 ${r * 1.1}px "Inter", "Segoe UI", sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(el.squadNumber === 0 ? '★' : String(el.squadNumber), x, y)
+        ctx.fillText(commander ? '★' : String(el.squadNumber), x, y)
       }
       break
     }

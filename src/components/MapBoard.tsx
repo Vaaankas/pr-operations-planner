@@ -784,15 +784,25 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       case 'squad': {
         const at = normToScreen(el.at)
         const r = 12 * iconScale
-        const icon = el.squadNumber === 0 ? assets.commander : assets.squads[String(el.squadNumber)]
+        const commander = el.squadNumber === 0
+        const icon = commander ? assets.commander : assets.squads[String(el.squadNumber)]
         return (
           <Group key={el.id} {...common} x={at.x} y={at.y}>
-            <Circle radius={r * 0.82} fill="#07110a" stroke={selected ? '#fbbf24' : undefined} strokeWidth={2 * iconScale} />
+            <Circle
+              radius={r * 0.82}
+              fill={commander ? '#2563eb' : '#07110a'}
+              stroke="#07110a"
+              strokeWidth={1.2 * iconScale}
+            />
             {icon ? (
-              <KonvaImage image={tintedAssetImage(icon, el.squadColor)} x={-r} y={-r} width={r * 2} height={r * 2} listening={false} />
+              commander ? (
+                <KonvaImage image={tintedAssetImage(icon, '#facc15')} x={-r * 0.7} y={-r * 0.7} width={r * 1.4} height={r * 1.4} listening={false} />
+              ) : (
+                <KonvaImage image={tintedAssetImage(icon, el.squadColor)} x={-r} y={-r} width={r * 2} height={r * 2} listening={false} />
+              )
             ) : (
               <Text
-                text={String(el.squadNumber)}
+                text={commander ? '★' : String(el.squadNumber)}
                 x={-r}
                 y={-r * 0.66}
                 width={r * 2}
@@ -800,7 +810,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 fontSize={r * 1.1}
                 fontFamily="Inter, Segoe UI, sans-serif"
                 fontStyle="bold"
-                fill="#f8fafc"
+                fill={commander ? '#facc15' : '#f8fafc'}
                 listening={false}
               />
             )}
@@ -1055,7 +1065,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           at: norm,
           squadId,
           squadNumber: commander ? 0 : index + 1,
-          squadColor: commander ? '#facc15' : squad!.color,
+          squadColor: commander ? '#2563eb' : squad!.color,
           size: 0.012,
         } as DrawElement
         planner.addElement(el)
@@ -1416,11 +1426,11 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             className="flex cursor-grab items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-200 active:cursor-grabbing"
             title="Drag onto the map to place a commander marker"
           >
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#07110a]">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-black/70 bg-[#2563eb]">
               {assets.commander ? (
-                <GameIcon path={assets.commander} tint="#facc15" size={24} />
+                <GameIcon path={assets.commander} tint="#facc15" size={17} />
               ) : (
-                <span className="text-[12px] text-amber-300">★</span>
+                <span className="text-[13px] font-bold text-[#facc15]">★</span>
               )}
             </span>
             <span>CMD</span>
