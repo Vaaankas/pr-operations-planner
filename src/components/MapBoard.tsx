@@ -1330,21 +1330,40 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 if (group.length < 2) return
                 const picks = group.map((cp) => aasPickCount(cp.sgid)).filter((value): value is number => value !== null)
                 const alternatives = picks.length > 0 && Math.min(...picks) < group.length
-                for (let i = 1; i < group.length; i++) {
-                  const a = worldToDisplayNorm(group[i - 1].x, group[i - 1].z, layer.world)
-                  const b = worldToDisplayNorm(group[i].x, group[i].z, layer.world)
-                  lines.push(
-                    <Line
-                      key={`${alternatives ? 'alternative' : 'parallel'}-${route.id}-${groupIndex}-${i}`}
-                      points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
-                      stroke={alternatives ? color : '#f8fafc'}
-                      strokeWidth={1.5 * iconScale}
-                      opacity={0.85}
-                      dash={alternatives ? [6 * iconScale, 4 * iconScale] : undefined}
-                      lineCap="round"
-                      listening={false}
-                    />,
-                  )
+                if (alternatives) {
+                  const hub = points[groupIndex]
+                  const b = worldToDisplayNorm(hub.x, hub.z, layer.world)
+                  group.forEach((cp) => {
+                    const a = worldToDisplayNorm(cp.x, cp.z, layer.world)
+                    lines.push(
+                      <Line
+                        key={`alternative-${route.id}-${groupIndex}-${cp.id}`}
+                        points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
+                        stroke={color}
+                        strokeWidth={1.5 * iconScale}
+                        opacity={0.85}
+                        dash={[6 * iconScale, 4 * iconScale]}
+                        lineCap="round"
+                        listening={false}
+                      />,
+                    )
+                  })
+                } else {
+                  for (let i = 1; i < group.length; i++) {
+                    const a = worldToDisplayNorm(group[i - 1].x, group[i - 1].z, layer.world)
+                    const b = worldToDisplayNorm(group[i].x, group[i].z, layer.world)
+                    lines.push(
+                      <Line
+                        key={`parallel-${route.id}-${groupIndex}-${i}`}
+                        points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
+                        stroke="#f8fafc"
+                        strokeWidth={1.5 * iconScale}
+                        opacity={0.85}
+                        lineCap="round"
+                        listening={false}
+                      />,
+                    )
+                  }
                 }
               })
             }
