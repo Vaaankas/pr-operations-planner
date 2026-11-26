@@ -13,7 +13,7 @@ import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
-import { routeSegments } from '../lib/routes'
+import { groupRoute, routeSegments } from '../lib/routes'
 import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_ICON_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
 import { assignedKits } from '../lib/kits'
 
@@ -1309,6 +1309,50 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 />
               )
             })
+          })}
+          {layer.mode === 'gpm_cq' && ui.showFlags && visibleRoutes.flatMap((route) => {
+            const groups = groupRoute(layer, route)
+              .map((group) => group.cps.filter((cp) => !ui.hiddenCps.includes(cp.id)))
+              .filter((group) => group.length > 0)
+            const lines: React.ReactNode[] = []
+            groups.forEach((group, groupIndex) => {
+              for (let i = 1; i < group.length; i++) {
+                const a = worldToDisplayNorm(group[i - 1].x, group[i - 1].z, layer.world)
+                const b = worldToDisplayNorm(group[i].x, group[i].z, layer.world)
+                lines.push(
+                  <Line
+                    key={`parallel-${route.id}-${groupIndex}-${i}`}
+                    points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
+                    stroke="#f8fafc"
+                    strokeWidth={1.6 * iconScale}
+                    opacity={0.8}
+                    lineCap="round"
+                    listening={false}
+                  />,
+                )
+              }
+              if (groupIndex > 0 && group.length > 1) {
+                const previousGroup = groups[groupIndex - 1]
+                const anchor = previousGroup[previousGroup.length - 1]
+                const a = worldToDisplayNorm(anchor.x, anchor.z, layer.world)
+                for (const cp of group) {
+                  const b = worldToDisplayNorm(cp.x, cp.z, layer.world)
+                  lines.push(
+                    <Line
+                      key={`alternative-${route.id}-${groupIndex}-${cp.id}`}
+                      points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
+                      stroke="#f8fafc"
+                      strokeWidth={1.4 * iconScale}
+                      opacity={0.85}
+                      dash={[6 * iconScale, 4 * iconScale]}
+                      lineCap="round"
+                      listening={false}
+                    />,
+                  )
+                }
+              }
+            })
+            return lines
           })}
           {ui.showFlags && (layer.caches ?? []).map((cache, i) => {
             const icon = assets.markers.cache_objective
