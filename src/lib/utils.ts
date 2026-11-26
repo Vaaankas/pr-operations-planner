@@ -49,7 +49,7 @@ export function parseTime(value: string): number {
 }
 
 export const ASSET_BASE = import.meta.env.BASE_URL
-export const ASSET_VERSION = '20261126-10'
+export const ASSET_VERSION = '20261126-11'
 
 export function dataUrl(path: string): string {
   return `${ASSET_BASE}data/${path}?v=${ASSET_VERSION}`

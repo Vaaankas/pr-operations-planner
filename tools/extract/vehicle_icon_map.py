@@ -24,8 +24,16 @@ def save_icon(im: Image.Image, path: Path, size: int = 64) -> None:
     bbox = im.getchannel("A").getbbox()
     if bbox:
         im = im.crop(bbox)
-    if im.width > size or im.height > size:
-        im.thumbnail((size, size), Image.Resampling.LANCZOS)
+    target = size - 8
+    scale = min(target / max(1, im.width), target / max(1, im.height))
+    resized = (
+        max(1, round(im.width * scale)),
+        max(1, round(im.height * scale)),
+    )
+    im = im.resize(
+        resized,
+        Image.Resampling.NEAREST if scale >= 1 else Image.Resampling.LANCZOS,
+    )
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     canvas.alpha_composite(im, ((size - im.width) // 2, (size - im.height) // 2))
     path.parent.mkdir(parents=True, exist_ok=True)

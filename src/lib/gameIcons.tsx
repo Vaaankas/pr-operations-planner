@@ -123,5 +123,5 @@ export function GameIcon({
 }) {
   const src = useTintedSrc(path, tint)
   if (!src) return <span className={className} style={{ width: size, height: size }} />
-  return <img src={src} alt={alt} className={className} style={{ width: size, height: size, objectFit: 'contain' }} draggable={false} />
+  return <img src={src} alt={alt} className={className} style={{ width: size, height: size, objectFit: 'contain', imageRendering: 'pixelated' }} draggable={false} />
 }

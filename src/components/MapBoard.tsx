@@ -1305,7 +1305,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           })}
         </Layer>
 
-        <Layer>
+        <Layer imageSmoothingEnabled={false}>
           {layer.vehicles.filter(vehicleVisible).map((v) => {
             const pos = vehiclePosition(v)
             const p = worldToDisplayNorm(pos.x, pos.z, layer.world)
@@ -1497,7 +1497,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           })}
         </Layer>
 
-        <Layer>
+        <Layer imageSmoothingEnabled={false}>
           {stage.elements.filter(isIconElement).map(drawElementNode)}
         </Layer>
       </Stage>
@@ -1507,6 +1507,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         const fy = frameDraft.y * mapH * view.scale + view.y
         const fw = frameDraft.size * mapW * view.scale
         const fh = frameDraft.size * mapH * view.scale
+        const mapX = view.x
+        const mapY = view.y
+        const mapRight = view.x + mapW * view.scale
+        const mapBottom = view.y + mapH * view.scale
         const handles = [
           { mode: 'nw', x: fx, y: fy, cursor: 'nwse-resize' },
           { mode: 'n', x: fx + fw / 2, y: fy, cursor: 'ns-resize' },
@@ -1519,27 +1523,50 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         ]
         return (
           <div className="pointer-events-none absolute inset-0 z-[5]">
-            <div className="absolute bg-black/55" style={{ left: 0, top: 0, width: box.w, height: Math.max(0, fy) }} />
-            <div className="absolute bg-black/55" style={{ left: 0, top: fy + fh, width: box.w, height: Math.max(0, box.h - fy - fh) }} />
-            <div className="absolute bg-black/55" style={{ left: 0, top: Math.max(0, fy), width: Math.max(0, fx), height: Math.max(0, fh) }} />
-            <div className="absolute bg-black/55" style={{ left: fx + fw, top: Math.max(0, fy), width: Math.max(0, box.w - fx - fw), height: Math.max(0, fh) }} />
+            <div className="absolute bg-black/55" style={{ left: mapX, top: mapY, width: Math.max(0, mapRight - mapX), height: Math.max(0, Math.min(fy, mapBottom) - mapY) }} />
+            <div className="absolute bg-black/55" style={{ left: mapX, top: Math.min(mapBottom, Math.max(mapY, fy + fh)), width: Math.max(0, mapRight - mapX), height: Math.max(0, mapBottom - Math.max(mapY, fy + fh)) }} />
+            <div className="absolute bg-black/55" style={{ left: mapX, top: Math.min(mapBottom, Math.max(mapY, fy)), width: Math.max(0, Math.min(fx, mapRight) - mapX), height: Math.max(0, Math.min(mapBottom, fy + fh) - Math.max(mapY, fy)) }} />
+            <div className="absolute bg-black/55" style={{ left: Math.min(mapRight, Math.max(mapX, fx + fw)), top: Math.min(mapBottom, Math.max(mapY, fy)), width: Math.max(0, mapRight - Math.max(mapX, fx + fw)), height: Math.max(0, Math.min(mapBottom, fy + fh) - Math.max(mapY, fy)) }} />
             <div className="absolute border-2 border-amber-400/90 shadow-[0_0_0_1px_rgba(0,0,0,0.8)]" style={{ left: fx, top: fy, width: fw, height: fh }} />
-            {handles.map((h) => (
-              <button
-                key={h.mode}
-                type="button"
-                title="Drag to resize export frame"
+            {([
+              { mode: 'n', x: fx, y: fy, w: fw, h: 8, cursor: 'ns-resize' },
+              { mode: 's', x: fx, y: fy + fh - 8, w: fw, h: 8, cursor: 'ns-resize' },
+              { mode: 'w', x: fx, y: fy, w: 8, h: fh, cursor: 'ew-resize' },
+              { mode: 'e', x: fx + fw - 8, y: fy, w: 8, h: fh, cursor: 'ew-resize' },
+            ] as const).map((edge) => (
+              <div
+                key={`edge-${edge.mode}`}
+                className="pointer-events-auto absolute"
+                style={{ left: edge.x, top: edge.y, width: edge.w, height: edge.h, cursor: edge.cursor }}
                 onPointerDown={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   planner.checkpoint()
                   const p = clientToFrameNorm(e.clientX, e.clientY)
-                  setFrameDrag({ mode: h.mode, startX: p.x, startY: p.y, frame: frameDraft })
+                  setFrameDrag({ mode: edge.mode, startX: p.x, startY: p.y, frame: frameDraft })
                 }}
-                className="pointer-events-auto absolute h-2.5 w-2.5 rounded-sm border border-amber-200 bg-amber-400 shadow"
-                style={{ left: h.x, top: h.y, transform: 'translate(-50%, -50%)', cursor: h.cursor }}
               />
             ))}
+            {handles.map((h) => {
+              const hx = clamp(h.x, 6, box.w - 6)
+              const hy = clamp(h.y, 6, box.h - 6)
+              return (
+                <button
+                  key={h.mode}
+                  type="button"
+                  title="Drag to resize export frame"
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    planner.checkpoint()
+                    const p = clientToFrameNorm(e.clientX, e.clientY)
+                    setFrameDrag({ mode: h.mode, startX: p.x, startY: p.y, frame: frameDraft })
+                  }}
+                  className="pointer-events-auto absolute h-3 w-3 rounded-sm border border-amber-200 bg-amber-400 shadow"
+                  style={{ left: hx, top: hy, transform: 'translate(-50%, -50%)', cursor: h.cursor }}
+                />
+              )
+            })}
           </div>
         )
       })()}
