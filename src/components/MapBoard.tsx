@@ -1886,6 +1886,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 const kits = assignedKits(plan.roster.specialistAssignments, member.id)
                 return (
                   <div key={member.id} className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: squad?.color ?? '#facc15' }} />
                     <span className="min-w-0 flex-1 truncate text-slate-300">{member.name}</span>
                     <span className="flex shrink-0 items-center gap-0.5">
                       {kits.map((kitId, index) => (
@@ -1910,7 +1911,16 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           ...plan.roster.squads.flatMap((squad) => squad.members),
           ...plan.roster.unassigned,
         ]
-        const names = crew.map((id) => allMembers.find((member) => member.id === id)?.name).filter(Boolean)
+        const crewMembers = crew.map((id) => {
+          const member = allMembers.find((item) => item.id === id)
+          if (!member) return null
+          const memberSquad = plan.roster.squads.find((item) => item.members.some((m) => m.id === id))
+          return {
+            id,
+            name: member.name,
+            color: memberSquad?.color ?? (plan.roster.commander?.id === id ? '#facc15' : '#64748b'),
+          }
+        }).filter(Boolean)
         const squad = plan.roster.squads.find((item) => item.id === plan.claims[vehicle.id])
         const squadIndex = squad ? plan.roster.squads.findIndex((item) => item.id === squad.id) : -1
         const squadIcon = squad ? assets.squads[String(squadIndex + 1)] : undefined
@@ -1926,9 +1936,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               </div>
             )}
             <div className="mt-1.5 text-[9px] uppercase tracking-wider text-slate-500">Crew</div>
-            {names.length > 0 ? (
+            {crewMembers.length > 0 ? (
               <div className="mt-1 flex flex-col gap-0.5 text-slate-300">
-                {names.map((name, index) => <div key={`${name}-${index}`}>{name}</div>)}
+                {crewMembers.map((member) => (
+                  <div key={member!.id} className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: member!.color }} />
+                    <span className="truncate">{member!.name}</span>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="mt-1 text-[9px] text-slate-600">No crew assigned</div>
