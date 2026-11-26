@@ -454,7 +454,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     const n = toNorm(mapCoords())
     if (draft.kind === 'pen' && pointerDown.current) {
       const last = draft.points[draft.points.length - 1]
-      if (Math.hypot(n.x - last.x, n.y - last.y) > 0.0018) {
+      const minStep = 1.2 / (mapW * view.scale)
+      if (Math.hypot(n.x - last.x, n.y - last.y) > minStep) {
         setDraft({ ...draft, points: [...draft.points, n] })
       }
     }

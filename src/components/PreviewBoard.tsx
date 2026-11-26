@@ -24,6 +24,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   const cacheKey = stagePreviewKey(plan, map, layer, stage, ui)
   const [images, setImages] = useState<Record<string, string>>({})
   const pending = useRef(new Set<string>())
+  const wheelAt = useRef(0)
 
   useEffect(() => {
     const cached = getStagePreview(cacheKey)
@@ -47,8 +48,24 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   const src = images[cacheKey] ?? getStagePreview(cacheKey)
   const slide = stageSlideData(plan, map, layer, stage)
 
+  const switchStage = (direction: -1 | 1) => {
+    if (stages.length < 2 || stageIndex < 0) return
+    const next = (stageIndex + direction + stages.length) % stages.length
+    planner.setActiveStage(stages[next].id)
+  }
+
   return (
-    <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#070b08] p-4">
+    <div
+      className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#070b08] p-4"
+      onWheel={(e) => {
+        if (stages.length < 2) return
+        e.preventDefault()
+        const now = performance.now()
+        if (now - wheelAt.current < 350) return
+        wheelAt.current = now
+        switchStage(e.deltaY > 0 ? 1 : -1)
+      }}
+    >
       <div className="relative aspect-video w-full max-w-[1280px] overflow-hidden bg-[#f8fafc] shadow-2xl">
         <div className="absolute inset-x-0 top-0 h-[0.8%] bg-amber-400" />
 
@@ -89,7 +106,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
       {stages.length > 1 && (
         <div className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded border border-white/15 bg-[#080d0a]/90 px-2 py-1.5 shadow-2xl">
           <button
-            onClick={() => stageIndex > 0 && planner.setActiveStage(stages[stageIndex - 1].id)}
+            onClick={() => switchStage(-1)}
             disabled={stageIndex <= 0}
             className="flex h-7 w-7 items-center justify-center rounded text-slate-300 hover:bg-white/10 disabled:opacity-25"
             title="Previous stage"
@@ -103,7 +120,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
             </div>
           </div>
           <button
-            onClick={() => stageIndex < stages.length - 1 && planner.setActiveStage(stages[stageIndex + 1].id)}
+            onClick={() => switchStage(1)}
             disabled={stageIndex >= stages.length - 1}
             className="flex h-7 w-7 items-center justify-center rounded text-slate-300 hover:bg-white/10 disabled:opacity-25"
             title="Next stage"

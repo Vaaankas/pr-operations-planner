@@ -44,6 +44,26 @@ function AppInner() {
   const plan = usePlanner((s) => s.plan)
   const ui = useUI()
   const cache = useRef(new Map<string, LayerData>())
+
+  useEffect(() => {
+    if (!plan || ui.view !== 'plan' || ui.exportOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return
+      const stages = [...plan.stages].sort((a, b) => a.time - b.time)
+      if (stages.length < 2) return
+      const index = stages.findIndex((item) => item.id === plan.activeStageId)
+      if (index < 0) return
+      const next = e.key === 'ArrowRight'
+        ? (index + 1) % stages.length
+        : (index - 1 + stages.length) % stages.length
+      e.preventDefault()
+      usePlanner.getState().setActiveStage(stages[next].id)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [plan, ui.exportOpen, ui.view])
   const booted = useRef(false)
 
   useToolHotkeys()
