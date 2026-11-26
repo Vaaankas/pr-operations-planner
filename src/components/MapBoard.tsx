@@ -938,6 +938,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             x={at.x}
             y={at.y}
             onMouseEnter={() => setHoverSquad({ id: el.squadId, x: at.x, y: at.y })}
+            onMouseMove={() => {
+              const pointer = stageRef.current?.getPointerPosition()
+              if (pointer) setHoverSquad({ id: el.squadId, x: pointer.x, y: pointer.y })
+            }}
             onMouseLeave={() => setHoverSquad(null)}
           >
             <Circle
