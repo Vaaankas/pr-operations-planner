@@ -86,8 +86,11 @@ function MemberRow({
   target: string
 }) {
   const planner = usePlanner()
+  const plan = usePlanner((s) => s.plan)
   const [over, setOver] = useState(false)
   const namePointer = useRef(false)
+  const memberKitId = assignedKits(plan?.roster.specialistAssignments, member.id)[0]
+  const memberKit = specialistKit(memberKitId)
   return (
     <div
       draggable
@@ -111,9 +114,13 @@ function MemberRow({
       onDragLeave={() => setOver(false)}
       onDrop={(e) => {
         e.preventDefault()
-        setOver(false)
-        if (e.dataTransfer.getData('text/pr-kit')) return
         e.stopPropagation()
+        setOver(false)
+        const kit = e.dataTransfer.getData('text/pr-kit')
+        if (kit) {
+          planner.assignSpecialist(member.id, kit)
+          return
+        }
         const id = e.dataTransfer.getData('text/pr-member')
         if (id) planner.moveMember(id, target, index)
       }}
@@ -130,6 +137,18 @@ function MemberRow({
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
         className="min-w-0 truncate bg-transparent text-[14px] font-medium text-slate-200 outline-none"
       />
+      {memberKit && (
+        <button
+          onContextMenu={(e) => {
+            e.preventDefault()
+            planner.clearSpecialist(member.id)
+          }}
+          title={`${memberKit.name} — right-click to clear`}
+          className="shrink-0"
+        >
+          <img src={dataUrl(`icons/kits/${memberKit.id}.webp`)} alt={memberKit.short} className="h-4 w-4 object-contain" />
+        </button>
+      )}
       <ConfirmationToggle member={member} />
       <button onClick={() => planner.removeMember(member.id)} title="Remove player">
         <X className="h-3.5 w-3.5 text-slate-500 hover:text-rose-400" />
@@ -231,7 +250,7 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
         })}
       </div>
       <div className="border-t border-white/5 px-2 py-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-500">
-        Drag kits onto squads · max 4
+        Drag kits onto players or squads
       </div>
     </div>
   )
@@ -319,8 +338,8 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
           )}
         </button>
         <EditableName
-          value={squad.name}
-          onCommit={(name) => planner.updateSquad(squad.id, { name })}
+          value={squad.name.toUpperCase()}
+          onCommit={(name) => planner.updateSquad(squad.id, { name: name.toUpperCase() })}
           placeholder="Squad name"
           className="min-w-0 border-0 bg-transparent text-[14px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
         />
@@ -377,6 +396,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
 export function RosterBoard() {
   const plan = usePlanner((s) => s.plan)!
   const planner = usePlanner()
+  const assets = useAssets()
   const [dropReserve, setDropReserve] = useState(false)
   const [dropCommander, setDropCommander] = useState(false)
   const count = playerCount(plan)
@@ -423,7 +443,11 @@ export function RosterBoard() {
       <aside className="flex w-[340px] shrink-0 flex-col border-l border-white/10 bg-[#080d0a]">
         <div className="border-b border-white/10 px-3 py-2">
           <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 text-amber-300" />
+            {assets.commander ? (
+              <GameIcon path={assets.commander} tint="#facc15" size={18} />
+            ) : (
+              <Star className="h-4 w-4 text-amber-300" />
+            )}
             <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-200">Commander</span>
           </div>
           <div

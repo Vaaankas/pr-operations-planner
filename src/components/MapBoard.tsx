@@ -1810,7 +1810,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   <span className="font-mono text-[10px] font-bold text-slate-100">{i + 1}</span>
                 )}
               </span>
-              <span className="max-w-36 truncate">{s.name || `SQUAD ${i + 1}`}</span>
+              <span className="max-w-36 truncate">{(s.name || `SQUAD ${i + 1}`).toUpperCase()}</span>
             </div>
           ))}
         </div>
@@ -1853,8 +1853,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const commanderMember = hoverSquad.id === 'commander' ? plan.roster.commander : null
         const strength = squad ? squad.members.length : commanderMember ? 1 : 0
         const counts = new Map<string, number>()
-        if (squad) {
-          for (const kitId of assignedKits(plan.roster.specialistAssignments, squad.id)) {
+        const targetIds = squad
+          ? [squad.id, ...squad.members.map((member) => member.id)]
+          : commanderMember ? [commanderMember.id] : []
+        for (const target of targetIds) {
+          for (const kitId of assignedKits(plan.roster.specialistAssignments, target)) {
             counts.set(kitId, (counts.get(kitId) ?? 0) + 1)
           }
         }
@@ -1864,7 +1867,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             style={{ left: clamp(hoverSquad.x + 18, 8, box.w - 235), top: clamp(hoverSquad.y - 8, 8, box.h - 150) }}
           >
             <div className="text-[12px] font-semibold text-slate-100">
-              {squad?.name || commanderMember?.name || 'Squad'}
+              {(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}
             </div>
             <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">
               Strength · {strength}{squad ? '/8' : ''}

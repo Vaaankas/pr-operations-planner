@@ -46,7 +46,7 @@ function AppInner() {
   const cache = useRef(new Map<string, LayerData>())
 
   useEffect(() => {
-    if (!plan || ui.view !== 'plan' || ui.exportOpen) return
+    if (!plan || ui.view !== 'plan' || ui.mode === 'preview' || ui.exportOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
       const target = e.target as HTMLElement | null
@@ -63,7 +63,7 @@ function AppInner() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [plan, ui.exportOpen, ui.view])
+  }, [plan, ui.exportOpen, ui.mode, ui.view])
   const booted = useRef(false)
 
   useToolHotkeys()

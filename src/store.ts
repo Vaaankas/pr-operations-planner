@@ -38,6 +38,7 @@ export function loadStoredPlan(): Plan | null {
       if (/^\d+$/.test(squad.name) || SQUAD_TYPES.includes(squad.name)) {
         squad.name = PHONETIC[index] ?? squad.name
       }
+      squad.name = squad.name.toUpperCase()
     })
     return plan
   } catch {
@@ -374,12 +375,18 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 
   assignSpecialist: (targetId, kit) =>
     get().mutate((plan) => {
-      if (!plan.roster.squads.some((squad) => squad.id === targetId)) return
+      const isSquad = plan.roster.squads.some((squad) => squad.id === targetId)
+      const isMember = !!findMember(plan.roster, targetId)
+      if (!isSquad && !isMember) return
       const assignments = { ...(plan.roster.specialistAssignments ?? {}) }
       const current = assignments[targetId] as unknown as string[] | string | undefined
       const list = Array.isArray(current) ? [...current] : current ? [current] : []
-      if (list.length >= 4) return
-      assignments[targetId] = [...list, kit]
+      if (isSquad) {
+        if (list.length >= 5) return
+        assignments[targetId] = [...list, kit]
+      } else {
+        assignments[targetId] = [kit]
+      }
       plan.roster.specialistAssignments = assignments
     }),
 
