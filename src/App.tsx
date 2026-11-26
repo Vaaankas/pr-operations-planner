@@ -236,18 +236,16 @@ function AppInner() {
 
       {ui.view === 'roster' ? (
         <RosterBoard />
+      ) : ui.mode === 'preview' ? (
+        <PreviewBoard key={`preview:${map.id}:${layer.id}:${stage.id}`} map={map} layer={layer} plan={plan} stage={stage} />
       ) : (
         <div className="flex min-h-0 flex-1">
-          {ui.mode === 'edit' && <ToolbarRail />}
+          <ToolbarRail />
 
           <div className="flex min-w-0 flex-1 flex-col">
-            {ui.mode === 'edit' && <OptionsBar />}
+            <OptionsBar />
             <div className="min-h-0 flex-1">
-              {ui.mode === 'preview' ? (
-                <PreviewBoard key={`preview:${map.id}:${layer.id}:${stage.id}`} map={map} layer={layer} plan={plan} stage={stage} />
-              ) : (
-                <MapBoard key={`${map.id}:${layer.id}`} map={map} layer={layer} plan={plan} stage={stage} />
-              )}
+              <MapBoard key={`${map.id}:${layer.id}`} map={map} layer={layer} plan={plan} stage={stage} />
             </div>
             <Timeline plan={plan} stage={stage} />
           </div>
