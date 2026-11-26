@@ -337,14 +337,31 @@ function VehicleCrewBox({ vehicle, squad, plan }: { vehicle: VehicleSpawn; squad
       <div className="flex items-center gap-1.5">
         {icon && <img src={dataUrl(icon)} alt="" className="h-4 w-4 object-contain" />}
         <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-200">{vehicle.label}</span>
-        <span className="font-mono text-[9px] text-slate-600">{crewMembers.length}</span>
+        <button
+          onClick={() => {
+            planner.claimVehicle(vehicle.id, null)
+            planner.setVehicleCrew(vehicle.id, [])
+          }}
+          className="shrink-0 text-slate-600 hover:text-rose-400"
+          title="Remove vehicle from squad"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
       <div className="mt-1 flex min-h-5 flex-wrap items-center gap-1">
         {crewMembers.length > 0 ? (
           crewMembers.map((member) => (
-            <span key={member!.id} className="rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[9px] text-slate-300">
+            <button
+              key={member!.id}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                planner.setVehicleCrew(vehicle.id, crew.filter((id) => id !== member!.id))
+              }}
+              className="rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[9px] text-slate-300"
+              title="Right-click to remove from vehicle"
+            >
               {member!.name}
-            </span>
+            </button>
           ))
         ) : (
           <span className="font-mono text-[9px] text-slate-600">Drag players here</span>
