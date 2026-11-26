@@ -248,6 +248,7 @@ export type Tool =
 export interface UIState {
   view: 'plan' | 'roster'
   mode: 'edit' | 'preview'
+  iconSize: number
   tool: Tool
   color: string
   width: number

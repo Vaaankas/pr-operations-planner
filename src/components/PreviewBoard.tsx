@@ -38,6 +38,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
       hiddenCps: ui.hiddenCps,
       frame: stage.frame,
       detailScale: stage.frame?.size ?? 1,
+      iconSize: ui.iconSize,
     }).then((canvas) => {
       if (cancelled) return
       canvas.style.maxWidth = '100%'
@@ -56,7 +57,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
     return () => {
       cancelled = true
     }
-  }, [assets, layer, map, plan, stage, ui.hiddenCps, ui.visibleRoutes])
+  }, [assets, layer, map, plan, stage, ui.hiddenCps, ui.iconSize, ui.visibleRoutes])
 
   return (
     <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#070b08] p-4">

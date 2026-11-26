@@ -14,6 +14,7 @@ import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehi
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
+import { CACHE_ICON_PX, FLAG_ICON_PX, SQUAD_ICON_PX, vehicleIconPx } from '../lib/mapStyle'
 
 interface Props {
   map: MapMeta
@@ -860,7 +861,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       }
       case 'squad': {
         const at = normToScreen(el.at)
-        const r = 12 * iconScale
+        const r = (SQUAD_ICON_PX / 2) * iconScale * ui.iconSize
         const commander = el.squadNumber === 0
         const icon = commander ? assets.commander : assets.squads[String(el.squadNumber)]
         return (
@@ -1220,7 +1221,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const icon = assets.markers.cache_objective
             if (!icon) return null
             const p = worldToDisplayNorm(cache.x, cache.z, layer.world)
-            const size = 19 * iconScale
+            const size = CACHE_ICON_PX * iconScale * ui.iconSize
             const outline = size + 4 * iconScale
             return (
               <Group key={`cache-${i}`} x={p.x * mapW} y={p.y * mapH} listening={false}>
@@ -1249,7 +1250,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const key = team ? layer.factions[String(team)]?.key : undefined
             const flagPath = cpFlag(assets, key)
             const img = flagPath ? assetImage(flagPath) : null
-            const w = 30 * iconScale
+            const w = FLAG_ICON_PX * iconScale * ui.iconSize
             const ratio = img && img.width && img.height ? img.height / img.width : 1
             const h = w * Math.min(1, Math.max(0.4, ratio))
             const index = visibleRoutes.findIndex((r) => r.cps.includes(cp.id))
@@ -1326,7 +1327,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const p = worldToDisplayNorm(pos.x, pos.z, layer.world)
             const move = stage.moves[v.id]
             const color = vehicleColor(v, plan, squadColors)
-            const s = (v.category === 'mbt' ? 32 : v.category === 'boat' || v.category === 'carrier' ? 34 : 30) * iconScale
+            const s = vehicleIconPx(v.category) * iconScale * ui.iconSize
             const nodeId = `veh_${v.id}`
             const selected = ui.selectedId === nodeId
             const commanderClaim = plan.claims[v.id] === 'commander'

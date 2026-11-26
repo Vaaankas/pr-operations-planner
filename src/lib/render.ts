@@ -5,6 +5,7 @@ import { cpFlag, vehicleIconPath } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
 import { mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from './coords'
 import { routeSegments } from './routes'
+import { CACHE_ICON_PX, exportPx, FLAG_ICON_PX, SQUAD_ICON_PX, vehicleIconPx } from './mapStyle'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
   const r = mirrorNorm(p)
@@ -49,6 +50,7 @@ export interface RenderOptions {
   hiddenCps: number[]
   frame?: StageFrame
   detailScale?: number
+  iconSize?: number
 }
 
 const LANE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
@@ -80,7 +82,7 @@ function drawArrowHead(ctx: CanvasRenderingContext2D, x: number, y: number, angl
   ctx.restore()
 }
 
-export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number, assets?: AssetManifest, world?: number, detailScale = 1): void {
+export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number, assets?: AssetManifest, world?: number, detailScale = 1, iconScale = 1): void {
   const ui = size * detailScale
   const lw = Math.max(1, (el.width * ui) / 1000)
   ctx.save()
@@ -202,7 +204,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'squad': {
       const [x, y] = normPoint(el.at, size)
-      const r = ui * 0.006
+      const r = exportPx(size, SQUAD_ICON_PX / 2, detailScale) * iconScale
       const commander = el.squadNumber === 0
       const icon = commander ? assets?.commander : assets?.squads[String(el.squadNumber)]
       ctx.beginPath()
@@ -285,12 +287,13 @@ function drawFlag(
   color: string,
   team: number,
   detailScale = 1,
+  iconScale = 1,
 ) {
   const ui = size * detailScale
   const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
   const x = p.x * size
   const y = p.y * size
-  const w = ui * 0.034
+  const w = exportPx(size, FLAG_ICON_PX, detailScale) * iconScale
   const radius = (cp.radius / layer.world) * size
   const key = team ? layer.factions[String(team)]?.key : undefined
   const flagPath = cpFlag(assets, key)
@@ -315,7 +318,7 @@ function drawFlag(
     ctx.drawImage(img, x - w / 2, y - h / 2, w, h)
     ctx.restore()
   }
-  if (showLabel) label(ctx, cp.name, x, y + h / 2 + ui * 0.003, ui * 0.015, '#f8fafc')
+  if (showLabel) label(ctx, cp.name, x, y + h / 2 + ui * 0.003, exportPx(size, 10.5, detailScale), '#f8fafc')
 }
 
 export async function renderStageCanvas(
@@ -328,6 +331,7 @@ export async function renderStageCanvas(
   const canvas = document.createElement('canvas')
   const size = opts.size
   const ds = opts.detailScale ?? 1
+  const iconSize = opts.iconSize ?? 1
   canvas.width = size
   canvas.height = size
   const ctx = canvas.getContext('2d')
@@ -427,15 +431,15 @@ export async function renderStageCanvas(
       if (!cp || opts.hiddenCps.includes(id)) continue
       const routeIndex = Math.max(0, visibleRoutes.findIndex((r) => r.cps.includes(id)))
       const team = plan.flagTeams?.[String(id)] ?? cp.team
-      drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex), team, ds)
+      drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex), team, ds, iconSize)
     }
 
     const cacheIcon = opts.assets.markers.cache_objective
     if (cacheIcon) {
       const cacheImage = tintedAssetImage(cacheIcon, '#ef4444')
       const cacheOutline = tintedAssetImage(cacheIcon, '#07110a')
-      const cacheSize = size * ds * 0.021
-      const cacheOutlineSize = cacheSize + size * ds * 0.004
+      const cacheSize = exportPx(size, CACHE_ICON_PX, ds) * iconSize
+      const cacheOutlineSize = cacheSize + exportPx(size, 4, ds) * iconSize
       for (const cache of layer.caches ?? []) {
         const [x, y] = normPoint(worldToDisplayNorm(cache.x, cache.z, layer.world), size)
         if (cacheOutline.complete) ctx.drawImage(cacheOutline, x - cacheOutlineSize / 2, y - cacheOutlineSize / 2, cacheOutlineSize, cacheOutlineSize)
@@ -482,7 +486,7 @@ export async function renderStageCanvas(
           ctx.restore()
         }
       }
-      const s = size * ds * (v.category === 'mbt' ? 0.032 : v.category === 'boat' || v.category === 'carrier' ? 0.034 : 0.028)
+      const s = exportPx(size, vehicleIconPx(v.category), ds) * iconSize
       const iconPath = vehicleIconPath(opts.assets, v)
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
@@ -491,26 +495,30 @@ export async function renderStageCanvas(
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const ready = vehicleReady(v, stage.time)
-      if (!ready && opts.showLabels) {
-        ctx.save()
-        ctx.fillStyle = '#94a3b8'
-        ctx.font = `600 ${size * ds * 0.012}px "Inter", "Segoe UI", sans-serif`
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'top'
-        ctx.fillText(formatTime(vehicleDelayRemaining(v, stage.time)), x, y + s * 0.62 + size * 0.010)
-        ctx.restore()
-      }
       const squadId = plan.claims[v.id]
       const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
-      if (squadId === 'commander') {
-        label(ctx, `[★] ${v.label}`, x, y + s * 0.62, size * ds * 0.009, color)
-      } else if (squadIndex >= 0) {
-        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * ds * 0.009, color)
+      const showVehicleName = squadId === 'commander' || squadIndex >= 0 || (opts.showLabels && (opts.frame?.size ?? 1) < 0.8)
+      if (!ready && showVehicleName) {
+        ctx.save()
+        ctx.fillStyle = '#94a3b8'
+        ctx.font = `600 ${exportPx(size, 10, ds)}px "Inter", "Segoe UI", sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        ctx.fillText(formatTime(vehicleDelayRemaining(v, stage.time)), x, y + s * 0.62 + exportPx(size, 11, ds))
+        ctx.restore()
+      }
+      if (showVehicleName) {
+        const name = squadId === 'commander'
+          ? `[★] ${v.label}`
+          : squadIndex >= 0
+            ? `[${squadIndex + 1}] ${v.label}`
+            : v.label
+        label(ctx, name, x, y + s * 0.62, exportPx(size, 9, ds), color)
       }
     }
   }
 
-  for (const el of stage.elements) drawElement(ctx, el, size, opts.assets, layer.world, ds)
+  for (const el of stage.elements) drawElement(ctx, el, size, opts.assets, layer.world, ds, iconSize)
 
   // footer
   const bar = size * ds * 0.036

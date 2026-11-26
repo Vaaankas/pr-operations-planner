@@ -405,6 +405,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 export const useUI = create<UIState & {
   setView: (view: UIState['view']) => void
   setMode: (mode: UIState['mode']) => void
+  setIconSize: (size: number) => void
   setTool: (tool: UIState['tool']) => void
   setColor: (color: string) => void
   setWidth: (width: number) => void
@@ -430,6 +431,7 @@ export const useUI = create<UIState & {
 }>((set) => ({
   view: 'plan',
   mode: 'edit',
+  iconSize: 1,
   tool: 'select',
   color: '#e2e8f0',
   width: 4,
@@ -459,6 +461,7 @@ export const useUI = create<UIState & {
 
   setView: (view) => set({ view }),
   setMode: (mode) => set({ mode }),
+  setIconSize: (iconSize) => set({ iconSize: clamp(iconSize, 0.5, 2.5) }),
   setTool: (tool) => set({ tool, selectedId: null, selectedKind: null }),
   setColor: (color) => set({ color }),
   setWidth: (width) => set({ width: clamp(width, 1, 24) }),

@@ -10,6 +10,7 @@ export interface ExportOptions {
   stages: 'all' | 'active'
   includeRoster: boolean
   rosterOnly: boolean
+  iconSize?: number
   download: boolean
   visibleRoutes: string[]
   hiddenCps: number[]
@@ -100,6 +101,7 @@ async function renderAll(
       hiddenCps: opts.hiddenCps,
       frame: stages[i].frame,
       detailScale: stages[i].frame?.size ?? 1,
+      iconSize: opts.iconSize ?? 1,
     })
     images.push({ stage: stages[i], data: canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined) })
   }

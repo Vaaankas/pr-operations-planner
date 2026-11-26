@@ -51,7 +51,23 @@ export function ToolbarRail() {
           {ui.tool === tool && <span className="absolute -right-0.5 -top-0.5 rounded bg-black px-0.5 font-mono text-[8px] text-amber-300">{key}</span>}
         </button>
       ))}
-      <div className="mt-auto flex flex-col gap-0.5 border-t border-white/10 pt-1.5">
+      <div className="mt-auto flex flex-col items-center gap-1 border-t border-white/10 pt-1.5">
+        <span className="font-mono text-[7px] uppercase tracking-wider text-slate-600">Icon</span>
+        <input
+          type="range"
+          min="0.5"
+          max="2.5"
+          step="0.1"
+          value={ui.iconSize}
+          onChange={(e) => ui.setIconSize(Number(e.target.value))}
+          className="h-16 w-3 cursor-pointer accent-amber-400"
+          style={{ writingMode: 'vertical-lr', direction: 'rtl' }}
+          title={`Icon size ${ui.iconSize.toFixed(1)}×`}
+        />
+        <span className="font-mono text-[8px] text-slate-500">{ui.iconSize.toFixed(1)}×</span>
+      </div>
+
+      <div className="mt-1 flex flex-col gap-0.5 border-t border-white/10 pt-1.5">
         <VisibilityButton icon={<Truck className="h-3.5 w-3.5" />} active={ui.showVehicles} title="Vehicles" onClick={() => ui.toggle('showVehicles')} />
         <VisibilityButton icon={<Shield className="h-3.5 w-3.5" />} active={ui.showEnemy} title="Enemy assets" onClick={() => ui.toggle('showEnemy')} />
         <VisibilityButton icon={<Flag className="h-3.5 w-3.5" />} active={ui.showFlags} title="Flags and capture radii" onClick={() => ui.toggle('showFlags')} />

@@ -41,6 +41,7 @@ export function ExportDialog({ plan, map, layer }: Props) {
         stages,
         includeRoster: rosterOnly ? true : includeRoster,
         rosterOnly,
+        iconSize: ui.iconSize,
         download: true,
         visibleRoutes: ui.visibleRoutes,
         hiddenCps: ui.hiddenCps,
