@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { GripVertical, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
-import type { Member, Plan, Squad } from '../types'
+import type { LayerData, Member, Plan, Squad, VehicleSpawn } from '../types'
 import { usePlanner } from '../store'
-import { cpFlag, useAssets } from '../lib/assets'
-import { dataUrl, playerCount, SQUAD_COLORS } from '../lib/utils'
+import { useAssets, vehicleIconPath } from '../lib/assets'
+import { dataUrl, isHiddenVehicle, playerCount, SQUAD_COLORS } from '../lib/utils'
 import { assignedKits, SPECIALIST_KITS, specialistKit, specialistLimit } from '../lib/kits'
 import { GameIcon } from '../lib/gameIcons'
 
@@ -130,6 +130,11 @@ function MemberRow({
           planner.assignSpecialist(member.id, kit)
           return
         }
+        const assetId = e.dataTransfer.getData('text/pr-asset')
+        if (assetId) {
+          if (target !== 'commander' && target !== 'unassigned') planner.claimVehicle(assetId, target)
+          return
+        }
         const id = e.dataTransfer.getData('text/pr-member')
         if (id) planner.moveMember(id, target, index)
       }}
@@ -221,7 +226,9 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
   )
 }
 
-function SpecialistKitsCard({ plan }: { plan: Plan }) {
+function SpecialistKitsCard({ plan, layer }: { plan: Plan; layer: LayerData }) {
+  const assets = useAssets()
+  const [mode, setMode] = useState<'kits' | 'assets'>('kits')
   const players = playerCount(plan)
   const assignments = plan.roster.specialistAssignments ?? {}
   const counts = Object.values(assignments)
@@ -232,11 +239,46 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
     }, {})
   return (
     <div className="flex h-full min-h-0 flex-col rounded border border-white/10 bg-[#0b120e]/85">
-      <div className="flex items-center gap-2 border-b border-white/5 px-2 py-1.5">
-        <span className="font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-slate-300">Specialist kits</span>
+      <div className="flex items-center gap-1 border-b border-white/5 px-2 py-1.5">
+        <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-slate-300">Specialist</span>
+        <div className="ml-auto flex rounded border border-white/10 p-0.5">
+          <button
+            onClick={() => setMode('kits')}
+            className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${mode === 'kits' ? 'bg-amber-400 text-black' : 'text-slate-500 hover:text-slate-200'}`}
+          >
+            Kits
+          </button>
+          <button
+            onClick={() => setMode('assets')}
+            className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${mode === 'assets' ? 'bg-amber-400 text-black' : 'text-slate-500 hover:text-slate-200'}`}
+          >
+            Assets
+          </button>
+        </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-1 px-1.5 py-1.5">
-        {SPECIALIST_KITS.map((kit) => {
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-1.5 py-1.5">
+        {mode === 'assets' ? (
+          layer.vehicles
+            .filter((vehicle) => vehicle.team === plan.side && !isHiddenVehicle(vehicle.template))
+            .map((vehicle) => (
+              <div
+                key={vehicle.id}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/pr-asset', vehicle.id)
+                  e.dataTransfer.effectAllowed = 'copy'
+                }}
+                className="flex min-h-8 cursor-grab select-none items-center gap-2 rounded border border-white/10 bg-black/25 px-1.5 active:cursor-grabbing"
+                title="Drag onto a squad to assign"
+              >
+                {(() => {
+                  const icon = vehicleIconPath(assets, vehicle)
+                  return icon ? <img src={dataUrl(icon)} alt="" draggable={false} className="h-5 w-5 object-contain" /> : null
+                })()}
+                <span className="min-w-0 flex-1 truncate text-[11px] text-slate-300">{vehicle.label}</span>
+              </div>
+            ))
+        ) : SPECIALIST_KITS.map((kit) => {
           const limit = specialistLimit(kit, players)
           const count = counts[kit.id] ?? 0
           return (
@@ -271,16 +313,72 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
   )
 }
 
-function SquadCard({ squad, index }: { squad: Squad; index: number }) {
+function VehicleCrewBox({ vehicle, squad, plan }: { vehicle: VehicleSpawn; squad: Squad; plan: Plan }) {
   const planner = usePlanner()
   const assets = useAssets()
-  const plan = usePlanner((s) => s.plan)
+  const crew = plan.vehicleCrew?.[vehicle.id] ?? []
+  const seatCount = crew.length >= 3 ? 3 : 2
+  const seats = ['Driver', 'Gunner', 'Commander']
+  const icon = vehicleIconPath(assets, vehicle)
+  const setSeat = (index: number, memberId: string) => {
+    const next = Array.from({ length: Math.max(2, crew.length) }, (_, i) => crew[i] ?? '')
+    next[index] = memberId
+    planner.setVehicleCrew(vehicle.id, next)
+  }
+  return (
+    <div className="rounded border border-white/15 bg-black/30 px-1.5 py-1">
+      <div className="flex items-center gap-1.5">
+        {icon && <img src={dataUrl(icon)} alt="" className="h-4 w-4 object-contain" />}
+        <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-200">{vehicle.label}</span>
+        <button
+          onClick={() => planner.claimVehicle(vehicle.id, null)}
+          className="text-slate-600 hover:text-rose-400"
+          title="Remove asset from squad"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+      <div className="mt-1 space-y-0.5">
+        {Array.from({ length: seatCount }).map((_, index) => (
+          <div key={index} className="flex items-center gap-1">
+            <span className="w-12 shrink-0 font-mono text-[8px] uppercase tracking-wider text-slate-500">{seats[index]}</span>
+            <select
+              value={crew[index] ?? ''}
+              onChange={(e) => setSeat(index, e.target.value)}
+              className="min-w-0 flex-1 rounded border border-white/10 bg-black/40 px-1 py-0.5 text-[9px] text-slate-300 outline-none"
+            >
+              <option value="">—</option>
+              {squad.members.map((member) => (
+                <option key={member.id} value={member.id}>{member.name}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+      {seatCount < 3 && (
+        <button
+          onClick={() => planner.setVehicleCrew(vehicle.id, [...Array.from({ length: 2 }, (_, i) => crew[i] ?? ''), ''])}
+          className="mt-1 flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider text-slate-500 hover:text-amber-300"
+          title="Add optional commander seat"
+        >
+          <Plus className="h-3 w-3" /> commander seat
+        </button>
+      )}
+    </div>
+  )
+}
+
+function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer: LayerData }) {
+  const planner = usePlanner()
+  const assets = useAssets()
+  const plan = usePlanner((s) => s.plan)!
   const [drop, setDrop] = useState(false)
   const [colorOpen, setColorOpen] = useState(false)
   const [headerDrop, setHeaderDrop] = useState(false)
   const namePointer = useRef(false)
   const full = squad.members.length >= 9
   const assignedKitIds = assignedKits(plan?.roster.specialistAssignments, squad.id)
+  const claimedVehicles = layer.vehicles.filter((vehicle) => plan?.claims[vehicle.id] === squad.id)
   useEffect(() => {
     const clear = () => {
       setDrop(false)
@@ -306,6 +404,11 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         const kit = e.dataTransfer.getData('text/pr-kit')
         if (kit) {
           planner.assignSpecialist(squad.id, kit)
+          return
+        }
+        const assetId = e.dataTransfer.getData('text/pr-asset')
+        if (assetId) {
+          planner.claimVehicle(assetId, squad.id)
           return
         }
         const memberId = e.dataTransfer.getData('text/pr-member')
@@ -340,6 +443,18 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         onDrop={(e) => {
           e.preventDefault()
           e.stopPropagation()
+          const kit = e.dataTransfer.getData('text/pr-kit')
+          if (kit) {
+            planner.assignSpecialist(squad.id, kit)
+            setHeaderDrop(false)
+            return
+          }
+          const assetId = e.dataTransfer.getData('text/pr-asset')
+          if (assetId) {
+            planner.claimVehicle(assetId, squad.id)
+            setHeaderDrop(false)
+            return
+          }
           const squadId = e.dataTransfer.getData('text/pr-squad')
           if (squadId) planner.reorderSquads(squadId, squad.id)
           setHeaderDrop(false)
@@ -407,10 +522,17 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
           ))}
         </div>
       )}
-      <div className="flex min-h-0 flex-1 flex-col gap-1 p-1.5">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-1.5">
         {squad.members.map((m, i) => (
           <MemberRow key={m.id} member={m} index={i} target={squad.id} role={i === 0 ? 'SL' : i === 1 ? '2IC' : undefined} />
         ))}
+        {claimedVehicles.length > 0 && (
+          <div className="space-y-1 border-t border-white/5 pt-1">
+            {claimedVehicles.map((vehicle) => (
+              <VehicleCrewBox key={vehicle.id} vehicle={vehicle} squad={squad} plan={plan} />
+            ))}
+          </div>
+        )}
         <div className="mt-auto">
           {!full && <AddPlayer target={squad.id} />}
         </div>
@@ -419,7 +541,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
   )
 }
 
-export function RosterBoard() {
+export function RosterBoard({ layer }: { layer: LayerData }) {
   const plan = usePlanner((s) => s.plan)!
   const planner = usePlanner()
   const assets = useAssets()
@@ -448,7 +570,7 @@ export function RosterBoard() {
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
           <div className="grid h-full auto-rows-[minmax(220px,1fr)] grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
             {plan.roster.squads.slice(0, 9).map((squad, i) => (
-              <SquadCard key={squad.id} squad={squad} index={i} />
+              <SquadCard key={squad.id} squad={squad} index={i} layer={layer} />
             ))}
             {plan.roster.squads.length < 9 && (
               <button
@@ -460,7 +582,7 @@ export function RosterBoard() {
               </button>
             )}
             <div className="h-full min-h-0 2xl:col-start-5 2xl:row-start-2">
-              <SpecialistKitsCard plan={plan} />
+              <SpecialistKitsCard plan={plan} layer={layer} />
             </div>
           </div>
         </div>

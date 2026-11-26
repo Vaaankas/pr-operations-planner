@@ -255,7 +255,7 @@ function AppInner() {
       />
 
       {ui.view === 'roster' ? (
-        <RosterBoard />
+        <RosterBoard layer={layer} />
       ) : ui.mode === 'preview' ? (
         <PreviewBoard key={`preview:${map.id}:${layer.id}:${stage.id}`} map={map} layer={layer} plan={plan} stage={stage} />
       ) : (

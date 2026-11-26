@@ -238,6 +238,7 @@ export interface Plan {
   stages: Stage[]
   activeStageId: string
   claims: Record<string, string>
+  vehicleCrew?: Record<string, string[]>
   flagTeams?: Record<string, number>
   flagNext?: Record<string, number>
   notes: string

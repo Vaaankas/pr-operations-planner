@@ -89,6 +89,7 @@ interface PlannerStore {
   reorderSquads: (fromId: string, toId: string) => void
   cycleConfirmation: (memberId: string) => void
   claimVehicle: (vehicleId: string, squadId: string | null) => void
+  setVehicleCrew: (vehicleId: string, crew: string[]) => void
   cycleFlagTeam: (cpId: number, current: number) => void
   setRoster: (roster: Roster) => void
   resetAll: () => void
@@ -427,6 +428,11 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
     get().mutate((plan) => {
       if (squadId) plan.claims[vehicleId] = squadId
       else delete plan.claims[vehicleId]
+    }),
+
+  setVehicleCrew: (vehicleId, crew) =>
+    get().mutate((plan) => {
+      plan.vehicleCrew = { ...(plan.vehicleCrew ?? {}), [vehicleId]: crew }
     }),
 
   cycleFlagTeam: (cpId, current) =>

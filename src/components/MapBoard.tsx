@@ -111,6 +111,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [tick, setTick] = useState(0)
   const [hoverFlag, setHoverFlag] = useState<{ cp: ControlPoint; x: number; y: number } | null>(null)
   const [hoverVehicleId, setHoverVehicleId] = useState<string | null>(null)
+  const [hoverCrew, setHoverCrew] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hoverSquad, setHoverSquad] = useState<{ id: string; x: number; y: number } | null>(null)
   const fitted = useRef<string>('')
 
@@ -1431,8 +1432,19 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             return (
               <Group
                 key={v.id}
-                onMouseEnter={() => setHoverVehicleId(v.id)}
-                onMouseLeave={() => setHoverVehicleId(null)}
+                onMouseEnter={() => {
+                  setHoverVehicleId(v.id)
+                  const pointer = stageRef.current?.getPointerPosition()
+                  if (pointer) setHoverCrew({ id: v.id, x: pointer.x, y: pointer.y })
+                }}
+                onMouseMove={() => {
+                  const pointer = stageRef.current?.getPointerPosition()
+                  if (pointer) setHoverCrew({ id: v.id, x: pointer.x, y: pointer.y })
+                }}
+                onMouseLeave={() => {
+                  setHoverVehicleId(null)
+                  setHoverCrew(null)
+                }}
                 onContextMenu={(e) => {
                   e.evt.preventDefault()
                   e.cancelBubble = true
@@ -1890,6 +1902,38 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             ) : (
               <div className="mt-1 text-[9px] text-slate-600">None assigned</div>
             )}
+          </div>
+        )
+      })()}
+
+      {!preview && hoverCrew && (() => {
+        const vehicle = layer.vehicles.find((item) => item.id === hoverCrew.id)
+        if (!vehicle) return null
+        const crew = plan.vehicleCrew?.[vehicle.id] ?? []
+        const allMembers = [
+          ...(plan.roster.commander ? [plan.roster.commander] : []),
+          ...plan.roster.squads.flatMap((squad) => squad.members),
+          ...plan.roster.unassigned,
+        ]
+        const memberName = (id: string | undefined) => id ? allMembers.find((member) => member.id === id)?.name ?? '—' : '—'
+        const seats = ['Driver', 'Gunner', 'Commander']
+        const squad = plan.roster.squads.find((item) => item.id === plan.claims[vehicle.id])
+        return (
+          <div
+            className="pointer-events-none absolute z-30 w-56 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
+            style={{ left: clamp(hoverCrew.x + 18, 8, box.w - 235), top: clamp(hoverCrew.y - 8, 8, box.h - 150) }}
+          >
+            <div className="text-[12px] font-semibold text-slate-100">{vehicle.label}</div>
+            {squad && <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">{squad.name}</div>}
+            <div className="mt-1.5 text-[9px] uppercase tracking-wider text-slate-500">Crew</div>
+            <div className="mt-1 flex flex-col gap-0.5">
+              {Array.from({ length: Math.max(2, crew.length) }).map((_, index) => (
+                <div key={index} className="flex items-center gap-1.5 text-slate-300">
+                  <span className="w-14 font-mono text-[8px] uppercase tracking-wider text-slate-500">{seats[index]}</span>
+                  <span className="truncate">{memberName(crew[index])}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )
       })()}
