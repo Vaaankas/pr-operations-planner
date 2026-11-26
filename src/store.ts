@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import type { DrawElement, LayerData, MapMeta, Member, Plan, Roster, Squad, Stage, Team, UIState, VehicleMove, VehicleTurn } from './types'
-import { clamp, defaultRoster, newSquad, newStage, PHONETIC, PLAYER_CAP, SQUAD_SIZE, SQUAD_TYPES, uid } from './lib/utils'
+import type { DrawElement, LayerData, MapMeta, Member, Plan, Roster, Squad, Stage, StageVisibility, Team, UIState, VehicleMove, VehicleTurn } from './types'
+import { clamp, DEFAULT_STAGE_VISIBILITY, defaultRoster, newSquad, newStage, PHONETIC, PLAYER_CAP, SQUAD_SIZE, SQUAD_TYPES, uid } from './lib/utils'
 
 const HISTORY_LIMIT = 80
 const STORAGE_KEY = 'prplanner.plan.v1'
@@ -73,6 +73,7 @@ interface PlannerStore {
   clearVehicleMove: (vehicleId: string) => void
   addStage: () => void
   updateStage: (id: string, patch: Partial<Stage>) => void
+  toggleStageVisibility: (key: keyof StageVisibility) => void
   removeStage: (id: string) => void
   setActiveStage: (id: string) => void
   addMember: (target: string, name: string, kit?: string) => boolean
@@ -245,6 +246,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       stage.elements = clone(previous.elements).map((el) => ({ ...el, id: uid('el') }))
       stage.moves = clone(previous.moves)
       stage.turns = {}
+      stage.visibility = { ...(previous.visibility ?? DEFAULT_STAGE_VISIBILITY) }
     }
     get().mutate((draft) => {
       draft.stages.push(stage)
@@ -258,6 +260,20 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       const stage = plan.stages.find((s) => s.id === id)
       if (stage) Object.assign(stage, patch)
     }),
+
+  toggleStageVisibility: (key) => {
+    const { plan } = get()
+    if (!plan) return
+    const stage = plan.stages.find((s) => s.id === plan.activeStageId)
+    if (!stage) return
+    const visibility = { ...(stage.visibility ?? DEFAULT_STAGE_VISIBILITY) }
+    visibility[key] = !visibility[key]
+    get().mutate((draft) => {
+      const active = draft.stages.find((s) => s.id === draft.activeStageId)
+      if (active) active.visibility = visibility
+    })
+    useUI.setState({ [key]: visibility[key] } as Pick<UIState, typeof key>)
+  },
 
   removeStage: (id) => {
     const { plan } = get()

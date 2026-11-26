@@ -1,8 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Clock, Eye, EyeOff, Flag, RotateCcw, Shield, Trash2, Truck } from 'lucide-react'
-import type { LayerData, Plan, Stage } from '../types'
-import { usePlanner, useUI } from '../store'
-import { formatTime, parseTime } from '../lib/utils'
+import { Boxes, Clock, Flag, Route as RouteIcon, Shield, Tag, Trash2, Truck, Type } from 'lucide-react'
+import type { LayerData, Plan, Stage, StageVisibility } from '../types'
+import { usePlanner } from '../store'
+import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
+
+const VISIBILITY_OPTIONS: Array<{
+  key: keyof StageVisibility
+  label: string
+  description: string
+  icon: typeof Truck
+}> = [
+  { key: 'showVehicles', label: 'Vehicles', description: 'Spawns and moves', icon: Truck },
+  { key: 'showEnemy', label: 'Enemy assets', description: 'Hostile markers', icon: Shield },
+  { key: 'showFlags', label: 'Flags & radii', description: 'Capture points', icon: Flag },
+  { key: 'showAssets', label: 'Static assets', description: 'Emplacements and crates', icon: Boxes },
+  { key: 'showLabels', label: 'Map labels', description: 'Flag and place names', icon: Tag },
+  { key: 'showVehicleNames', label: 'Vehicle names', description: 'Names and timers', icon: Type },
+  { key: 'showVehiclePaths', label: 'Vehicle paths', description: 'Movement trails', icon: RouteIcon },
+]
 
 interface Props {
   layer: LayerData
@@ -31,11 +46,11 @@ function CommitInput({
 
 export function StagePanel({ layer, plan, stage }: Props) {
   const planner = usePlanner()
-  const ui = useUI()
   const [time, setTime] = useState(formatTime(stage.time))
   const [notes, setNotes] = useState(stage.notes)
   useEffect(() => setTime(formatTime(stage.time)), [stage.time])
   useEffect(() => setNotes(stage.notes), [stage.notes])
+  const visibility = stage.visibility ?? DEFAULT_STAGE_VISIBILITY
 
 
   return (
@@ -88,16 +103,34 @@ export function StagePanel({ layer, plan, stage }: Props) {
         </button>
       </div>
 
+      <div className="h-1/4 min-h-[165px] shrink-0 border-t border-white/10 bg-black/20 p-2">
+        <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">Stage visibility</div>
+        <div className="grid h-[calc(100%-18px)] grid-cols-2 gap-1">
+          {VISIBILITY_OPTIONS.map(({ key, label, description, icon: Icon }) => {
+            const active = visibility[key]
+            return (
+              <button
+                key={key}
+                onClick={() => planner.toggleStageVisibility(key)}
+                className={`flex min-h-0 items-center gap-1.5 rounded border px-1.5 py-1 text-left ${
+                  active
+                    ? 'border-amber-400/40 bg-amber-400/10 text-amber-200'
+                    : 'border-white/10 bg-black/20 text-slate-500 hover:border-white/20 hover:text-slate-300'
+                }`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block truncate text-[10px] font-semibold uppercase tracking-wider">{label}</span>
+                  <span className="block truncate text-[8px] text-slate-500">{description}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
     </div>
   )
 }
 
-function Toggle({ icon, label, value, onClick }: { icon: React.ReactNode; label: string; value: boolean; onClick: () => void }) {
-  return (
-    <button onClick={onClick} className="flex w-full items-center gap-2 rounded px-1 py-1 text-[10px] text-slate-400 hover:bg-white/5">
-      <span className={value ? 'text-amber-400/80' : 'text-slate-600'}>{icon}</span>
-      <span>{label}</span>
-      <span className="ml-auto">{value ? <Eye className="h-3 w-3 text-slate-500" /> : <EyeOff className="h-3 w-3 text-slate-700" />}</span>
-    </button>
-  )
-}
+

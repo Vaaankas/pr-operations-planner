@@ -190,11 +190,22 @@ export interface StageFrame {
   size: number
 }
 
+export interface StageVisibility {
+  showVehicles: boolean
+  showEnemy: boolean
+  showFlags: boolean
+  showAssets: boolean
+  showLabels: boolean
+  showVehicleNames: boolean
+  showVehiclePaths: boolean
+}
+
 export interface Stage {
   id: string
   name: string
   time: number
   frame?: StageFrame
+  visibility?: StageVisibility
   notes: string
   elements: DrawElement[]
   moves: Record<string, VehicleMove>

@@ -1,4 +1,4 @@
-import type { Plan, Squad, Stage, VehicleSpawn } from '../types'
+import type { Plan, Squad, Stage, StageVisibility, VehicleSpawn } from '../types'
 
 export const PLAYER_CAP = 50
 export const SQUAD_SIZE = 8
@@ -79,11 +79,22 @@ export function newSquad(index: number, type = 'INF', name?: string): Squad {
   }
 }
 
+export const DEFAULT_STAGE_VISIBILITY: StageVisibility = {
+  showVehicles: true,
+  showEnemy: true,
+  showFlags: true,
+  showAssets: true,
+  showLabels: true,
+  showVehicleNames: true,
+  showVehiclePaths: true,
+}
+
 export function newStage(index: number, time = 0): Stage {
   return {
     id: uid('st'),
     name: index === 0 ? 'Deployment' : `Stage ${index + 1}`,
     time,
+    visibility: { ...DEFAULT_STAGE_VISIBILITY },
     notes: '',
     elements: [],
     moves: {},

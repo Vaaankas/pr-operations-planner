@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Boxes, Crosshair, Loader2, Map as MapIcon, AlertTriangle, Route as RouteIcon } from 'lucide-react'
 import type { AssetManifest, LayerData, LayerRef, MapIndex, MapMeta, Team } from './types'
 import { makePlan, loadStoredPlan, storePlan, usePlanner, useUI } from './store'
-import { dataUrl } from './lib/utils'
+import { dataUrl, DEFAULT_STAGE_VISIBILITY } from './lib/utils'
 import { AssetProvider } from './lib/assets'
 import { Picker } from './components/Picker'
 import { Header } from './components/Header'
@@ -147,6 +147,21 @@ function AppInner() {
       usePlanner.getState().setActiveStage(plan.stages[0].id)
     }
   }, [plan])
+
+  useEffect(() => {
+    if (!plan) return
+    const active = plan.stages.find((s) => s.id === plan.activeStageId)
+    const visibility = active?.visibility ?? DEFAULT_STAGE_VISIBILITY
+    useUI.setState({
+      showVehicles: visibility.showVehicles,
+      showEnemy: visibility.showEnemy,
+      showFlags: visibility.showFlags,
+      showAssets: visibility.showAssets,
+      showLabels: visibility.showLabels,
+      showVehicleNames: visibility.showVehicleNames,
+      showVehiclePaths: visibility.showVehiclePaths,
+    })
+  }, [plan?.activeStageId, plan?.stages])
 
   const startPlan = useCallback(async (nextMap: MapMeta, ref: LayerRef, side: Team) => {
     if (plan) {
