@@ -329,7 +329,7 @@ function SpecialistKitsCard({ plan, layer }: { plan: Plan; layer: LayerData }) {
         })}
       </div>
       <div className="border-t border-white/5 px-2 py-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-500">
-        Drag kits onto players or squads
+        {mode === 'assets' ? 'Drag assets onto squads' : 'Drag kits onto players or squads'}
       </div>
     </div>
   )
