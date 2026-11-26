@@ -1316,40 +1316,23 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               .filter((group) => group.length > 0)
             const lines: React.ReactNode[] = []
             groups.forEach((group, groupIndex) => {
+              if (group.length < 2) return
+              const alternatives = new Set(group.map((cp) => cp.sgid)).size > 1
               for (let i = 1; i < group.length; i++) {
                 const a = worldToDisplayNorm(group[i - 1].x, group[i - 1].z, layer.world)
                 const b = worldToDisplayNorm(group[i].x, group[i].z, layer.world)
                 lines.push(
                   <Line
-                    key={`parallel-${route.id}-${groupIndex}-${i}`}
+                    key={`${alternatives ? 'alternative' : 'parallel'}-${route.id}-${groupIndex}-${i}`}
                     points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
                     stroke="#f8fafc"
-                    strokeWidth={1.6 * iconScale}
-                    opacity={0.8}
+                    strokeWidth={1.5 * iconScale}
+                    opacity={0.85}
+                    dash={alternatives ? [6 * iconScale, 4 * iconScale] : undefined}
                     lineCap="round"
                     listening={false}
                   />,
                 )
-              }
-              if (groupIndex > 0 && group.length > 1) {
-                const previousGroup = groups[groupIndex - 1]
-                const anchor = previousGroup[previousGroup.length - 1]
-                const a = worldToDisplayNorm(anchor.x, anchor.z, layer.world)
-                for (const cp of group) {
-                  const b = worldToDisplayNorm(cp.x, cp.z, layer.world)
-                  lines.push(
-                    <Line
-                      key={`alternative-${route.id}-${groupIndex}-${cp.id}`}
-                      points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
-                      stroke="#f8fafc"
-                      strokeWidth={1.4 * iconScale}
-                      opacity={0.85}
-                      dash={[6 * iconScale, 4 * iconScale]}
-                      lineCap="round"
-                      listening={false}
-                    />,
-                  )
-                }
               }
             })
             return lines
