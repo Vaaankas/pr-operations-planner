@@ -22,6 +22,7 @@ interface Props {
   plan: Plan
   stage: PlanStage
   preview?: boolean
+  screenScale?: number
 }
 
 const isIconElement = (el: DrawElement) => el.type === 'icon' || el.type === 'unit' || el.type === 'squad'
@@ -71,7 +72,7 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 
 const PENCIL = '#f8fafc'
 
-export function MapBoard({ map, layer, plan, stage, preview = false }: Props) {
+export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1 }: Props) {
   const ui = useUI()
   const assets = useAssets()
   const planner = usePlanner()
@@ -649,7 +650,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false }: Props) {
     return ui.showVehicles
   }
 
-  const iconScale = 1 / view.scale
+  const iconScale = (1 / view.scale) * screenScale
   const stageCursor = panning ? 'grabbing' : ui.tool === 'select' ? 'default' : 'crosshair'
 
   const drawElementNode = (el: DrawElement) => {

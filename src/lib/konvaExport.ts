@@ -35,6 +35,7 @@ export async function captureStageDataUrl(
         layer: src.layer,
         plan: src.plan,
         stage,
+        screenScale: resolution / 900,
       }),
     )
 
