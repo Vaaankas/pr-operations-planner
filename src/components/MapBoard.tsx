@@ -73,6 +73,15 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 
 const PENCIL = '#f8fafc'
 
+function contrastText(color: string): string {
+  const hex = color.replace('#', '')
+  if (hex.length !== 6) return '#f8fafc'
+  const r = parseInt(hex.slice(0, 2), 16)
+  const g = parseInt(hex.slice(2, 4), 16)
+  const b = parseInt(hex.slice(4, 6), 16)
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#0f172a' : '#f8fafc'
+}
+
 export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1 }: Props) {
   const ui = useUI()
   const assets = useAssets()
@@ -1882,11 +1891,21 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               <span className="truncate">{(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}</span>
             </div>
             <div className="mt-1.5 flex flex-col gap-1">
-              {members.map((member) => {
+              {members.map((member, index) => {
                 const kits = assignedKits(plan.roster.specialistAssignments, member.id)
+                const dotColor = squad?.color ?? '#facc15'
                 return (
                   <div key={member.id} className="flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: squad?.color ?? '#facc15' }} />
+                    {index === 0 ? (
+                      <span
+                        className="shrink-0 rounded px-1 font-mono text-[8px] font-bold leading-4"
+                        style={{ background: dotColor, color: contrastText(dotColor) }}
+                      >
+                        SL
+                      </span>
+                    ) : (
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: dotColor }} />
+                    )}
                     <span className="min-w-0 flex-1 truncate text-slate-300">{member.name}</span>
                     <span className="flex shrink-0 items-center gap-0.5">
                       {kits.map((kitId, index) => (
