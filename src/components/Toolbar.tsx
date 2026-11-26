@@ -123,13 +123,14 @@ export function OptionsBar() {
             WIDTH
             <input
               type="range"
-              min={1}
+              min={0.1}
               max={20}
+              step={0.1}
               value={ui.width}
               onChange={(e) => ui.setWidth(Number(e.target.value))}
               className="h-1 w-20 accent-amber-400"
             />
-            <span className="w-4 font-mono text-slate-300">{ui.width}</span>
+            <span className="w-7 font-mono text-slate-300">{ui.width.toFixed(1)}</span>
           </label>
           <label className="flex items-center gap-2 text-[10px] text-slate-400">
             OPACITY

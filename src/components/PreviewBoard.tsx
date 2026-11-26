@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { LayerData, MapMeta, Plan, Stage } from '../types'
-import { usePlanner } from '../store'
+import { usePlanner, useUI } from '../store'
 import { useAssets } from '../lib/assets'
 import { formatTime } from '../lib/utils'
 import { stageSlideData } from '../lib/slide'
+import { getStagePreview, setStagePreview, stagePreviewKey } from '../lib/previewCache'
 import { captureStageDataUrl } from '../lib/konvaExport'
 
 interface Props {
@@ -16,27 +17,34 @@ interface Props {
 
 export function PreviewBoard({ map, layer, plan, stage }: Props) {
   const planner = usePlanner()
+  const ui = useUI()
   const assets = useAssets()
   const stages = [...plan.stages].sort((a, b) => a.time - b.time)
   const stageIndex = stages.findIndex((item) => item.id === stage.id)
+  const cacheKey = stagePreviewKey(plan, map, layer, stage, ui)
   const [images, setImages] = useState<Record<string, string>>({})
   const pending = useRef(new Set<string>())
-  const cacheKey = `${stage.id}:${plan.updatedAt}:${map.id}:${layer.id}`
 
   useEffect(() => {
-    if (images[cacheKey] || pending.current.has(cacheKey)) return
+    const cached = getStagePreview(cacheKey)
+    if (cached) {
+      setImages((current) => (current[cacheKey] === cached ? current : { ...current, [cacheKey]: cached }))
+      return
+    }
+    if (pending.current.has(cacheKey)) return
     pending.current.add(cacheKey)
     captureStageDataUrl({ map, layer, plan, assets }, stage, 2048, 'png')
       .then((src) => {
+        setStagePreview(cacheKey, src)
         setImages((current) => ({ ...current, [cacheKey]: src }))
       })
       .catch((err) => console.error(err))
       .finally(() => {
         pending.current.delete(cacheKey)
       })
-  }, [assets, cacheKey, images, layer, map, plan, stage])
+  }, [assets, cacheKey, layer, map, plan, stage])
 
-  const src = images[cacheKey]
+  const src = images[cacheKey] ?? getStagePreview(cacheKey)
   const slide = stageSlideData(plan, map, layer, stage)
 
   return (

@@ -14,7 +14,7 @@ import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehi
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
-import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, vehicleIconPx } from '../lib/mapStyle'
+import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_DETAIL_SCALE, vehicleIconPx } from '../lib/mapStyle'
 
 interface Props {
   map: MapMeta
@@ -656,7 +656,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const drawElementNode = (el: DrawElement) => {
     const selected = !preview && ui.selectedId === el.id
     const color = selected ? '#fbbf24' : el.color
-    const sw = Math.max(1, (el.width * mapW) / 1000)
+    const sw = Math.max(0.25, el.width * iconScale)
     const common = {
       id: el.id,
       draggable: ui.tool === 'select',
@@ -944,7 +944,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
   const draftNode = () => {
     if (!draft) return null
-    const sw = Math.max(1, (ui.width * mapW) / 1000)
+    const sw = Math.max(0.25, ui.width * iconScale)
     if (draft.kind === 'pen') {
       return (
         <Line
@@ -1009,7 +1009,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     const [a0, b0] = pending.points
     const a = normToScreen(a0)
     const b = normToScreen(b0)
-    const sw = Math.max(1, (ui.width * mapW) / 1000)
+    const sw = Math.max(0.25, ui.width * iconScale)
     if (pending.kind === 'line') {
       return (
         <Arrow
@@ -1189,7 +1189,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             <Line
               points={polygon.flatMap((p) => { const s = normToScreen(p); return [s.x, s.y] })}
               stroke={ui.color}
-              strokeWidth={Math.max(1, (ui.width * mapW) / 1000)}
+              strokeWidth={Math.max(0.25, ui.width * iconScale)}
               dash={[8, 5]}
               closed={false}
               listening={false}
@@ -1331,7 +1331,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const p = worldToDisplayNorm(pos.x, pos.z, layer.world)
             const move = stage.moves[v.id]
             const color = vehicleColor(v, plan, squadColors)
-            const s = vehicleIconPx(v.category) * iconScale * ui.iconSize
+            const s = vehicleIconPx(v.category) * iconScale * ui.iconSize * VEHICLE_DETAIL_SCALE
             const nodeId = `veh_${v.id}`
             const selected = !preview && ui.selectedId === nodeId
             const commanderClaim = plan.claims[v.id] === 'commander'
@@ -1481,34 +1481,34 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {!ready && showName && (
                   <Text
                     text={formatTime(delayRemaining)}
-                    fontSize={10 * iconScale}
+                    fontSize={10 * iconScale * VEHICLE_DETAIL_SCALE}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill="#94a3b8"
                     stroke="rgba(2,6,4,0.92)"
-                    strokeWidth={3 * iconScale}
+                    strokeWidth={3 * iconScale * VEHICLE_DETAIL_SCALE}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.56 + 11 * iconScale}
-                    width={100 * iconScale}
+                    y={dp.y * mapH + s * 0.56 + 11 * iconScale * VEHICLE_DETAIL_SCALE}
+                    width={100 * iconScale * VEHICLE_DETAIL_SCALE}
                     align="center"
-                    x={dp.x * mapW - 50 * iconScale}
+                    x={dp.x * mapW - 50 * iconScale * VEHICLE_DETAIL_SCALE}
                     listening={false}
                   />
                 )}
                 {showName && (
                   <Text
                     text={`${claimPrefix}${v.label}`}
-                    fontSize={9 * iconScale}
+                    fontSize={9 * iconScale * VEHICLE_DETAIL_SCALE}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill={selected ? '#fbbf24' : color}
                     stroke={MAP_TEXT_OUTLINE}
-                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale}
+                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_DETAIL_SCALE}
                     fillAfterStrokeEnabled
                     y={dp.y * mapH + s * 0.56}
-                    width={240 * iconScale}
+                    width={240 * iconScale * VEHICLE_DETAIL_SCALE}
                     align="center"
-                    x={dp.x * mapW - 120 * iconScale}
+                    x={dp.x * mapW - 120 * iconScale * VEHICLE_DETAIL_SCALE}
                     listening={false}
                   />
                 )}
