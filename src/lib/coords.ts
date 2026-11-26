@@ -30,11 +30,6 @@ export function displayRotation(rotation: number): number {
   return (180 - rotation + 360) % 360
 }
 
-const VEHICLE_SPRITE_OFFSET: Record<string, number> = {
-  hades_peak: 0,
-}
-
-export function vehicleSpriteRotation(layerId: string, rotation: number): number {
-  const mapId = layerId.split('__')[0]
-  return (displayRotation(rotation) + (VEHICLE_SPRITE_OFFSET[mapId] ?? 90)) % 360
+export function vehicleSpriteRotation(rotation: number): number {
+  return displayRotation(rotation)
 }

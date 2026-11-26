@@ -1280,7 +1280,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   id={nodeId}
                   x={p.x * mapW}
                   y={p.y * mapH}
-                  rotation={vehicleSpriteRotation(layer.id, pos.rotation)}
+                  rotation={vehicleSpriteRotation(pos.rotation)}
                   draggable={ui.tool === 'select'}
                   listening={ui.tool === 'select' || ui.tool === 'erase'}
                   opacity={v.atStart ? 1 : 0.78}
@@ -1303,7 +1303,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   }}
                   onTransformEnd={(e) => {
                     const node = e.target
-                    const rotation = (270 - node.rotation() + 360) % 360
+                    const rotation = (180 - node.rotation() + 360) % 360
                     node.rotation(0)
                     node.scaleX(1)
                     node.scaleY(1)
