@@ -117,16 +117,19 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-200">
                           {v.label}
                         </span>
-                        <span className="flex h-[22px] shrink-0 flex-col items-end justify-center whitespace-nowrap font-mono text-[8px] leading-[10px] text-slate-500">
-                          <span>Respawn:</span>
-                          <span className="text-[9px] text-slate-400">{v.respawn ? formatTime(v.respawn) : '—'}</span>
+                        <span className="flex h-[22px] shrink-0 items-center gap-2 whitespace-nowrap font-mono text-[8px] leading-[10px] text-slate-500">
+                          {!v.atStart && (
+                            <span className="flex flex-col items-end">
+                              <span>Delay:</span>
+                              <span className="text-[9px] text-slate-400">{formatTime(v.respawn ?? 0)}</span>
+                            </span>
+                          )}
+                          <span className="flex flex-col items-end">
+                            <span>Respawn:</span>
+                            <span className="text-[9px] text-slate-400">{v.respawn ? formatTime(v.respawn) : '—'}</span>
+                          </span>
                         </span>
                       </div>
-                      {!v.atStart && (
-                        <div className="mt-0.5 font-mono text-[9px] text-slate-500">
-                          Delay phase {formatTime(v.respawn ?? 0)}
-                        </div>
-                      )}
                       {moved && (
                         <div className="mt-0.5 flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-wider text-amber-400/80">
                           <button

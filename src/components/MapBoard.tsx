@@ -5,7 +5,7 @@ import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
-import { affiliationColor, clamp, dataUrl, isHiddenVehicle, SQUAD_COLORS } from '../lib/utils'
+import { affiliationColor, clamp, dataUrl, formatTime, isHiddenVehicle, SQUAD_COLORS } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
@@ -1389,6 +1389,23 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     )
                   })()}
                 </Group>
+                {!v.atStart && (
+                  <Text
+                    text={formatTime(v.respawn ?? 0)}
+                    fontSize={8 * iconScale}
+                    fontFamily="Inter, Segoe UI, sans-serif"
+                    fontStyle="bold"
+                    fill="#94a3b8"
+                    stroke="rgba(2,6,4,0.92)"
+                    strokeWidth={2.5 * iconScale}
+                    fillAfterStrokeEnabled
+                    y={dp.y * mapH + s * 0.5}
+                    width={80 * iconScale}
+                    align="center"
+                    x={dp.x * mapW - 40 * iconScale}
+                    listening={false}
+                  />
+                )}
                 {ui.showLabels && !drag && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0) && (
                   <Text
                     text={`${claimPrefix}${v.label}`}
@@ -1399,7 +1416,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.56}
+                    y={dp.y * mapH + s * (v.atStart ? 0.56 : 0.7)}
                     width={240 * iconScale}
                     align="center"
                     x={dp.x * mapW - 120 * iconScale}

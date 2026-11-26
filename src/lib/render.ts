@@ -478,12 +478,21 @@ export async function renderStageCanvas(
       ctx.rotate((vehicleSpriteRotation(layer.id, pos.rotation) * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
+      if (!v.atStart) {
+        ctx.save()
+        ctx.fillStyle = '#94a3b8'
+        ctx.font = `600 ${size * 0.0095}px "Inter", "Segoe UI", sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        ctx.fillText(formatTime(v.respawn ?? 0), x, y + s * 0.52)
+        ctx.restore()
+      }
       const squadId = plan.claims[v.id]
       const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
       if (squadId === 'commander') {
-        label(ctx, `[★] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
+        label(ctx, `[★] ${v.label}`, x, y + s * (v.atStart ? 0.62 : 0.72), size * 0.009, color)
       } else if (squadIndex >= 0) {
-        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
+        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * (v.atStart ? 0.62 : 0.72), size * 0.009, color)
       }
     }
   }
