@@ -21,6 +21,7 @@ interface Props {
   layer: LayerData
   plan: Plan
   stage: PlanStage
+  preview?: boolean
 }
 
 const isIconElement = (el: DrawElement) => el.type === 'icon' || el.type === 'unit' || el.type === 'squad'
@@ -70,7 +71,7 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 
 const PENCIL = '#f8fafc'
 
-export function MapBoard({ map, layer, plan, stage }: Props) {
+export function MapBoard({ map, layer, plan, stage, preview = false }: Props) {
   const ui = useUI()
   const assets = useAssets()
   const planner = usePlanner()
@@ -120,7 +121,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const stageFrame = stage.frame ?? { x: 0, y: 0, size: 1 }
   const frameView = (frame: StageFrame) => {
     const size = clamp(frame.size, 0.03, 1)
-    const scale = Math.min(box.w / (mapW * size), box.h / (mapH * size)) * 0.94
+    const scale = Math.min(box.w / (mapW * size), box.h / (mapH * size)) * (preview ? 1 : 0.94)
     return {
       scale,
       x: box.w / 2 - (frame.x + size / 2) * mapW * scale,
@@ -142,7 +143,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }, [])
 
   useEffect(() => {
-    const key = `${map.id}:${stage.id}:${box.w}x${box.h}`
+    const key = `${map.id}:${stage.id}:${box.w}x${box.h}:${preview ? 'preview' : 'edit'}`
     if (fitted.current === key) return
     fitted.current = key
     setView(frameView(stage.frame ?? { x: 0, y: 0, size: 1 }))
@@ -652,7 +653,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const stageCursor = panning ? 'grabbing' : ui.tool === 'select' ? 'default' : 'crosshair'
 
   const drawElementNode = (el: DrawElement) => {
-    const selected = ui.selectedId === el.id
+    const selected = !preview && ui.selectedId === el.id
     const color = selected ? '#fbbf24' : el.color
     const sw = Math.max(1, (el.width * mapW) / 1000)
     const common = {
@@ -1118,7 +1119,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     <div
       ref={wrapRef}
       className="relative h-full w-full overflow-hidden bg-[#080c0a]"
-      style={{ cursor: stageCursor }}
+      style={{ cursor: preview ? 'default' : stageCursor, pointerEvents: preview ? 'none' : undefined }}
       onPointerDown={() => setFrameSelected(false)}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes('text/pr-squad')) {
@@ -1159,6 +1160,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         ref={stageRef}
         width={box.w}
         height={box.h}
+        listening={!preview}
         scaleX={view.scale}
         scaleY={view.scale}
         x={view.x}
@@ -1330,7 +1332,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const color = vehicleColor(v, plan, squadColors)
             const s = vehicleIconPx(v.category) * iconScale * ui.iconSize
             const nodeId = `veh_${v.id}`
-            const selected = ui.selectedId === nodeId
+            const selected = !preview && ui.selectedId === nodeId
             const commanderClaim = plan.claims[v.id] === 'commander'
             const claimIndex = plan.roster.squads.findIndex((q) => q.id === plan.claims[v.id])
             const claimPrefix = commanderClaim ? '[★] ' : claimIndex >= 0 ? `[${claimIndex + 1}] ` : ''
@@ -1519,7 +1521,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
       </Stage>
 
-      {(() => {
+      {!preview && (() => {
         const fx = frameDraft.x * mapW * view.scale + view.x
         const fy = frameDraft.y * mapH * view.scale + view.y
         const fw = frameDraft.size * mapW * view.scale
@@ -1594,7 +1596,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
-      {(dragVehicle || selectedScreen) && selectedVehicle && ui.tool === 'select' && (() => {
+      {!preview && (dragVehicle || selectedScreen) && selectedVehicle && ui.tool === 'select' && (() => {
         const screen = dragVehicle?.id === selectedVehicle.id
           ? { x: dragVehicle.screenX, y: dragVehicle.screenY }
           : selectedScreen!
@@ -1650,7 +1652,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
-      {dragVehicle && (() => {
+      {!preview && dragVehicle && (() => {
         const v = layer.vehicles.find((item) => item.id === dragVehicle.id)
         if (!v) return null
         const commander = plan.claims[v.id] === 'commander'
@@ -1670,7 +1672,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
-      {textAt && (() => {
+      {!preview && textAt && (() => {
         const at = normToScreen(textAt)
         return (
         <div
@@ -1701,7 +1703,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
-      {(plan.roster.squads.length > 0 || plan.roster.commander) && (
+      {!preview && (plan.roster.squads.length > 0 || plan.roster.commander) && (
         <div className="absolute bottom-16 right-3 z-20 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2.5 py-2">
           {plan.roster.commander && (
           <div
@@ -1750,15 +1752,17 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </div>
       )}
 
-      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded border border-white/10 bg-black/70 p-1">
-        <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(0.8)} title="Zoom out">−</button>
-        <button className="h-7 min-w-12 rounded px-1 text-[10px] font-mono text-slate-400 hover:bg-white/10" onClick={resetView} title="Fit map">
-          {Math.round(view.scale * 100)}%
-        </button>
-        <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(1.25)} title="Zoom in">+</button>
-      </div>
+      {!preview && (
+        <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded border border-white/10 bg-black/70 p-1">
+          <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(0.8)} title="Zoom out">−</button>
+          <button className="h-7 min-w-12 rounded px-1 text-[10px] font-mono text-slate-400 hover:bg-white/10" onClick={resetView} title="Fit map">
+            {Math.round(view.scale * 100)}%
+          </button>
+          <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(1.25)} title="Zoom in">+</button>
+        </div>
+      )}
 
-      {hoverFlag && (() => {
+      {!preview && hoverFlag && (() => {
         const team = captureTeam(plan, hoverFlag.cp)
         const capturable = isCapturable(hoverFlag.cp)
         return (
@@ -1780,7 +1784,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
-      {ui.tool === 'polygon' && (
+      {!preview && ui.tool === 'polygon' && (
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded border border-white/10 bg-black/80 px-3 py-1.5 text-[11px] text-slate-300">
           <span>Click to add points · close on first point · {polygon.length} placed</span>
           <button

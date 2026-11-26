@@ -1,6 +1,6 @@
 import type { AssetManifest, LayerData, MapMeta, Plan, Stage } from '../types'
 import { formatTime, safeName } from './utils'
-import { renderStageCanvas } from './render'
+import { captureStageDataUrl } from './konvaExport'
 
 export type ExportFormat = 'pptx' | 'pdf' | 'png'
 
@@ -88,22 +88,8 @@ async function renderAll(
   const images: { stage: Stage; data: string }[] = []
   for (let i = 0; i < stages.length; i++) {
     onProgress?.(i, stages.length, `Rendering ${stages[i].name}`)
-    const canvas = await renderStageCanvas(src.plan, src.layer, stages[i], src.map, {
-      size: opts.resolution,
-      showFlags: true,
-      showVehicles: true,
-      showEnemy: true,
-      showAssets: false,
-      showLabels: true,
-      showSpawnMarks: true,
-      assets: src.assets,
-      visibleRoutes: opts.visibleRoutes,
-      hiddenCps: opts.hiddenCps,
-      frame: stages[i].frame,
-      detailScale: stages[i].frame?.size ?? 1,
-      iconSize: opts.iconSize ?? 1,
-    })
-    images.push({ stage: stages[i], data: canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined) })
+    const data = await captureStageDataUrl(src, stages[i], opts.resolution, format)
+    images.push({ stage: stages[i], data })
   }
   onProgress?.(stages.length, stages.length, 'Rendered')
   return images

@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { LayerData, MapMeta, Plan, Stage } from '../types'
-import { usePlanner, useUI } from '../store'
-import { useAssets } from '../lib/assets'
-import { renderStageCanvas } from '../lib/render'
+import { usePlanner } from '../store'
 import { formatTime } from '../lib/utils'
+import { captureStageDataUrl } from '../lib/konvaExport'
 
 interface Props {
   map: MapMeta
@@ -14,66 +13,45 @@ interface Props {
 }
 
 export function PreviewBoard({ map, layer, plan, stage }: Props) {
-  const assets = useAssets()
-  const ui = useUI()
   const planner = usePlanner()
   const stages = [...plan.stages].sort((a, b) => a.time - b.time)
   const stageIndex = stages.findIndex((item) => item.id === stage.id)
-  const hostRef = useRef<HTMLDivElement>(null)
-  const [loading, setLoading] = useState(true)
+  const [images, setImages] = useState<Record<string, string>>({})
+  const pending = useRef(new Set<string>())
+  const cacheKey = `${stage.id}:${plan.updatedAt}:${map.id}:${layer.id}`
 
   useEffect(() => {
+    if (images[cacheKey] || pending.current.has(cacheKey)) return
+    pending.current.add(cacheKey)
     let cancelled = false
-    setLoading(true)
-    renderStageCanvas(plan, layer, stage, map, {
-      size: 2048,
-      showFlags: true,
-      showVehicles: true,
-      showEnemy: true,
-      showAssets: false,
-      showLabels: true,
-      showSpawnMarks: true,
-      assets,
-      visibleRoutes: ui.visibleRoutes,
-      hiddenCps: ui.hiddenCps,
-      frame: stage.frame,
-      detailScale: stage.frame?.size ?? 1,
-      iconSize: ui.iconSize,
-    }).then((canvas) => {
-      if (cancelled) return
-      canvas.style.maxWidth = '100%'
-      canvas.style.maxHeight = '100%'
-      canvas.style.width = 'auto'
-      canvas.style.height = 'auto'
-      canvas.style.display = 'block'
-      const host = hostRef.current
-      if (host) {
-        host.replaceChildren(canvas)
-        setLoading(false)
-      }
-    }).catch(() => {
-      if (!cancelled) setLoading(false)
-    })
+    captureStageDataUrl({ map, layer, plan }, stage, 2048, 'png')
+      .then((src) => {
+        if (cancelled) return
+        setImages((current) => ({ ...current, [cacheKey]: src }))
+      })
+      .catch((err) => console.error(err))
+      .finally(() => {
+        pending.current.delete(cacheKey)
+      })
     return () => {
       cancelled = true
     }
-  }, [assets, layer, map, plan, stage, ui.hiddenCps, ui.iconSize, ui.visibleRoutes])
+  }, [cacheKey, images, layer, map, plan, stage])
+
+  const src = images[cacheKey]
 
   return (
     <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#070b08] p-4">
-      <div
-        ref={hostRef}
-        className="flex h-full w-full items-center justify-center"
-        style={{ filter: loading ? 'blur(2px)' : undefined, opacity: loading ? 0.35 : 1 }}
-      />
-      {loading && (
-        <div className="absolute font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
-          Rendering preview
+      {src ? (
+        <img src={src} alt={`${stage.name} preview`} className="block max-h-full max-w-full object-contain" draggable={false} />
+      ) : (
+        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
+          Capturing frame
         </div>
       )}
 
       {stages.length > 1 && (
-        <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded border border-white/15 bg-[#080d0a]/90 px-2 py-1.5 shadow-2xl">
+        <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded border border-white/15 bg-[#080d0a]/90 px-2 py-1.5 shadow-2xl">
           <button
             onClick={() => stageIndex > 0 && planner.setActiveStage(stages[stageIndex - 1].id)}
             disabled={stageIndex <= 0}
