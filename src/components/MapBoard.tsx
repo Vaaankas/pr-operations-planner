@@ -81,6 +81,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const [frameDraft, setFrameDraft] = useState<StageFrame>(stage.frame ?? { x: 0, y: 0, size: 1 })
   const frameDraftRef = useRef<StageFrame>(stage.frame ?? { x: 0, y: 0, size: 1 })
   const [frameDrag, setFrameDrag] = useState<{ mode: string; startX: number; startY: number; frame: StageFrame } | null>(null)
+  const [frameSelected, setFrameSelected] = useState(false)
   const rotateStart = useRef<{ angle: number; rotation: number } | null>(null)
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
@@ -1527,7 +1528,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             <div className="absolute bg-black/55" style={{ left: mapX, top: Math.min(mapBottom, Math.max(mapY, fy + fh)), width: Math.max(0, mapRight - mapX), height: Math.max(0, mapBottom - Math.max(mapY, fy + fh)) }} />
             <div className="absolute bg-black/55" style={{ left: mapX, top: Math.min(mapBottom, Math.max(mapY, fy)), width: Math.max(0, Math.min(fx, mapRight) - mapX), height: Math.max(0, Math.min(mapBottom, fy + fh) - Math.max(mapY, fy)) }} />
             <div className="absolute bg-black/55" style={{ left: Math.min(mapRight, Math.max(mapX, fx + fw)), top: Math.min(mapBottom, Math.max(mapY, fy)), width: Math.max(0, mapRight - Math.max(mapX, fx + fw)), height: Math.max(0, Math.min(mapBottom, fy + fh) - Math.max(mapY, fy)) }} />
-            <div className="absolute border-2 border-amber-400/90 shadow-[0_0_0_1px_rgba(0,0,0,0.8)]" style={{ left: fx, top: fy, width: fw, height: fh }} />
+            <div
+              className={`absolute border-2 shadow-[0_0_0_1px_rgba(0,0,0,0.8)] ${frameSelected ? 'border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.35)]' : 'border-amber-400/90'}`}
+              style={{ left: fx, top: fy, width: fw, height: fh }}
+            />
             {([
               { mode: 'n', x: fx, y: fy, w: fw, h: 8, cursor: 'ns-resize' },
               { mode: 's', x: fx, y: fy + fh - 8, w: fw, h: 8, cursor: 'ns-resize' },
@@ -1541,6 +1545,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 onPointerDown={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
+                  setFrameSelected(true)
                   planner.checkpoint()
                   const p = clientToFrameNorm(e.clientX, e.clientY)
                   setFrameDrag({ mode: edge.mode, startX: p.x, startY: p.y, frame: frameDraft })
@@ -1558,6 +1563,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   onPointerDown={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
+                    setFrameSelected(true)
                     planner.checkpoint()
                     const p = clientToFrameNorm(e.clientX, e.clientY)
                     setFrameDrag({ mode: h.mode, startX: p.x, startY: p.y, frame: frameDraft })
