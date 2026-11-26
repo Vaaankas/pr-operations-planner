@@ -331,6 +331,50 @@ def parse_factions(init_text: str) -> dict[int, dict]:
     return result
 
 
+def parse_layer_factions(init_text: str, mode: str, players: int) -> dict[int, dict]:
+    base: dict[int, dict] = {}
+    matched: dict[int, dict] = {}
+    conditions: list[bool] = []
+    for raw in init_text.splitlines():
+        line = raw.strip()
+        if not line or line.lower().startswith("rem "):
+            continue
+        if line.lower().startswith("if "):
+            condition = True
+            mode_match = re.match(r'if\s+v_mode\s*==\s*"([^"]+)"', line, re.I)
+            layer_match = re.match(r'if\s+v_layer\s*==\s*"([^"]+)"', line, re.I)
+            editor_match = re.match(r"if\s+v_arg1\s*(==|!=)\s*BF2Editor", line, re.I)
+            if mode_match:
+                condition = mode_match.group(1).lower() == mode.lower()
+            elif layer_match:
+                condition = layer_match.group(1) == str(players)
+            elif editor_match:
+                condition = editor_match.group(1) == "!="
+            conditions.append(condition)
+            continue
+        if line.lower().startswith("endif"):
+            if conditions:
+                conditions.pop()
+            continue
+        if line.lower().startswith("else"):
+            if conditions:
+                conditions[-1] = not conditions[-1]
+            continue
+        m = re.search(r"faction_init\.con\s+(\d+)\s+\"([^\"]+)\"", line)
+        if not m:
+            continue
+        team = int(m.group(1))
+        key = m.group(2)
+        full, short = clean_faction(key)
+        value = {"key": key, "name": full, "short": short}
+        if conditions:
+            if all(conditions):
+                matched[team] = value
+        else:
+            base[team] = value
+    return matched or base
+
+
 TEMPLATE_CREATE = re.compile(r"ObjectTemplate\.create\s+(\w+)\s+(\S+)")
 INSTANCE_CREATE = re.compile(r"^\s*Object\.create\s+(\S+)", re.M)
 
@@ -482,7 +526,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
                 layer_init = read_zip_text(server, init_name)
                 if not layer_init:
                     continue
-                parsed_factions = parse_factions(layer_init)
+                parsed_factions = parse_layer_factions(layer_init, mode, players)
                 if parsed_factions:
                     factions = parsed_factions
                     break

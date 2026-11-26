@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Clock, Eye, EyeOff, Flag, PencilRuler, RotateCcw, Shield, Trash2, Truck } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
@@ -82,7 +82,7 @@ export function StagePanel({ layer, plan, stage }: Props) {
             onChange={(e) => setNotes(e.target.value)}
             onBlur={() => notes !== stage.notes && planner.updateStage(stage.id, { notes })}
             rows={8}
-            placeholder="Intent, tasks, timing, coordinationвЂ¦"
+            placeholder="Intent, tasks, timing, coordination..."
             className="w-full resize-none rounded border border-white/10 bg-black/30 px-2 py-2 text-[12px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/50"
           />
         </div>
@@ -97,26 +97,6 @@ export function StagePanel({ layer, plan, stage }: Props) {
             <div className="font-mono text-lg text-slate-200">{moves}</div>
           </div>
         </div>
-
-        <div>
-          <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">Planning side</div>
-          <div className="grid grid-cols-2 gap-1.5">
-            {[1, 2].map((t) => {
-              const f = layer.factions[String(t)]
-              return (
-                <button
-                  key={t}
-                  onClick={() => planner.setMeta({ side: t as 1 | 2 })}
-                  className={`rounded border px-2 py-1.5 text-left ${plan.side === t ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/10 hover:border-white/20'}`}
-                >
-                  <div className="truncate text-[11px] font-semibold text-slate-200">{f?.name ?? `Team ${t}`}</div>
-                  <div className="font-mono text-[9px] uppercase tracking-wider text-slate-500">{f?.short ?? 'вЂ”'}</div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
 
         <button
           onClick={() => planner.removeStage(stage.id)}

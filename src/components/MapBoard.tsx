@@ -1106,7 +1106,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         <Layer listening={ui.tool === 'select'}>
           {ui.showFlags && visibleRoutes.flatMap((r) => {
             const index = routes.findIndex((x) => x.id === r.id)
-            return routeSegments(layer, r).map(([from, to], i) => {
+            return routeSegments(layer, r)
+              .filter(([from, to]) => !ui.hiddenCps.includes(from.id) && !ui.hiddenCps.includes(to.id))
+              .map(([from, to], i) => {
               const a = worldToDisplayNorm(from.x, from.z, layer.world)
               const b = worldToDisplayNorm(to.x, to.z, layer.world)
               return (

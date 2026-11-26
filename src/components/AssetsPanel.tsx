@@ -53,15 +53,12 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
       .filter((g) => g.list.length > 0)
   }, [vehicles, plan.side])
 
-  const startCount = layer.vehicles.filter((v) => v.atStart).length
-
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-white/10 px-3 py-2">
         <div className="flex items-center gap-2">
           <Crosshair className="h-3.5 w-3.5 text-amber-400" />
           <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-300">Asset manifest</span>
-          <span className="ml-auto font-mono text-[10px] text-slate-500">{startCount} at start</span>
         </div>
         <div className="mt-2 flex items-center gap-1.5">
           <div className="relative flex-1">
