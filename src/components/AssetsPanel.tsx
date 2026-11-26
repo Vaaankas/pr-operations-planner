@@ -110,7 +110,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                     title={v.template}
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/40" style={{ border: `1px solid ${color}66` }}>
-                      <GameIcon path={vehicleIconPath(assets, v)} tint={color} size={24} />
+                      <GameIcon path={vehicleIconPath(assets, v)} tint={color} size={28} pixelated={false} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">

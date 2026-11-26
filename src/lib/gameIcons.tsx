@@ -114,14 +114,16 @@ export function GameIcon({
   size = 24,
   className,
   alt = '',
+  pixelated = true,
 }: {
   path: string | undefined
   tint?: string
   size?: number
   className?: string
   alt?: string
+  pixelated?: boolean
 }) {
   const src = useTintedSrc(path, tint)
   if (!src) return <span className={className} style={{ width: size, height: size }} />
-  return <img src={src} alt={alt} className={className} style={{ width: size, height: size, objectFit: 'contain', imageRendering: 'pixelated' }} draggable={false} />
+  return <img src={src} alt={alt} className={className} style={{ width: size, height: size, objectFit: 'contain', imageRendering: pixelated ? 'pixelated' : 'auto' }} draggable={false} />
 }
