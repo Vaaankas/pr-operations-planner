@@ -113,6 +113,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [hoverVehicleId, setHoverVehicleId] = useState<string | null>(null)
   const [hoverCrew, setHoverCrew] = useState<{ id: string; x: number; y: number } | null>(null)
   const [hoverSquad, setHoverSquad] = useState<{ id: string; x: number; y: number } | null>(null)
+  const [pinnedSquadId, setPinnedSquadId] = useState<string | null>(null)
   const fitted = useRef<string>('')
 
   const routes = layer.routes ?? []
@@ -1206,7 +1207,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       ref={wrapRef}
       className="relative h-full w-full overflow-hidden bg-[#080c0a]"
       style={{ cursor: preview ? 'default' : stageCursor, pointerEvents: preview ? 'none' : undefined }}
-      onPointerDown={() => setFrameSelected(false)}
+      onPointerDown={() => {
+        setFrameSelected(false)
+        setPinnedSquadId(null)
+      }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes('text/pr-squad')) {
           e.preventDefault()
@@ -1807,6 +1811,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               e.dataTransfer.setData('text/pr-squad', 'commander')
               e.dataTransfer.effectAllowed = 'copy'
             }}
+            onMouseEnter={() => setHoverSquad({ id: 'commander', x: 0, y: 0 })}
+            onMouseLeave={() => setHoverSquad(null)}
+            onClick={() => setPinnedSquadId((current) => current === 'commander' ? null : 'commander')}
             className="flex cursor-grab items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-200 active:cursor-grabbing"
             title="Drag onto the map to place a commander marker"
           >
@@ -1831,6 +1838,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 e.dataTransfer.setData('text/pr-squad', s.id)
                 e.dataTransfer.effectAllowed = 'copy'
               }}
+              onMouseEnter={() => setHoverSquad({ id: s.id, x: 0, y: 0 })}
+              onMouseLeave={() => setHoverSquad(null)}
+              onClick={() => setPinnedSquadId((current) => current === s.id ? null : s.id)}
               className="flex cursor-grab items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-200 active:cursor-grabbing"
               title="Drag onto the map to place a squad badge"
             >
@@ -1878,8 +1888,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         )
       })()}
 
-      {!preview && (hoverSquad || selectedSquadId) && (() => {
-        const squadPopupId = hoverSquad?.id ?? selectedSquadId
+      {!preview && (hoverSquad || selectedSquadId || pinnedSquadId) && (() => {
+        const squadPopupId = hoverSquad?.id ?? selectedSquadId ?? pinnedSquadId
         const squad = plan.roster.squads.find((item) => item.id === squadPopupId)
         const isCommander = squadPopupId === 'commander'
         const commanderMember = isCommander ? plan.roster.commander : null
