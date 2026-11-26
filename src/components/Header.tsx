@@ -91,21 +91,6 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         {side?.name ?? `Team ${plan.side}`}
       </span>
 
-      <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
-        <button
-          onClick={() => ui.setView('plan')}
-          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Battle Plan
-        </button>
-        <button
-          onClick={() => ui.setView('roster')}
-          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Roster
-        </button>
-      </div>
-
       <span
         className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
         title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} unconfirmed`}
@@ -118,16 +103,22 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
       <div className="ml-auto flex items-center gap-1.5">
         <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
           <button
-            onClick={() => ui.setMode('edit')}
-            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.mode === 'edit' ? 'bg-white/15 text-slate-100' : 'text-slate-500 hover:text-slate-300'}`}
+            onClick={() => { ui.setView('plan'); ui.setMode('edit') }}
+            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'edit' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
           >
-            Edit
+            Edit Plan
           </button>
           <button
-            onClick={() => ui.setMode('preview')}
-            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.mode === 'preview' ? 'bg-amber-400 text-black' : 'text-slate-500 hover:text-slate-300'}`}
+            onClick={() => { ui.setView('plan'); ui.setMode('preview') }}
+            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'preview' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
           >
             Preview
+          </button>
+          <button
+            onClick={() => ui.setView('roster')}
+            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Roster
           </button>
         </div>
         <button onClick={() => planner.undo()} disabled={!canUndo} className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Undo (Ctrl+Z)">

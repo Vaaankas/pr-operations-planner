@@ -269,8 +269,8 @@ function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number
   ctx.font = `600 ${f}px "Inter", "Segoe UI", sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  ctx.lineWidth = Math.max(2, f * 0.28)
-  ctx.strokeStyle = 'rgba(2,6,4,0.9)'
+  ctx.lineWidth = Math.max(1, f * 0.12)
+  ctx.strokeStyle = 'rgba(2,6,4,0.68)'
   ctx.strokeText(text, x, y)
   ctx.fillStyle = color
   ctx.fillText(text, x, y)

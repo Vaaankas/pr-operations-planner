@@ -127,7 +127,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       y: box.h / 2 - (frame.y + size / 2) * mapH * scale,
     }
   }
-  const fitScale = frameView(stageFrame).scale
+  const fullMapFit = Math.min(box.w / mapW, box.h / mapH) * 0.94
+  const minZoom = Math.max(0.02, fullMapFit * 0.4)
 
   useEffect(() => {
     const el = wrapRef.current
@@ -302,7 +303,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     if (!pointer) return
     const old = view.scale
     const dir = e.evt.deltaY > 0 ? 0.9 : 1.1
-    const next = clamp(old * dir, Math.max(0.02, fitScale * 0.4), 20)
+    const next = clamp(old * dir, minZoom, 20)
     const wx = (pointer.x - view.x) / old
     const wy = (pointer.y - view.y) / old
     setView({ scale: next, x: pointer.x - wx * next, y: pointer.y - wy * next })
@@ -310,7 +311,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
 
   const zoomBy = (factor: number) => {
     const old = view.scale
-    const next = clamp(old * factor, Math.max(0.02, fitScale * 0.4), 20)
+    const next = clamp(old * factor, minZoom, 20)
     const cx = box.w / 2
     const cy = box.h / 2
     const wx = (cx - view.x) / old
