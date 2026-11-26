@@ -639,6 +639,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     return layer.vehicles.find((v) => `veh_${v.id}` === ui.selectedId) ?? null
   }, [layer.vehicles, ui.selectedId, ui.selectedKind])
 
+  const selectedSquadId = useMemo(() => {
+    if (ui.selectedKind !== 'element') return null
+    const element = stage.elements.find(
+      (item): item is Extract<DrawElement, { type: 'squad' }> => item.id === ui.selectedId && item.type === 'squad',
+    )
+    return element?.squadId ?? null
+  }, [stage.elements, ui.selectedId, ui.selectedKind])
+
   const selectedVehiclePos = selectedVehicle ? vehiclePosition(selectedVehicle) : null
 
   const selectedScreen = selectedVehiclePos
@@ -1870,9 +1878,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         )
       })()}
 
-      {!preview && hoverSquad && (() => {
-        const squad = plan.roster.squads.find((item) => item.id === hoverSquad.id)
-        const isCommander = hoverSquad.id === 'commander'
+      {!preview && (hoverSquad || selectedSquadId) && (() => {
+        const squadPopupId = hoverSquad?.id ?? selectedSquadId
+        const squad = plan.roster.squads.find((item) => item.id === squadPopupId)
+        const isCommander = squadPopupId === 'commander'
         const commanderMember = isCommander ? plan.roster.commander : null
         const members = squad ? squad.members : commanderMember ? [commanderMember] : []
         const squadIndex = squad ? plan.roster.squads.findIndex((item) => item.id === squad.id) : -1
