@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, Star } from 'lucide-react'
+import { ArrowUp } from 'lucide-react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
@@ -1895,12 +1895,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 const dotColor = squad?.color ?? '#facc15'
                 return (
                   <div key={member.id} className="flex items-center gap-2">
-                    {isCommander ? (
-                      <Star className="h-3 w-3 shrink-0" style={{ color: '#facc15', fill: '#facc15' }} />
-                    ) : index === 0 ? (
-                      <Star className="h-3 w-3 shrink-0" style={{ color: dotColor, fill: dotColor }} />
+                    {isCommander || index === 0 ? (
+                      <span
+                        className="w-3 shrink-0 text-center text-[11px] leading-none"
+                        style={{ color: isCommander ? '#facc15' : dotColor }}
+                      >
+                        ★
+                      </span>
                     ) : (
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: dotColor }} />
+                      <span className="flex w-3 shrink-0 justify-center">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: dotColor }} />
+                      </span>
                     )}
                     <span className="min-w-0 flex-1 truncate text-slate-300">{member.name}</span>
                     <span className="flex shrink-0 items-center gap-0.5">
