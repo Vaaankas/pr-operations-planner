@@ -1949,7 +1949,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           >
             <div className="text-[12px] font-semibold text-slate-100">{vehicle.label}</div>
             {squad && (
-              <div className="mt-0.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-slate-500">
+              <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-slate-300">
                 {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={24} />}
                 <span className="truncate">{squad.name}</span>
               </div>
