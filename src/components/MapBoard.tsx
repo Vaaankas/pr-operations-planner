@@ -1867,12 +1867,19 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const squad = plan.roster.squads.find((item) => item.id === hoverSquad.id)
         const commanderMember = hoverSquad.id === 'commander' ? plan.roster.commander : null
         const members = squad ? squad.members : commanderMember ? [commanderMember] : []
+        const squadIndex = squad ? plan.roster.squads.findIndex((item) => item.id === squad.id) : -1
+        const squadIcon = squad ? assets.squads[String(squadIndex + 1)] : assets.commander
         return (
           <div
             className="pointer-events-none absolute right-3 top-3 z-30 w-fit min-w-32 max-w-40 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
           >
-            <div className="text-[12px] font-semibold text-slate-100">
-              {(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}
+            <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
+              {squadIcon && (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black/50">
+                  <GameIcon path={squadIcon} tint={squad?.color ?? '#facc15'} size={18} />
+                </span>
+              )}
+              <span className="truncate">{(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}</span>
             </div>
             <div className="mt-1.5 flex flex-col gap-1">
               {members.map((member) => {
@@ -1905,12 +1912,19 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         ]
         const names = crew.map((id) => allMembers.find((member) => member.id === id)?.name).filter(Boolean)
         const squad = plan.roster.squads.find((item) => item.id === plan.claims[vehicle.id])
+        const squadIndex = squad ? plan.roster.squads.findIndex((item) => item.id === squad.id) : -1
+        const squadIcon = squad ? assets.squads[String(squadIndex + 1)] : undefined
         return (
           <div
             className="pointer-events-none absolute right-3 top-3 z-30 w-fit min-w-[7.5rem] max-w-36 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
           >
             <div className="text-[12px] font-semibold text-slate-100">{vehicle.label}</div>
-            {squad && <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">{squad.name}</div>}
+            {squad && (
+              <div className="mt-0.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-slate-500">
+                {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={14} />}
+                <span className="truncate">{squad.name}</span>
+              </div>
+            )}
             <div className="mt-1.5 text-[9px] uppercase tracking-wider text-slate-500">Crew</div>
             {names.length > 0 ? (
               <div className="mt-1 flex flex-col gap-0.5 text-slate-300">

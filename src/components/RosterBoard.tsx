@@ -342,6 +342,8 @@ function VehicleCrewBox({ vehicle, squad, plan }: { vehicle: VehicleSpawn; squad
   const crew = (plan.vehicleCrew?.[vehicle.id] ?? []).filter((id) => squad.members.some((member) => member.id === id))
   const icon = vehicleIconPath(assets, vehicle)
   const crewMembers = crew.map((id) => squad.members.find((member) => member.id === id)).filter(Boolean)
+  const squadIndex = plan.roster.squads.findIndex((item) => item.id === squad.id)
+  const squadIcon = assets.squads[String(squadIndex + 1)]
   return (
     <div
       onDragOver={(e) => {
@@ -362,6 +364,7 @@ function VehicleCrewBox({ vehicle, squad, plan }: { vehicle: VehicleSpawn; squad
       <div className="flex items-center gap-1.5">
         {icon && <img src={dataUrl(icon)} alt="" className="h-4 w-4 object-contain" />}
         <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-200">{vehicle.label}</span>
+        {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={14} />}
         <button
           onClick={() => {
             planner.claimVehicle(vehicle.id, null)
