@@ -15,7 +15,7 @@ import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gam
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
 import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_DETAIL_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
-import { specialistKit } from '../lib/kits'
+import { assignedKits, specialistKit } from '../lib/kits'
 
 interface Props {
   map: MapMeta
@@ -1852,13 +1852,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const squad = plan.roster.squads.find((item) => item.id === hoverSquad.id)
         const commanderMember = hoverSquad.id === 'commander' ? plan.roster.commander : null
         const strength = squad ? squad.members.length : commanderMember ? 1 : 0
-        const targetIds = squad
-          ? [squad.id, ...squad.members.map((member) => member.id)]
-          : commanderMember ? [commanderMember.id] : []
         const counts = new Map<string, number>()
-        for (const target of targetIds) {
-          const kit = plan.roster.specialistAssignments?.[target]
-          if (kit) counts.set(kit, (counts.get(kit) ?? 0) + 1)
+        if (squad) {
+          for (const kitId of assignedKits(plan.roster.specialistAssignments, squad.id)) {
+            counts.set(kitId, (counts.get(kitId) ?? 0) + 1)
+          }
         }
         return (
           <div

@@ -20,6 +20,15 @@ export function specialistKit(id: string | undefined): SpecialistKit | undefined
   return SPECIALIST_KITS.find((kit) => kit.id === id)
 }
 
+export function assignedKits(
+  assignments: Record<string, string[]> | undefined,
+  targetId: string,
+): string[] {
+  const value = assignments?.[targetId] as unknown as string[] | string | undefined
+  if (!value) return []
+  return Array.isArray(value) ? value : [value]
+}
+
 export function specialistLimit(kit: SpecialistKit, players: number): number {
   if (players <= 7) return kit.limits[0]
   if (players <= 15) return kit.limits[1]

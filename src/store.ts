@@ -82,7 +82,7 @@ interface PlannerStore {
   addSquad: () => void
   setSpecialistCount: (kit: string, count: number) => void
   assignSpecialist: (targetId: string, kit: string) => void
-  clearSpecialist: (targetId: string) => void
+  clearSpecialist: (targetId: string, kit?: string) => void
   updateSquad: (squadId: string, patch: Partial<Omit<Squad, 'members'>>) => void
   removeSquad: (squadId: string) => void
   reorderSquads: (fromId: string, toId: string) => void
@@ -374,16 +374,28 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 
   assignSpecialist: (targetId, kit) =>
     get().mutate((plan) => {
-      plan.roster.specialistAssignments = {
-        ...(plan.roster.specialistAssignments ?? {}),
-        [targetId]: kit,
-      }
+      if (!plan.roster.squads.some((squad) => squad.id === targetId)) return
+      const assignments = { ...(plan.roster.specialistAssignments ?? {}) }
+      const current = assignments[targetId] as unknown as string[] | string | undefined
+      const list = Array.isArray(current) ? [...current] : current ? [current] : []
+      if (list.length >= 4) return
+      assignments[targetId] = [...list, kit]
+      plan.roster.specialistAssignments = assignments
     }),
 
-  clearSpecialist: (targetId) =>
+  clearSpecialist: (targetId, kit) =>
     get().mutate((plan) => {
       const assignments = { ...(plan.roster.specialistAssignments ?? {}) }
-      delete assignments[targetId]
+      if (!kit) {
+        delete assignments[targetId]
+      } else {
+        const current = assignments[targetId] as unknown as string[] | string | undefined
+        const list = Array.isArray(current) ? [...current] : current ? [current] : []
+        const index = list.indexOf(kit)
+        if (index >= 0) list.splice(index, 1)
+        if (list.length) assignments[targetId] = list
+        else delete assignments[targetId]
+      }
       plan.roster.specialistAssignments = assignments
     }),
 
@@ -478,7 +490,7 @@ export const useUI = create<UIState & {
   unitAffiliation: 'hostile',
   selectedId: null,
   selectedKind: null,
-  rightTab: 'assets',
+  rightTab: 'stage',
   showVehicles: true,
   showEnemy: true,
   showFlags: true,

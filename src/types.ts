@@ -222,7 +222,7 @@ export interface Roster {
   squads: Squad[]
   unassigned: Member[]
   specialists?: Record<string, number>
-  specialistAssignments?: Record<string, string>
+  specialistAssignments?: Record<string, string[]>
 }
 
 export interface Plan {

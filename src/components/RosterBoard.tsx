@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { GripVertical, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
 import type { Member, Plan, Squad } from '../types'
 import { usePlanner } from '../store'
+import { cpFlag, useAssets } from '../lib/assets'
 import { dataUrl, playerCount, SQUAD_COLORS } from '../lib/utils'
-import { SPECIALIST_KITS, specialistKit, specialistLimit } from '../lib/kits'
+import { assignedKits, SPECIALIST_KITS, specialistKit, specialistLimit } from '../lib/kits'
+import { GameIcon } from '../lib/gameIcons'
 
 function EditableName({ value, onCommit, className, placeholder }: { value: string; onCommit: (v: string) => void; className?: string; placeholder?: string }) {
   const [v, setV] = useState(value)
@@ -84,10 +86,8 @@ function MemberRow({
   target: string
 }) {
   const planner = usePlanner()
-  const plan = usePlanner((s) => s.plan)
   const [over, setOver] = useState(false)
   const namePointer = useRef(false)
-  const assignedKit = specialistKit(plan?.roster.specialistAssignments?.[member.id])
   return (
     <div
       draggable
@@ -111,13 +111,9 @@ function MemberRow({
       onDragLeave={() => setOver(false)}
       onDrop={(e) => {
         e.preventDefault()
-        e.stopPropagation()
         setOver(false)
-        const kit = e.dataTransfer.getData('text/pr-kit')
-        if (kit) {
-          planner.assignSpecialist(member.id, kit)
-          return
-        }
+        if (e.dataTransfer.getData('text/pr-kit')) return
+        e.stopPropagation()
         const id = e.dataTransfer.getData('text/pr-member')
         if (id) planner.moveMember(id, target, index)
       }}
@@ -134,18 +130,6 @@ function MemberRow({
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
         className="min-w-0 truncate bg-transparent text-[14px] font-medium text-slate-200 outline-none"
       />
-      {assignedKit && (
-        <button
-          onContextMenu={(e) => {
-            e.preventDefault()
-            planner.clearSpecialist(member.id)
-          }}
-          title={`${assignedKit.name} — right-click to clear`}
-          className="shrink-0"
-        >
-          <img src={dataUrl(`icons/kits/${assignedKit.id}.webp`)} alt={assignedKit.short} className="h-4 w-4 object-contain" />
-        </button>
-      )}
       <ConfirmationToggle member={member} />
       <button onClick={() => planner.removeMember(member.id)} title="Remove player">
         <X className="h-3.5 w-3.5 text-slate-500 hover:text-rose-400" />
@@ -205,10 +189,12 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
 function SpecialistKitsCard({ plan }: { plan: Plan }) {
   const players = playerCount(plan)
   const assignments = plan.roster.specialistAssignments ?? {}
-  const counts = Object.values(assignments).reduce<Record<string, number>>((acc, kit) => {
-    acc[kit] = (acc[kit] ?? 0) + 1
-    return acc
-  }, {})
+  const counts = Object.values(assignments)
+    .flatMap((value) => (Array.isArray(value) ? value : [value as unknown as string]))
+    .reduce<Record<string, number>>((acc, kit) => {
+      acc[kit] = (acc[kit] ?? 0) + 1
+      return acc
+    }, {})
   return (
     <div className="flex h-full min-h-0 flex-col rounded border border-white/10 bg-[#0b120e]/85">
       <div className="flex items-center gap-2 border-b border-white/5 px-2 py-1.5">
@@ -244,8 +230,8 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
           )
         })}
       </div>
-      <div className="border-t border-white/5 px-2 py-1 font-mono text-[8px] uppercase tracking-wider text-slate-600">
-        Drag a kit onto a player or squad
+      <div className="border-t border-white/5 px-2 py-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-500">
+        Drag kits onto squads · max 4
       </div>
     </div>
   )
@@ -253,13 +239,14 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
 
 function SquadCard({ squad, index }: { squad: Squad; index: number }) {
   const planner = usePlanner()
+  const assets = useAssets()
   const plan = usePlanner((s) => s.plan)
   const [drop, setDrop] = useState(false)
   const [colorOpen, setColorOpen] = useState(false)
   const [headerDrop, setHeaderDrop] = useState(false)
   const namePointer = useRef(false)
   const full = squad.members.length >= 9
-  const assignedKit = specialistKit(plan?.roster.specialistAssignments?.[squad.id])
+  const assignedKitIds = assignedKits(plan?.roster.specialistAssignments, squad.id)
   return (
     <div
       onDragOver={(e) => {
@@ -286,11 +273,13 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         draggable
         onPointerDown={(e) => {
           const target = e.target as HTMLElement
-          namePointer.current = target.tagName === 'INPUT' || !!target.closest('[data-name-text]')
+          namePointer.current = target.tagName === 'INPUT'
+            || !!target.closest('[data-name-text]')
+            || !!target.closest('[data-squad-icon]')
         }}
         onDragStart={(e) => {
           const target = e.target as HTMLElement
-          if (namePointer.current || target.tagName === 'INPUT' || target.closest('[data-name-text]')) {
+          if (namePointer.current || target.tagName === 'INPUT' || target.closest('[data-name-text]') || target.closest('[data-squad-icon]')) {
             e.preventDefault()
             return
           }
@@ -317,28 +306,41 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         <span className="cursor-grab active:cursor-grabbing" title="Drag squad">
           <GripVertical className="h-3.5 w-3.5 text-slate-600" />
         </span>
-        <span className="w-6 shrink-0 border-0 text-left font-mono text-[20px] font-bold leading-none text-slate-100 outline-none">
-          {index + 1}
-        </span>
+        <button
+          data-squad-icon
+          onClick={() => setColorOpen(!colorOpen)}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#07110a]"
+          title="Squad colour"
+        >
+          {assets.squads[String(index + 1)] ? (
+            <GameIcon path={assets.squads[String(index + 1)]} tint={squad.color} size={26} />
+          ) : (
+            <span className="font-mono text-[20px] font-bold text-slate-100">{index + 1}</span>
+          )}
+        </button>
         <EditableName
           value={squad.name}
           onCommit={(name) => planner.updateSquad(squad.id, { name })}
           placeholder="Squad name"
           className="min-w-0 border-0 bg-transparent text-[14px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
         />
-        {assignedKit && (
-          <button
-            onContextMenu={(e) => {
-              e.preventDefault()
-              planner.clearSpecialist(squad.id)
-            }}
-            title={`${assignedKit.name} — right-click to clear`}
-            className="shrink-0"
-          >
-            <img src={dataUrl(`icons/kits/${assignedKit.id}.webp`)} alt={assignedKit.short} className="h-4 w-4 object-contain" />
-          </button>
-        )}
-        <button onClick={() => setColorOpen(!colorOpen)} className="h-3.5 w-3.5 rounded-full border border-white/40" style={{ background: squad.color }} title="Squad colour" />
+        {assignedKitIds.map((kitId, kitIndex) => {
+          const kit = specialistKit(kitId)
+          if (!kit) return null
+          return (
+            <button
+              key={`${kitId}-${kitIndex}`}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                planner.clearSpecialist(squad.id, kitId)
+              }}
+              title={`${kit.name} — right-click to clear`}
+              className="shrink-0"
+            >
+              <img src={dataUrl(`icons/kits/${kitId}.webp`)} alt={kit.short} className="h-4 w-4 object-contain" />
+            </button>
+          )
+        })}
         <span className={`font-mono text-[12px] ${full ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/9</span>
         <button onClick={() => planner.removeSquad(squad.id)} className="text-slate-600 hover:text-rose-400" title="Delete squad">
           <Trash2 className="h-3.5 w-3.5" />
@@ -346,7 +348,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       </div>
       {colorOpen && (
         <div className="flex flex-wrap gap-1.5 border-b border-white/5 px-2 py-1.5">
-          {SQUAD_COLORS.concat(['#ef4444']).map((c) => (
+          {SQUAD_COLORS.map((c) => (
             <button
               key={c}
               onClick={() => {
