@@ -196,6 +196,7 @@ export interface StageVisibility {
   showFlags: boolean
   showAssets: boolean
   showLabels: boolean
+  showDrawings: boolean
   showVehicleNames: boolean
   showVehiclePaths: boolean
 }
@@ -284,6 +285,7 @@ export interface UIState {
   showFlags: boolean
   showAssets: boolean
   showLabels: boolean
+  showDrawings: boolean
   showVehicleNames: boolean
   showVehiclePaths: boolean
   hiddenVehiclePaths: string[]

@@ -246,7 +246,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       stage.elements = clone(previous.elements).map((el) => ({ ...el, id: uid('el') }))
       stage.moves = clone(previous.moves)
       stage.turns = {}
-      stage.visibility = { ...(previous.visibility ?? DEFAULT_STAGE_VISIBILITY) }
+      stage.visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(previous.visibility ?? {}) }
     }
     get().mutate((draft) => {
       draft.stages.push(stage)
@@ -501,7 +501,7 @@ export const useUI = create<UIState & {
   setAffiliation: (a: UIState['unitAffiliation']) => void
   setSelected: (id: string | null, kind: UIState['selectedKind']) => void
   setRightTab: (tab: UIState['rightTab']) => void
-  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels' | 'showVehicleNames' | 'showVehiclePaths') => void
+  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels' | 'showDrawings' | 'showVehicleNames' | 'showVehiclePaths') => void
   toggleVehiclePath: (vehicleId: string) => void
   setExportOpen: (open: boolean) => void
   setHelpOpen: (open: boolean) => void
@@ -531,6 +531,7 @@ export const useUI = create<UIState & {
   showFlags: true,
   showAssets: true,
   showLabels: true,
+  showDrawings: true,
   showVehicleNames: true,
   showVehiclePaths: true,
   hiddenVehiclePaths: [],

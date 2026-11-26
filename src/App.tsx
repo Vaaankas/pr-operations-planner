@@ -151,13 +151,14 @@ function AppInner() {
   useEffect(() => {
     if (!plan) return
     const active = plan.stages.find((s) => s.id === plan.activeStageId)
-    const visibility = active?.visibility ?? DEFAULT_STAGE_VISIBILITY
+    const visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(active?.visibility ?? {}) }
     useUI.setState({
       showVehicles: visibility.showVehicles,
       showEnemy: visibility.showEnemy,
       showFlags: visibility.showFlags,
       showAssets: visibility.showAssets,
       showLabels: visibility.showLabels,
+      showDrawings: visibility.showDrawings,
       showVehicleNames: visibility.showVehicleNames,
       showVehiclePaths: visibility.showVehiclePaths,
     })

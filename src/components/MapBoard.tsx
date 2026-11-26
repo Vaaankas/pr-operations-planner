@@ -1273,7 +1273,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         </Layer>
 
         <Layer>
-          {stage.elements.filter((el) => !isIconElement(el)).map(drawElementNode)}
+          {ui.showDrawings && stage.elements.filter((el) => !isIconElement(el)).map(drawElementNode)}
           {polygon.length > 0 && (
             <Line
               points={polygon.flatMap((p) => { const s = normToScreen(p); return [s.x, s.y] })}
@@ -1630,7 +1630,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         </Layer>
 
         <Layer imageSmoothingEnabled={false}>
-          {stage.elements.filter(isIconElement).map(drawElementNode)}
+          {ui.showDrawings && stage.elements.filter(isIconElement).map(drawElementNode)}
         </Layer>
       </Stage>
 

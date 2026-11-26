@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Boxes, Clock, Flag, Route as RouteIcon, Shield, Tag, Trash2, Truck, Type } from 'lucide-react'
+import { Boxes, Clock, Flag, Pencil, Route as RouteIcon, Shield, Tag, Trash2, Truck, Type } from 'lucide-react'
 import type { LayerData, Plan, Stage, StageVisibility } from '../types'
 import { usePlanner } from '../store'
 import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
@@ -14,6 +14,7 @@ const VISIBILITY_OPTIONS: Array<{
   { key: 'showEnemy', label: 'Enemy assets', description: 'Hostile markers', icon: Shield },
   { key: 'showFlags', label: 'Flags & radii', description: 'Capture points', icon: Flag },
   { key: 'showAssets', label: 'Static assets', description: 'Emplacements and crates', icon: Boxes },
+  { key: 'showDrawings', label: 'Drawings', description: 'Lines, zones and labels', icon: Pencil },
   { key: 'showLabels', label: 'Map labels', description: 'Flag and place names', icon: Tag },
   { key: 'showVehicleNames', label: 'Vehicle names', description: 'Names and timers', icon: Type },
   { key: 'showVehiclePaths', label: 'Vehicle paths', description: 'Movement trails', icon: RouteIcon },
@@ -50,7 +51,7 @@ export function StagePanel({ layer, plan, stage }: Props) {
   const [notes, setNotes] = useState(stage.notes)
   useEffect(() => setTime(formatTime(stage.time)), [stage.time])
   useEffect(() => setNotes(stage.notes), [stage.notes])
-  const visibility = stage.visibility ?? DEFAULT_STAGE_VISIBILITY
+  const visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(stage.visibility ?? {}) }
 
 
   return (
