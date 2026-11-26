@@ -107,6 +107,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [textValue, setTextValue] = useState('')
   const [tick, setTick] = useState(0)
   const [hoverFlag, setHoverFlag] = useState<{ cp: ControlPoint; x: number; y: number } | null>(null)
+  const [hoverVehicleId, setHoverVehicleId] = useState<string | null>(null)
   const fitted = useRef<string>('')
 
   const routes = layer.routes ?? []
@@ -1356,9 +1357,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 })
               : []
             const dp = drag ? worldToDisplayNorm(drag.x, drag.z, layer.world) : p
-            const showName = ui.showVehicleNames && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0)
+            const showName = hoverVehicleId === v.id || (ui.showVehicleNames && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0))
             return (
-              <Group key={v.id}>
+              <Group
+                key={v.id}
+                onMouseEnter={() => setHoverVehicleId(v.id)}
+                onMouseLeave={() => setHoverVehicleId(null)}
+              >
                 {route.length > 1 && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && (
                   <Line
                     points={route.flatMap(([x, y]) => [x, y])}
