@@ -80,6 +80,7 @@ interface PlannerStore {
   removeMember: (memberId: string) => void
   setCommander: (memberId: string) => void
   addSquad: () => void
+  setSpecialistCount: (kit: string, count: number) => void
   updateSquad: (squadId: string, patch: Partial<Omit<Squad, 'members'>>) => void
   removeSquad: (squadId: string) => void
   reorderSquads: (fromId: string, toId: string) => void
@@ -327,7 +328,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 
   addSquad: () => {
     const { plan } = get()
-    if (!plan || plan.roster.squads.length >= 10) return
+    if (!plan || plan.roster.squads.length >= 9) return
     get().mutate((draft) => {
       draft.roster.squads.push(newSquad(draft.roster.squads.length))
     })
@@ -353,6 +354,14 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
         member.unconfirmed = true
       } else {
         member.unconfirmed = false
+      }
+    }),
+
+  setSpecialistCount: (kit, count) =>
+    get().mutate((plan) => {
+      plan.roster.specialists = {
+        ...(plan.roster.specialists ?? {}),
+        [kit]: Math.max(0, Math.floor(count)),
       }
     }),
 

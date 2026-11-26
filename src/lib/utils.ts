@@ -16,7 +16,8 @@ export function vehicleReady(v: VehicleSpawn, stageTime: number): boolean {
 
 export const SQUAD_COLORS = [
   '#3b82f6', '#65a30d', '#22d3ee', '#facc15', '#e2e8f0',
-  '#f472b6', '#86efac', '#a78bfa', '#fb923c', '#ef4444',
+  '#f472b6', '#86efac', '#a78bfa', '#fb923c', '#ff1a1a',
+  '#000000',
 ]
 export const SQUAD_TYPES = [
   'INF', 'ARMOR', 'CAS', 'TRANS', 'RECON', 'MORTARS', 'APC', 'LOGISTICS', 'CMD',

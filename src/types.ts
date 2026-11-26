@@ -221,6 +221,7 @@ export interface Roster {
   commander: Member | null
   squads: Squad[]
   unassigned: Member[]
+  specialists?: Record<string, number>
 }
 
 export interface Plan {

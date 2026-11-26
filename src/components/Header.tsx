@@ -52,10 +52,10 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
     <header className="relative z-30 flex h-14 shrink-0 items-center gap-3 border-b border-white/10 bg-[#080d0a] px-3">
       <button
         onClick={onOpenPicker}
-        className="flex h-8 shrink-0 items-center gap-1.5 rounded border border-white/15 px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
-        title="Back to planning menu"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
+        title="Go back to map/layer selection"
       >
-        <Map className="h-3.5 w-3.5" /> Menu
+        <Map className="h-4 w-4" />
       </button>
       <button onClick={onHelp} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
         <HelpCircle className="h-4 w-4" />
@@ -108,27 +108,27 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         </div>
       </div>
 
+      <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
+        {side && cpFlag(assets, side.key) ? (
+          <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-4 object-contain" />
+        ) : (
+          <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+        )}
+        {side?.name ?? `Team ${plan.side}`}
+      </span>
+
+      <span
+        className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
+        title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} unconfirmed`}
+      >
+        <Users className="h-3 w-3 text-emerald-400" />
+        <span className="text-emerald-400">{confirmed}</span>
+        <span className="text-slate-500">/50</span>
+      </span>
+
       <div className="hidden h-7 w-px bg-white/10 lg:block" />
 
       <div className="ml-auto flex items-center gap-1.5">
-        <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
-          {side && cpFlag(assets, side.key) ? (
-            <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-4 object-contain" />
-          ) : (
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-          )}
-          {side?.name ?? `Team ${plan.side}`}
-        </span>
-
-        <span
-          className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
-          title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} unconfirmed`}
-        >
-          <Users className="h-3 w-3 text-emerald-400" />
-          <span className="text-emerald-400">{confirmed}</span>
-          <span className="text-slate-500">/50</span>
-        </span>
-
         <div className="hidden items-center gap-1 px-2 font-mono text-[9px] uppercase tracking-wider text-slate-600 xl:flex">
           <Save className="h-3 w-3 text-emerald-500/70" /> saved {new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>

@@ -833,7 +833,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
-            fill={el.fill ? el.color : undefined}
+            fill={el.fill ? color : undefined}
             fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
           />
         )
@@ -852,7 +852,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
-            fill={el.fill ? el.color : undefined}
+            fill={el.fill ? color : undefined}
             fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
           />
         )
@@ -866,7 +866,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             closed
             stroke={color}
             strokeWidth={sw}
-            fill={el.fill ? el.color : undefined}
+            fill={el.fill ? color : undefined}
             fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
             hitStrokeWidth={14}

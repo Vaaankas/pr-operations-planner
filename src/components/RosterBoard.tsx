@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { GripVertical, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
-import type { Member, Squad } from '../types'
+import { GripVertical, Minus, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
+import type { Member, Plan, Squad } from '../types'
 import { usePlanner } from '../store'
-import { playerCount, SQUAD_COLORS } from '../lib/utils'
+import { dataUrl, playerCount, SQUAD_COLORS } from '../lib/utils'
+import { SPECIALIST_KITS, specialistLimit } from '../lib/kits'
 
 function EditableName({ value, onCommit, className, placeholder }: { value: string; onCommit: (v: string) => void; className?: string; placeholder?: string }) {
   const [v, setV] = useState(value)
@@ -154,6 +155,51 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
   )
 }
 
+function SpecialistKitsCard({ plan }: { plan: Plan }) {
+  const planner = usePlanner()
+  const players = playerCount(plan)
+  const counts = plan.roster.specialists ?? {}
+  return (
+    <div className="flex min-h-[260px] flex-col rounded border border-white/10 bg-[#0b120e]/85">
+      <div className="flex items-center gap-2 border-b border-white/5 px-2 py-1.5">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-slate-300">Specialist kits</span>
+        <span className="ml-auto font-mono text-[9px] text-slate-500">{players} players</span>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-0.5 px-2 py-1">
+        {SPECIALIST_KITS.map((kit) => {
+          const limit = specialistLimit(kit, players)
+          const count = Math.min(counts[kit.id] ?? 0, limit)
+          return (
+            <div key={kit.id} className="flex items-center gap-1.5">
+              <img src={dataUrl(`icons/kits/${kit.id}.webp`)} alt="" className="h-4 w-4 shrink-0 object-contain" />
+              <span className="min-w-0 flex-1 truncate text-[10px] text-slate-400" title={kit.name}>{kit.name}</span>
+              <button
+                onClick={() => planner.setSpecialistCount(kit.id, count - 1)}
+                disabled={count <= 0}
+                className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:bg-white/10 hover:text-slate-200 disabled:opacity-20"
+                title={`Remove ${kit.name}`}
+              >
+                <Minus className="h-3 w-3" />
+              </button>
+              <span className={`w-8 shrink-0 text-center font-mono text-[10px] ${count >= limit ? 'text-amber-300' : 'text-slate-300'}`}>
+                {count}/{limit}
+              </span>
+              <button
+                onClick={() => planner.setSpecialistCount(kit.id, count + 1)}
+                disabled={count >= limit}
+                className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:bg-white/10 hover:text-slate-200 disabled:opacity-20"
+                title={`Add ${kit.name}`}
+              >
+                <Plus className="h-3 w-3" />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function SquadCard({ squad, index }: { squad: Squad; index: number }) {
   const planner = usePlanner()
   const [drop, setDrop] = useState(false)
@@ -280,7 +326,7 @@ export function RosterBoard() {
             {plan.roster.squads.map((squad, i) => (
               <SquadCard key={squad.id} squad={squad} index={i} />
             ))}
-            {plan.roster.squads.length < 10 && (
+            {plan.roster.squads.length < 9 && (
               <button
                 onClick={() => planner.addSquad()}
                 className="flex min-h-[260px] flex-col items-center justify-center gap-2 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
@@ -289,6 +335,7 @@ export function RosterBoard() {
                 <span className="font-mono text-[10px] uppercase tracking-wider">Add squad</span>
               </button>
             )}
+            <SpecialistKitsCard plan={plan} />
           </div>
         </div>
       </section>
