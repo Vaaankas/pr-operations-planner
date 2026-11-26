@@ -234,6 +234,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
   const [drop, setDrop] = useState(false)
   const [colorOpen, setColorOpen] = useState(false)
   const [headerDrop, setHeaderDrop] = useState(false)
+  const namePointer = useRef(false)
   const full = squad.members.length >= 9
   const assignedKit = specialistKit(plan?.roster.specialistAssignments?.[squad.id])
   return (
@@ -259,6 +260,18 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       className={`flex h-full min-h-0 flex-col rounded border bg-[#0b120e]/85 ${drop ? 'border-amber-400/70 bg-amber-400/5' : 'border-white/10'}`}
     >
       <div
+        draggable
+        onPointerDown={(e) => {
+          namePointer.current = (e.target as HTMLElement).tagName === 'INPUT'
+        }}
+        onDragStart={(e) => {
+          if (namePointer.current || (e.target as HTMLElement).tagName === 'INPUT') {
+            e.preventDefault()
+            return
+          }
+          e.dataTransfer.setData('text/pr-squad', squad.id)
+          e.dataTransfer.effectAllowed = 'move'
+        }}
         onDragOver={(e) => {
           e.preventDefault()
           setHeaderDrop(true)
@@ -271,20 +284,12 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
           if (squadId) planner.reorderSquads(squadId, squad.id)
           setHeaderDrop(false)
         }}
-        className={`flex items-center gap-1.5 border-b px-2 py-1.5 ${
+        className={`flex cursor-grab select-none items-center gap-1.5 border-b px-2 py-1.5 active:cursor-grabbing ${
           headerDrop ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/5'
         }`}
         style={{ boxShadow: `inset 3px 0 0 ${squad.color}` }}
       >
-        <span
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData('text/pr-squad', squad.id)
-            e.dataTransfer.effectAllowed = 'move'
-          }}
-          className="cursor-grab active:cursor-grabbing"
-          title="Drag squad"
-        >
+        <span className="cursor-grab active:cursor-grabbing" title="Drag squad">
           <GripVertical className="h-3.5 w-3.5 text-slate-600" />
         </span>
         <span className="w-6 shrink-0 border-0 text-left font-mono text-[20px] font-bold leading-none text-slate-100 outline-none">
@@ -294,7 +299,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
           value={squad.name}
           onCommit={(name) => planner.updateSquad(squad.id, { name })}
           placeholder="Squad name"
-          className="min-w-0 flex-1 border-0 bg-transparent text-[14px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
+          className="min-w-0 flex-1 cursor-text select-text border-0 bg-transparent text-[14px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
         />
         {assignedKit && (
           <button
