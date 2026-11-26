@@ -1374,15 +1374,6 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                       />
                     )
                   })()}
-                  {selected && (
-                    <Circle
-                      radius={s * 0.62}
-                      stroke="#fbbf24"
-                      strokeWidth={2 * iconScale}
-                      dash={[5 * iconScale, 3 * iconScale]}
-                      listening={false}
-                    />
-                  )}
                 </Group>
                 {ui.showLabels && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0) && (
                   <Text
