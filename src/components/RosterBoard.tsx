@@ -364,7 +364,7 @@ function VehicleCrewBox({ vehicle, squad, plan }: { vehicle: VehicleSpawn; squad
       <div className="flex items-center gap-1.5">
         {icon && <img src={dataUrl(icon)} alt="" className="h-4 w-4 object-contain" />}
         <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-200">{vehicle.label}</span>
-        {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={14} />}
+        {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={24} />}
         <button
           onClick={() => {
             planner.claimVehicle(vehicle.id, null)
@@ -505,7 +505,7 @@ function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer
           title="Squad colour"
         >
           {assets.squads[String(index + 1)] ? (
-            <GameIcon path={assets.squads[String(index + 1)]} tint={squad.color} size={26} />
+            <GameIcon path={assets.squads[String(index + 1)]} tint={squad.color} size={24} />
           ) : (
             <span className="font-mono text-[20px] font-bold text-slate-100">{index + 1}</span>
           )}

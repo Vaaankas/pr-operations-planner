@@ -1875,8 +1875,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           >
             <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
               {squadIcon && (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black/50">
-                  <GameIcon path={squadIcon} tint={squad?.color ?? '#facc15'} size={18} />
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black/50">
+                  <GameIcon path={squadIcon} tint={squad?.color ?? '#facc15'} size={24} />
                 </span>
               )}
               <span className="truncate">{(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}</span>
@@ -1921,7 +1921,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             <div className="text-[12px] font-semibold text-slate-100">{vehicle.label}</div>
             {squad && (
               <div className="mt-0.5 flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-slate-500">
-                {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={14} />}
+                {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={24} />}
                 <span className="truncate">{squad.name}</span>
               </div>
             )}
