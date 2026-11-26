@@ -21,7 +21,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
     let cancelled = false
     setLoading(true)
     renderStageCanvas(plan, layer, stage, map, {
-      size: 1600,
+      size: 2048,
       showFlags: true,
       showVehicles: true,
       showEnemy: true,
