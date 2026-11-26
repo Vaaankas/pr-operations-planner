@@ -3,7 +3,7 @@ import { affiliationColor, dataUrl, formatTime } from './utils'
 import { iconImage, glyphFor } from '../icons'
 import { cpFlag } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
-import { displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from './coords'
+import { mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from './coords'
 import { routeSegments } from './routes'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
@@ -456,7 +456,7 @@ export async function renderStageCanvas(
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
       ctx.translate(x, y)
-      ctx.rotate(((displayRotation(pos.rotation) + 90) * Math.PI) / 180)
+      ctx.rotate((vehicleSpriteRotation(layer.id, pos.rotation) * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const squadId = plan.claims[v.id]

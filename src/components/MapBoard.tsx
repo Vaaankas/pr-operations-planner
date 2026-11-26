@@ -9,7 +9,7 @@ import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
-import { displayNormToWorld, displayRotation, mirrorNorm, unmirrorNorm, worldToDisplayNorm } from '../lib/coords'
+import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
@@ -1280,7 +1280,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   id={nodeId}
                   x={p.x * mapW}
                   y={p.y * mapH}
-                  rotation={(displayRotation(pos.rotation) + 90) % 360}
+                  rotation={vehicleSpriteRotation(layer.id, pos.rotation)}
                   draggable={ui.tool === 'select'}
                   listening={ui.tool === 'select' || ui.tool === 'erase'}
                   opacity={v.atStart ? 1 : 0.78}
