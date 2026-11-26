@@ -1278,9 +1278,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     lineCap="round"
                     lineJoin="round"
                     hitStrokeWidth={20 * iconScale}
-                    listening={ui.tool === 'select'}
+                    listening={ui.tool === 'select' && v.atStart}
                     onClick={(e) => {
-                      if (ui.tool !== 'select') return
+                      if (ui.tool !== 'select' || !v.atStart) return
                       e.cancelBubble = true
                       if (!selected) {
                         useUI.getState().setSelected(nodeId, 'vehicle')
@@ -1330,9 +1330,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   x={p.x * mapW}
                   y={p.y * mapH}
                   rotation={vehicleSpriteRotation(layer.id, pos.rotation)}
-                  draggable={ui.tool === 'select'}
+                  draggable={ui.tool === 'select' && v.atStart}
                   listening={ui.tool === 'select' || ui.tool === 'erase'}
-                  opacity={v.atStart ? 1 : 0.78}
+                  opacity={1}
                   onClick={(e) => {
                     e.cancelBubble = true
                     if (ui.tool === 'erase') {
@@ -1392,17 +1392,17 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 {!v.atStart && (
                   <Text
                     text={formatTime(v.respawn ?? 0)}
-                    fontSize={8 * iconScale}
+                    fontSize={10 * iconScale}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill="#94a3b8"
                     stroke="rgba(2,6,4,0.92)"
-                    strokeWidth={2.5 * iconScale}
+                    strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.5}
-                    width={80 * iconScale}
+                    y={dp.y * mapH + s * 0.53}
+                    width={100 * iconScale}
                     align="center"
-                    x={dp.x * mapW - 40 * iconScale}
+                    x={dp.x * mapW - 50 * iconScale}
                     listening={false}
                   />
                 )}
@@ -1416,7 +1416,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * (v.atStart ? 0.56 : 0.7)}
+                    y={dp.y * mapH + s * (v.atStart ? 0.56 : 0.82)}
                     width={240 * iconScale}
                     align="center"
                     x={dp.x * mapW - 120 * iconScale}
@@ -1445,6 +1445,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         return (
           <div className="pointer-events-none absolute z-10" style={{ left: screen.x, top: screen.y }}>
             <div className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-amber-400/80" />
+            {selectedVehicle.atStart && (
             <button
               title="Drag to rotate asset"
               onPointerDown={(e) => {
@@ -1483,6 +1484,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             >
               <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} style={{ transform: `rotate(${angle}deg)` }} />
             </button>
+            )}
           </div>
         )
       })()}
