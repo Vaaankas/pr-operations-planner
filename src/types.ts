@@ -184,10 +184,17 @@ export interface VehicleTurn {
   z: number
 }
 
+export interface StageFrame {
+  x: number
+  y: number
+  size: number
+}
+
 export interface Stage {
   id: string
   name: string
   time: number
+  frame?: StageFrame
   notes: string
   elements: DrawElement[]
   moves: Record<string, VehicleMove>
@@ -240,6 +247,7 @@ export type Tool =
 
 export interface UIState {
   view: 'plan' | 'roster'
+  mode: 'edit' | 'preview'
   tool: Tool
   color: string
   width: number

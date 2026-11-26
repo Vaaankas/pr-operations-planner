@@ -404,6 +404,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 
 export const useUI = create<UIState & {
   setView: (view: UIState['view']) => void
+  setMode: (mode: UIState['mode']) => void
   setTool: (tool: UIState['tool']) => void
   setColor: (color: string) => void
   setWidth: (width: number) => void
@@ -428,6 +429,7 @@ export const useUI = create<UIState & {
   setLayerPickerOpen: (open: boolean) => void
 }>((set) => ({
   view: 'plan',
+  mode: 'edit',
   tool: 'select',
   color: '#e2e8f0',
   width: 4,
@@ -456,6 +458,7 @@ export const useUI = create<UIState & {
   layerPickerOpen: false,
 
   setView: (view) => set({ view }),
+  setMode: (mode) => set({ mode }),
   setTool: (tool) => set({ tool, selectedId: null, selectedKind: null }),
   setColor: (color) => set({ color }),
   setWidth: (width) => set({ width: clamp(width, 1, 24) }),

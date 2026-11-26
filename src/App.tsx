@@ -8,6 +8,7 @@ import { Picker } from './components/Picker'
 import { Header } from './components/Header'
 import { ToolbarRail, OptionsBar, useToolHotkeys } from './components/Toolbar'
 import { MapBoard } from './components/MapBoard'
+import { PreviewBoard } from './components/PreviewBoard'
 import { RosterBoard } from './components/RosterBoard'
 import { AssetsPanel } from './components/AssetsPanel'
 import { StagePanel } from './components/StagePanel'
@@ -237,12 +238,16 @@ function AppInner() {
         <RosterBoard />
       ) : (
         <div className="flex min-h-0 flex-1">
-          <ToolbarRail />
+          {ui.mode === 'edit' && <ToolbarRail />}
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <OptionsBar />
+            {ui.mode === 'edit' && <OptionsBar />}
             <div className="min-h-0 flex-1">
-              <MapBoard key={`${map.id}:${layer.id}`} map={map} layer={layer} plan={plan} stage={stage} />
+              {ui.mode === 'preview' ? (
+                <PreviewBoard key={`preview:${map.id}:${layer.id}:${stage.id}`} map={map} layer={layer} plan={plan} stage={stage} />
+              ) : (
+                <MapBoard key={`${map.id}:${layer.id}`} map={map} layer={layer} plan={plan} stage={stage} />
+              )}
             </div>
             <Timeline plan={plan} stage={stage} />
           </div>

@@ -3,7 +3,7 @@ import { ArrowUp } from 'lucide-react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
+import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, StageFrame, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
 import { affiliationColor, clamp, dataUrl, formatTime, isHiddenVehicle, SQUAD_COLORS, vehicleDelayRemaining, vehicleReady } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
@@ -78,6 +78,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const [previewRotation, setPreviewRotation] = useState<number | null>(null)
   const [dragVehicle, setDragVehicle] = useState<{ id: string; x: number; z: number; screenX: number; screenY: number } | null>(null)
   const [dragTurn, setDragTurn] = useState<{ vehicleId: string; index: number; x: number; z: number } | null>(null)
+  const [frameDraft, setFrameDraft] = useState<StageFrame>(stage.frame ?? { x: 0, y: 0, size: 1 })
+  const frameDraftRef = useRef<StageFrame>(stage.frame ?? { x: 0, y: 0, size: 1 })
+  const [frameDrag, setFrameDrag] = useState<{ mode: string; startX: number; startY: number; frame: StageFrame } | null>(null)
   const rotateStart = useRef<{ angle: number; rotation: number } | null>(null)
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
@@ -194,6 +197,69 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     const r = mirrorNorm(p)
     return { x: r.x * mapW, y: r.y * mapH }
   }, [mapW, mapH])
+
+  const clientToFrameNorm = useCallback((clientX: number, clientY: number): Point =>
+    toNorm(mapCoords(clientX, clientY)), [mapCoords, toNorm])
+
+  useEffect(() => {
+    const next = stage.frame ?? { x: 0, y: 0, size: 1 }
+    frameDraftRef.current = next
+    setFrameDraft(next)
+  }, [stage.id, stage.frame?.x, stage.frame?.y, stage.frame?.size])
+
+  useEffect(() => {
+    if (!frameDrag) return
+    const move = (e: PointerEvent) => {
+      const p = clientToFrameNorm(e.clientX, e.clientY)
+      const s = frameDrag.frame
+      const dx = p.x - frameDrag.startX
+      const dy = p.y - frameDrag.startY
+      const min = 0.12
+      let x = s.x
+      let y = s.y
+      let size = s.size
+      const right = s.x + s.size
+      const bottom = s.y + s.size
+      if (frameDrag.mode === 'e') {
+        size = clamp(s.size + dx, min, 1 - s.x)
+      } else if (frameDrag.mode === 'w') {
+        x = clamp(s.x + dx, 0, right - min)
+        size = right - x
+      } else if (frameDrag.mode === 's') {
+        size = clamp(s.size + dy, min, 1 - s.y)
+      } else if (frameDrag.mode === 'n') {
+        y = clamp(s.y + dy, 0, bottom - min)
+        size = bottom - y
+      } else if (frameDrag.mode === 'se') {
+        size = clamp(s.size + Math.max(dx, dy), min, Math.min(1 - s.x, 1 - s.y))
+      } else if (frameDrag.mode === 'nw') {
+        size = clamp(s.size + Math.max(-dx, -dy), min, Math.min(right, bottom))
+        x = right - size
+        y = bottom - size
+      } else if (frameDrag.mode === 'ne') {
+        size = clamp(s.size + Math.max(dx, -dy), min, Math.min(1 - s.x, bottom))
+        y = bottom - size
+      } else if (frameDrag.mode === 'sw') {
+        size = clamp(s.size + Math.max(-dx, dy), min, Math.min(right, 1 - s.y))
+        x = right - size
+      }
+      const next = { x, y, size }
+      frameDraftRef.current = next
+      setFrameDraft(next)
+    }
+    const up = () => {
+      planner.updateStage(stage.id, { frame: frameDraftRef.current })
+      setFrameDrag(null)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [frameDrag, clientToFrameNorm, planner, stage.id])
 
   const commit = useCallback((el: DrawElement) => {
     planner.addElement(el)
@@ -1436,6 +1502,48 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
       </Stage>
 
+      {(() => {
+        const fx = frameDraft.x * mapW * view.scale + view.x
+        const fy = frameDraft.y * mapH * view.scale + view.y
+        const fw = frameDraft.size * mapW * view.scale
+        const fh = frameDraft.size * mapH * view.scale
+        const handles = [
+          { mode: 'nw', x: fx, y: fy, cursor: 'nwse-resize' },
+          { mode: 'n', x: fx + fw / 2, y: fy, cursor: 'ns-resize' },
+          { mode: 'ne', x: fx + fw, y: fy, cursor: 'nesw-resize' },
+          { mode: 'e', x: fx + fw, y: fy + fh / 2, cursor: 'ew-resize' },
+          { mode: 'se', x: fx + fw, y: fy + fh, cursor: 'nwse-resize' },
+          { mode: 's', x: fx + fw / 2, y: fy + fh, cursor: 'ns-resize' },
+          { mode: 'sw', x: fx, y: fy + fh, cursor: 'nesw-resize' },
+          { mode: 'w', x: fx, y: fy + fh / 2, cursor: 'ew-resize' },
+        ]
+        return (
+          <div className="pointer-events-none absolute inset-0 z-[5]">
+            <div className="absolute bg-black/55" style={{ left: 0, top: 0, width: box.w, height: Math.max(0, fy) }} />
+            <div className="absolute bg-black/55" style={{ left: 0, top: fy + fh, width: box.w, height: Math.max(0, box.h - fy - fh) }} />
+            <div className="absolute bg-black/55" style={{ left: 0, top: Math.max(0, fy), width: Math.max(0, fx), height: Math.max(0, fh) }} />
+            <div className="absolute bg-black/55" style={{ left: fx + fw, top: Math.max(0, fy), width: Math.max(0, box.w - fx - fw), height: Math.max(0, fh) }} />
+            <div className="absolute border-2 border-amber-400/90 shadow-[0_0_0_1px_rgba(0,0,0,0.8)]" style={{ left: fx, top: fy, width: fw, height: fh }} />
+            {handles.map((h) => (
+              <button
+                key={h.mode}
+                type="button"
+                title="Drag to resize export frame"
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  planner.checkpoint()
+                  const p = clientToFrameNorm(e.clientX, e.clientY)
+                  setFrameDrag({ mode: h.mode, startX: p.x, startY: p.y, frame: frameDraft })
+                }}
+                className="pointer-events-auto absolute h-2.5 w-2.5 rounded-sm border border-amber-200 bg-amber-400 shadow"
+                style={{ left: h.x, top: h.y, transform: 'translate(-50%, -50%)', cursor: h.cursor }}
+              />
+            ))}
+          </div>
+        )
+      })()}
+
       {(dragVehicle || selectedScreen) && selectedVehicle && ui.tool === 'select' && (() => {
         const screen = dragVehicle?.id === selectedVehicle.id
           ? { x: dragVehicle.screenX, y: dragVehicle.screenY }
@@ -1544,7 +1652,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       })()}
 
       {(plan.roster.squads.length > 0 || plan.roster.commander) && (
-        <div className="absolute bottom-16 right-3 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2.5 py-2">
+        <div className="absolute bottom-16 right-3 z-20 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2.5 py-2">
           {plan.roster.commander && (
           <div
             draggable
@@ -1592,7 +1700,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </div>
       )}
 
-      <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded border border-white/10 bg-black/70 p-1">
+      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded border border-white/10 bg-black/70 p-1">
         <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(0.8)} title="Zoom out">−</button>
         <button className="h-7 min-w-12 rounded px-1 text-[10px] font-mono text-slate-400 hover:bg-white/10" onClick={resetView} title="Fit map">
           {Math.round(view.scale * 100)}%

@@ -1,4 +1,4 @@
-import type { AssetManifest, ControlPoint, DrawElement, LayerData, MapMeta, Plan, Stage, VehicleSpawn } from '../types'
+import type { AssetManifest, ControlPoint, DrawElement, LayerData, MapMeta, Plan, Stage, StageFrame, VehicleSpawn } from '../types'
 import { affiliationColor, dataUrl, formatTime, isHiddenVehicle, vehicleDelayRemaining, vehicleReady } from './utils'
 import { iconImage, glyphFor } from '../icons'
 import { cpFlag, vehicleIconPath } from './assets'
@@ -47,6 +47,7 @@ export interface RenderOptions {
   assets: AssetManifest
   visibleRoutes: string[]
   hiddenCps: number[]
+  frame?: StageFrame
 }
 
 const LANE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
@@ -515,6 +516,19 @@ export async function renderStageCanvas(
   const side = layer.factions[String(plan.side)]
   ctx.fillText(`${map.name}  ·  ${layer.name}  ·  ${side ? side.name : `Team ${plan.side}`}`, size - size * 0.014, size - bar / 2)
   ctx.restore()
+
+  if (opts.frame && opts.frame.size < 0.999) {
+    const out = document.createElement('canvas')
+    out.width = size
+    out.height = size
+    const outCtx = out.getContext('2d')
+    if (!outCtx) return canvas
+    const fx = opts.frame.x * size
+    const fy = opts.frame.y * size
+    const fw = opts.frame.size * size
+    outCtx.drawImage(canvas, fx, fy, fw, fw, 0, 0, size, size)
+    return out
+  }
 
   return canvas
 }

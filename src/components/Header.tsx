@@ -93,6 +93,21 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
 
       <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
         <button
+          onClick={() => ui.setMode('edit')}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.mode === 'edit' ? 'bg-white/15 text-slate-100' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => ui.setMode('preview')}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.mode === 'preview' ? 'bg-amber-400 text-black' : 'text-slate-500 hover:text-slate-300'}`}
+        >
+          Preview
+        </button>
+      </div>
+
+      <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
+        <button
           onClick={() => ui.setView('plan')}
           className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
         >
