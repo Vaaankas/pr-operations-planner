@@ -1356,7 +1356,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 })
               : []
             const dp = drag ? worldToDisplayNorm(drag.x, drag.z, layer.world) : p
-            const showName = ui.showLabels && !drag && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0)
+            const showName = ui.showLabels && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0)
             return (
               <Group key={v.id}>
                 {route.length > 1 && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && (
@@ -1650,26 +1650,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} style={{ transform: `rotate(${angle}deg)` }} />
             </button>
             )}
-          </div>
-        )
-      })()}
-
-      {!preview && dragVehicle && (() => {
-        const v = layer.vehicles.find((item) => item.id === dragVehicle.id)
-        if (!v) return null
-        const commander = plan.claims[v.id] === 'commander'
-        const index = plan.roster.squads.findIndex((s) => s.id === plan.claims[v.id])
-        const prefix = commander ? '[★] ' : index >= 0 ? `[${index + 1}] ` : ''
-        return (
-          <div
-            className="pointer-events-none absolute z-20 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold text-amber-300"
-            style={{
-              left: dragVehicle.screenX,
-              top: dragVehicle.screenY + 14,
-              textShadow: '0 1px 3px #000, 0 0 3px #000',
-            }}
-          >
-            {prefix}{v.label}
           </div>
         )
       })()}
