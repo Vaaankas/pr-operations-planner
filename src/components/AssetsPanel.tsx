@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
+import { Eye, EyeOff, Lock, RotateCcw, Search } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
-import { dataUrl, formatTime, isHiddenVehicle } from '../lib/utils'
+import { dataUrl, formatTime, isHiddenVehicle, vehicleReady } from '../lib/utils'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets, vehicleIconPath } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
@@ -95,6 +95,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
               {list.map((v) => {
                 const selected = ui.selectedId === `veh_${v.id}`
                 const moved = Boolean(stage.moves[v.id])
+                const delayed = !vehicleReady(v, stage.time)
                 const squadId = plan.claims[v.id] ?? ''
                 const color = vehicleColor(v, plan, plan.roster.squads.map((s) => ({ id: s.id, color: s.color })))
                 return (
@@ -106,7 +107,13 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                       ui.setSelected(`veh_${v.id}`, 'vehicle')
                       ui.setRightTab('assets')
                     }}
-                    className={`group flex cursor-pointer items-center gap-1.5 rounded border px-1.5 py-1 ${selected ? 'border-amber-400 bg-amber-400/15 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]' : 'border-transparent hover:border-white/10 hover:bg-white/5'}`}
+                    className={`group flex cursor-pointer items-center gap-1.5 rounded border px-1.5 py-1 ${
+                      selected
+                        ? delayed
+                          ? 'border-slate-500/70 bg-slate-500/15 shadow-[0_0_0_1px_rgba(148,163,184,0.2)]'
+                          : 'border-amber-400 bg-amber-400/15 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]'
+                        : 'border-transparent hover:border-white/10 hover:bg-white/5'
+                    }`}
                     title={v.template}
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/40" style={{ border: `1px solid ${color}66` }}>
@@ -117,6 +124,11 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-200">
                           {v.label}
                         </span>
+                        {delayed && (
+                          <span title="Not available at this stage time">
+                            <Lock className="h-3 w-3 shrink-0 text-slate-500" />
+                          </span>
+                        )}
                         <span className="flex h-[22px] shrink-0 items-center gap-2 whitespace-nowrap font-mono text-[8px] leading-[10px] text-slate-500">
                           {!v.atStart && (
                             <span className="flex flex-col items-end">
