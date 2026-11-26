@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, Lock } from 'lucide-react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
@@ -1562,12 +1562,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   <Circle radius={s * 0.5} fill="rgba(0,0,0,0.001)" />
                   {(() => {
                     const iconPath = vehicleIconPath(assets, v)
+                    const selectedColor = selected ? (ready ? '#fbbf24' : '#94a3b8') : color
                     if (!iconPath) {
-                      return <IconGlyph icon={glyphFor('vehicle', v.category)} color={selected ? '#fbbf24' : color} size={s} x={0} y={0} />
+                      return <IconGlyph icon={glyphFor('vehicle', v.category)} color={selectedColor} size={s} x={0} y={0} />
                     }
                     return (
                       <KonvaImage
-                        image={tintedAssetImage(iconPath, selected ? '#fbbf24' : color)}
+                        image={tintedAssetImage(iconPath, selectedColor)}
                         x={-s / 2}
                         y={-s / 2}
                         width={s}
@@ -1600,7 +1601,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                     fontSize={9 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
-                    fill={selected ? '#fbbf24' : color}
+                    fill={selected ? (ready ? '#fbbf24' : '#94a3b8') : color}
                     stroke={MAP_TEXT_OUTLINE}
                     strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     fillAfterStrokeEnabled
@@ -1705,9 +1706,15 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           : 0
         const rad = (angle * Math.PI) / 180
         const handleRadius = 42
+        const locked = !vehicleReady(selectedVehicle, stage.time)
         return (
           <div className="pointer-events-none absolute z-10" style={{ left: screen.x, top: screen.y }}>
-            <div className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-amber-400/80" />
+            <div className={`absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed ${locked ? 'border-slate-400/80' : 'border-amber-400/80'}`} />
+            {locked && (
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full border border-slate-400/60 bg-[#0b110d]">
+                <Lock className="h-2.5 w-2.5 text-slate-300" />
+              </span>
+            )}
             {vehicleReady(selectedVehicle, stage.time) && (
             <button
               title="Drag to rotate asset"
@@ -1922,9 +1929,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         )
       })()}
 
-      {!preview && hoverCrew && (() => {
-        const vehicle = layer.vehicles.find((item) => item.id === hoverCrew.id)
+      {!preview && (hoverCrew || selectedVehicle) && (() => {
+        const popupVehicleId = hoverCrew?.id ?? selectedVehicle?.id
+        const vehicle = popupVehicleId ? layer.vehicles.find((item) => item.id === popupVehicleId) : undefined
         if (!vehicle) return null
+        const delayed = !vehicleReady(vehicle, stage.time)
         const crew = plan.vehicleCrew?.[vehicle.id] ?? []
         const allMembers = [
           ...(plan.roster.commander ? [plan.roster.commander] : []),
@@ -1948,7 +1957,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           <div
             className="pointer-events-none absolute right-3 top-3 z-30 w-fit min-w-[7.5rem] max-w-36 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
           >
-            <div className="text-[12px] font-semibold text-slate-100">{vehicle.label}</div>
+            <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
+              <span className="truncate">{vehicle.label}</span>
+              {delayed && <Lock className="h-3 w-3 shrink-0 text-slate-400" />}
+            </div>
             {squad && (
               <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-slate-300">
                 {squadIcon && <GameIcon path={squadIcon} tint={squad.color} size={24} />}
