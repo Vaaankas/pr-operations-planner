@@ -14,7 +14,7 @@ import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehi
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
-import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_DETAIL_SCALE, vehicleIconPx } from '../lib/mapStyle'
+import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_DETAIL_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
 
 interface Props {
   map: MapMeta
@@ -1482,34 +1482,34 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {!ready && showName && (
                   <Text
                     text={formatTime(delayRemaining)}
-                    fontSize={10 * iconScale * VEHICLE_DETAIL_SCALE}
+                    fontSize={10 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill="#94a3b8"
                     stroke="rgba(2,6,4,0.92)"
-                    strokeWidth={3 * iconScale * VEHICLE_DETAIL_SCALE}
+                    strokeWidth={3 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.56 + 11 * iconScale * VEHICLE_DETAIL_SCALE}
-                    width={100 * iconScale * VEHICLE_DETAIL_SCALE}
+                    y={dp.y * mapH + s * 0.56 + 11 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    width={100 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     align="center"
-                    x={dp.x * mapW - 50 * iconScale * VEHICLE_DETAIL_SCALE}
+                    x={dp.x * mapW - 50 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     listening={false}
                   />
                 )}
                 {showName && (
                   <Text
                     text={`${claimPrefix}${v.label}`}
-                    fontSize={9 * iconScale * VEHICLE_DETAIL_SCALE}
+                    fontSize={9 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill={selected ? '#fbbf24' : color}
                     stroke={MAP_TEXT_OUTLINE}
-                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_DETAIL_SCALE}
+                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     fillAfterStrokeEnabled
                     y={dp.y * mapH + s * 0.56}
-                    width={240 * iconScale * VEHICLE_DETAIL_SCALE}
+                    width={240 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     align="center"
-                    x={dp.x * mapW - 120 * iconScale * VEHICLE_DETAIL_SCALE}
+                    x={dp.x * mapW - 120 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
                     listening={false}
                   />
                 )}
