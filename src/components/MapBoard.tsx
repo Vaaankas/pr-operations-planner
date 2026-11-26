@@ -304,12 +304,19 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     if (!st) return
     const pointer = st.getPointerPosition()
     if (!pointer) return
-    const old = view.scale
+    if (panStart.current) {
+      panStart.current = null
+      panMoved.current = false
+      setPanning(false)
+    }
     const dir = e.evt.deltaY > 0 ? 0.9 : 1.1
-    const next = clamp(old * dir, minZoom, 20)
-    const wx = (pointer.x - view.x) / old
-    const wy = (pointer.y - view.y) / old
-    setView({ scale: next, x: pointer.x - wx * next, y: pointer.y - wy * next })
+    setView((current) => {
+      const old = current.scale
+      const next = clamp(old * dir, minZoom, 20)
+      const wx = (pointer.x - current.x) / old
+      const wy = (pointer.y - current.y) / old
+      return { scale: next, x: pointer.x - wx * next, y: pointer.y - wy * next }
+    })
   }
 
   const zoomBy = (factor: number) => {
