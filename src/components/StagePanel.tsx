@@ -7,16 +7,15 @@ import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
 const VISIBILITY_OPTIONS: Array<{
   key: keyof StageVisibility
   label: string
-  description: string
   icon: typeof Truck
 }> = [
-  { key: 'showVehicles', label: 'Vehicles', description: 'Spawns and moves', icon: Truck },
-  { key: 'showEnemy', label: 'Enemy assets', description: 'Hostile markers', icon: Swords },
-  { key: 'showFlags', label: 'Flags & radii', description: 'Capture points', icon: Flag },
-  { key: 'showDrawings', label: 'Drawings', description: 'Lines, zones and labels', icon: Pencil },
-  { key: 'showLabels', label: 'Map labels', description: 'Flag and place names', icon: Tag },
-  { key: 'showVehicleNames', label: 'Vehicle names', description: 'Names and timers', icon: Type },
-  { key: 'showVehiclePaths', label: 'Vehicle paths', description: 'Movement trails', icon: RouteIcon },
+  { key: 'showVehicles', label: 'Vehicles', icon: Truck },
+  { key: 'showEnemy', label: 'Enemy assets', icon: Swords },
+  { key: 'showFlags', label: 'Flags & radii', icon: Flag },
+  { key: 'showDrawings', label: 'Drawings', icon: Pencil },
+  { key: 'showLabels', label: 'Map labels', icon: Tag },
+  { key: 'showVehicleNames', label: 'Vehicle names', icon: Type },
+  { key: 'showVehiclePaths', label: 'Vehicle paths', icon: RouteIcon },
 ]
 
 interface Props {
@@ -107,7 +106,7 @@ export function StagePanel({ layer, plan, stage }: Props) {
       <div className="h-1/4 min-h-[165px] shrink-0 border-t border-white/10 bg-black/20 p-2">
         <div className="mb-1 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">Stage visibility</div>
         <div className="grid h-[calc(100%-18px)] grid-cols-2 gap-1">
-          {VISIBILITY_OPTIONS.map(({ key, label, description, icon: Icon }) => {
+          {VISIBILITY_OPTIONS.map(({ key, label, icon: Icon }) => {
             const active = visibility[key]
             return (
               <button
@@ -116,10 +115,7 @@ export function StagePanel({ layer, plan, stage }: Props) {
                 className="flex min-h-0 items-center gap-1.5 rounded border border-white/10 bg-black/20 px-1.5 py-1 text-left text-slate-400 hover:border-white/20 hover:text-slate-300"
               >
                 <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-amber-300' : 'text-slate-600'}`} />
-                <span className="min-w-0">
-                  <span className="block truncate text-[10px] font-semibold uppercase tracking-wider">{label}</span>
-                  <span className="block truncate text-[8px] text-slate-500">{description}</span>
-                </span>
+                <span className="min-w-0 truncate text-[10px] font-semibold uppercase tracking-wider">{label}</span>
               </button>
             )
           })}
