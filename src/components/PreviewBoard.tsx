@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { LayerData, MapMeta, Plan, Stage } from '../types'
 import { usePlanner } from '../store'
+import { useAssets } from '../lib/assets'
 import { formatTime } from '../lib/utils'
 import { captureStageDataUrl } from '../lib/konvaExport'
 
@@ -14,6 +15,7 @@ interface Props {
 
 export function PreviewBoard({ map, layer, plan, stage }: Props) {
   const planner = usePlanner()
+  const assets = useAssets()
   const stages = [...plan.stages].sort((a, b) => a.time - b.time)
   const stageIndex = stages.findIndex((item) => item.id === stage.id)
   const [images, setImages] = useState<Record<string, string>>({})
@@ -23,7 +25,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   useEffect(() => {
     if (images[cacheKey] || pending.current.has(cacheKey)) return
     pending.current.add(cacheKey)
-    captureStageDataUrl({ map, layer, plan }, stage, 2048, 'png')
+    captureStageDataUrl({ map, layer, plan, assets }, stage, 2048, 'png')
       .then((src) => {
         setImages((current) => ({ ...current, [cacheKey]: src }))
       })
@@ -31,7 +33,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
       .finally(() => {
         pending.current.delete(cacheKey)
       })
-  }, [cacheKey, images, layer, map, plan, stage])
+  }, [assets, cacheKey, images, layer, map, plan, stage])
 
   const src = images[cacheKey]
 

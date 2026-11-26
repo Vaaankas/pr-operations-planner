@@ -1,12 +1,14 @@
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { LayerData, MapMeta, Plan, Stage } from '../types'
+import type { AssetManifest, LayerData, MapMeta, Plan, Stage } from '../types'
+import { AssetProvider } from './assets'
 import { MapBoard } from '../components/MapBoard'
 
 export interface CaptureSource {
   map: MapMeta
   layer: LayerData
   plan: Plan
+  assets: AssetManifest
 }
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -28,16 +30,15 @@ export async function captureStageDataUrl(
 
   const root = createRoot(host)
   try {
-    root.render(
-      createElement(MapBoard, {
-        preview: true,
-        map: src.map,
-        layer: src.layer,
-        plan: src.plan,
-        stage,
-        screenScale: resolution / 900,
-      }),
-    )
+    const board = createElement(MapBoard, {
+      preview: true,
+      map: src.map,
+      layer: src.layer,
+      plan: src.plan,
+      stage,
+      screenScale: resolution / 900,
+    })
+    root.render(createElement(AssetProvider, { value: src.assets, children: board }))
 
     let canvases: HTMLCanvasElement[] = []
     for (let i = 0; i < 60; i++) {
