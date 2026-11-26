@@ -1269,6 +1269,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 })
               : []
             const dp = drag ? worldToDisplayNorm(drag.x, drag.z, layer.world) : p
+            const showName = ui.showLabels && !drag && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0)
             return (
               <Group key={v.id}>
                 {route.length > 1 && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && (
@@ -1391,7 +1392,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     )
                   })()}
                 </Group>
-                {!ready && (
+                {!ready && showName && (
                   <Text
                     text={formatTime(delayRemaining)}
                     fontSize={10 * iconScale}
@@ -1401,14 +1402,14 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.56 + 16 * iconScale}
+                    y={dp.y * mapH + s * 0.56 + 11 * iconScale}
                     width={100 * iconScale}
                     align="center"
                     x={dp.x * mapW - 50 * iconScale}
                     listening={false}
                   />
                 )}
-                {ui.showLabels && !drag && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0) && (
+                {showName && (
                   <Text
                     text={`${claimPrefix}${v.label}`}
                     fontSize={9 * iconScale}

@@ -479,13 +479,13 @@ export async function renderStageCanvas(
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const ready = vehicleReady(v, stage.time)
-      if (!ready) {
+      if (!ready && opts.showLabels) {
         ctx.save()
         ctx.fillStyle = '#94a3b8'
         ctx.font = `600 ${size * 0.012}px "Inter", "Segoe UI", sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'top'
-        ctx.fillText(formatTime(vehicleDelayRemaining(v, stage.time)), x, y + s * 0.62 + size * 0.014)
+        ctx.fillText(formatTime(vehicleDelayRemaining(v, stage.time)), x, y + s * 0.62 + size * 0.010)
         ctx.restore()
       }
       const squadId = plan.claims[v.id]
