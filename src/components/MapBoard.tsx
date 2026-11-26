@@ -72,6 +72,8 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 }
 
 const PENCIL = '#f8fafc'
+const FLAG_ANCHOR_X = 0.148
+const FLAG_ANCHOR_Y = 0.727
 
 function withAlpha(color: string, alpha: number): string {
   const hex = color.replace('#', '')
@@ -1448,8 +1450,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {img ? (
                   <KonvaImage
                     image={img}
-                    x={-w / 2}
-                    y={-h / 2}
+                    x={-w * FLAG_ANCHOR_X}
+                    y={-h * FLAG_ANCHOR_Y}
                     width={w}
                     height={h}
                     listening={false}
