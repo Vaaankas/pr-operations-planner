@@ -9,7 +9,7 @@ import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
-import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
+import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
@@ -148,6 +148,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       jobs.push(preloadAsset(assets.commander, '#07110a'))
       jobs.push(preloadAsset(assets.commander, '#facc15'))
     }
+    if (assets.markers.cache_objective) jobs.push(preloadAsset(assets.markers.cache_objective, '#ef4444'))
     plan.roster.squads.forEach((squad, index) => {
       const icon = assets.squads[String(index + 1)]
       if (icon) jobs.push(preloadAsset(icon, squad.color))
@@ -1104,7 +1105,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
 
         <Layer listening={ui.tool === 'select'}>
-          {ui.showFlags && visibleRoutes.flatMap((r) => {
+          {ui.showFlags && layer.mode !== 'gpm_insurgency' && visibleRoutes.flatMap((r) => {
             const index = routes.findIndex((x) => x.id === r.id)
             return routeSegments(layer, r)
               .filter(([from, to]) => !ui.hiddenCps.includes(from.id) && !ui.hiddenCps.includes(to.id))
@@ -1124,6 +1125,23 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 />
               )
             })
+          })}
+          {ui.showFlags && (layer.caches ?? []).map((cache, i) => {
+            const icon = assets.markers.cache_objective
+            if (!icon) return null
+            const p = worldToDisplayNorm(cache.x, cache.z, layer.world)
+            const size = 20 * iconScale
+            return (
+              <KonvaImage
+                key={`cache-${i}`}
+                image={tintedAssetImage(icon, '#ef4444')}
+                x={p.x * mapW - size / 2}
+                y={p.y * mapH - size / 2}
+                width={size}
+                height={size}
+                listening={false}
+              />
+            )
           })}
           {ui.showFlags && activeCps.map((cp) => {
             if (!cp || ui.hiddenCps.includes(cp.id)) return null
@@ -1280,7 +1298,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   id={nodeId}
                   x={p.x * mapW}
                   y={p.y * mapH}
-                  rotation={vehicleSpriteRotation(pos.rotation)}
+                  rotation={vehicleSpriteRotation(layer.id, pos.rotation)}
                   draggable={ui.tool === 'select'}
                   listening={ui.tool === 'select' || ui.tool === 'erase'}
                   opacity={v.atStart ? 1 : 0.78}
@@ -1303,7 +1321,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   }}
                   onTransformEnd={(e) => {
                     const node = e.target
-                    const rotation = (180 - node.rotation() + 360) % 360
+                    const rotation = (180 + vehicleSpriteOffset(layer.id) - node.rotation() + 360) % 360
                     node.rotation(0)
                     node.scaleX(1)
                     node.scaleY(1)

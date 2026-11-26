@@ -352,6 +352,7 @@ export async function renderStageCanvas(
     const icon = opts.assets.squads[String(index + 1)]
     if (icon) jobs.push(preloadAsset(icon, squad.color))
   })
+  if (opts.assets.markers.cache_objective) jobs.push(preloadAsset(opts.assets.markers.cache_objective, '#ef4444'))
   for (const path of Object.values(opts.assets.markers)) jobs.push(preloadAsset(path))
   for (const path of Object.values(opts.assets.orders)) jobs.push(preloadAsset(path))
   for (const el of stage.elements) {
@@ -386,7 +387,7 @@ export async function renderStageCanvas(
   const visibleRoutes = routes.filter((r) => opts.visibleRoutes.includes(r.id))
   const cpsById = new Map(layer.controlPoints.map((cp) => [cp.id, cp]))
   if (opts.showFlags) {
-    for (const route of visibleRoutes) {
+    for (const route of (layer.mode === 'gpm_insurgency' ? [] : visibleRoutes)) {
       const index = routes.findIndex((r) => r.id === route.id)
       ctx.save()
       ctx.strokeStyle = laneColor(index)
@@ -411,6 +412,16 @@ export async function renderStageCanvas(
       const routeIndex = Math.max(0, visibleRoutes.findIndex((r) => r.cps.includes(id)))
       const team = plan.flagTeams?.[String(id)] ?? cp.team
       drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex), team)
+    }
+
+    const cacheIcon = opts.assets.markers.cache_objective
+    if (cacheIcon) {
+      const cacheImage = tintedAssetImage(cacheIcon, '#ef4444')
+      const cacheSize = size * 0.022
+      for (const cache of layer.caches ?? []) {
+        const [x, y] = normPoint(worldToDisplayNorm(cache.x, cache.z, layer.world), size)
+        if (cacheImage.complete) ctx.drawImage(cacheImage, x - cacheSize / 2, y - cacheSize / 2, cacheSize, cacheSize)
+      }
     }
   }
 
@@ -456,7 +467,7 @@ export async function renderStageCanvas(
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
       ctx.translate(x, y)
-      ctx.rotate((vehicleSpriteRotation(pos.rotation) * Math.PI) / 180)
+      ctx.rotate((vehicleSpriteRotation(layer.id, pos.rotation) * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const squadId = plan.claims[v.id]

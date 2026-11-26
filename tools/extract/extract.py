@@ -53,7 +53,7 @@ LAYER_NAMES = {
 
 ROUTE_COLORS = ["#38bdf8", "#fb923c", "#a78bfa", "#34d399"]
 EXCLUDED_LEVELS = {"saaremaa_winter"}
-SIZE_KM_OVERRIDES = {"gaza_2": 2, "fallujah_west": 2}
+SIZE_KM_OVERRIDES = {"gaza_2": 1, "fallujah_west": 1}
 
 FACTIONS = {
     "us": ("United States", "US"),
@@ -520,6 +520,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
     layer_id = f"{level}__{mode.replace('gpm_', '')}__{players}"
     server_path = level_dir / "server.zip"
     gpo_name = f"gamemodes/{mode}/{players}/gameplayobjects.con"
+    caches = []
     try:
         with zipfile.ZipFile(server_path) as server:
             text = read_zip_text(server, gpo_name)
@@ -540,6 +541,20 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             if not factions:
                 factions = parse_factions(init_text)
             tickets = parse_tickets(init_text, players, mode)
+            if mode == "gpm_insurgency":
+                cache_text = read_zip_text(server, f"gamemodes/gpm_insurgency/{players}/caches.json")
+                if cache_text:
+                    try:
+                        cache_entries = json.loads(cache_text)
+                        for entry in cache_entries:
+                            position = entry.get("position") or []
+                            if len(position) >= 3:
+                                caches.append({
+                                    "x": round(float(position[0]), 2),
+                                    "z": round(float(position[2]), 2),
+                                })
+                    except (ValueError, TypeError):
+                        caches = []
     except (zipfile.BadZipFile, FileNotFoundError):
         return None
 
@@ -645,6 +660,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         "tickets": tickets,
         "controlPoints": cps,
         "routes": routes,
+        "caches": caches,
         "vehicles": vehicles,
         "vehicleAtStart": sum(1 for v in vehicles if v["atStart"]),
         "counts": dict(counts),
@@ -750,6 +766,7 @@ MARKER_ICONS = {
     "phase": "hud/texture/ingame/minimap/icons/icon_move.tga",
     "waypoint": "hud/texture/ingame/minimap/icons/icon_target.tga",
     "star": "hud/texture/ingame/minimap/icons/icon_reinforcements.tga",
+    "cache_objective": "hud/texture/ingame/communication/rose/icons/spotted/objective.tga",
 }
 
 ORDER_NAMES = ["move", "attack", "defend", "repair", "build", "observe"]

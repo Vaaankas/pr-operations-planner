@@ -113,6 +113,7 @@ export interface LayerData {
   tickets?: LayerTickets
   controlPoints: ControlPoint[]
   routes: Route[]
+  caches?: { x: number; z: number }[]
   vehicles: VehicleSpawn[]
   vehicleAtStart: number
   counts: Record<string, number>

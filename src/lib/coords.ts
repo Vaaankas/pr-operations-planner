@@ -30,6 +30,16 @@ export function displayRotation(rotation: number): number {
   return (180 - rotation + 360) % 360
 }
 
-export function vehicleSpriteRotation(rotation: number): number {
-  return displayRotation(rotation)
+// Most PR minimaps use the same north-up heading convention. Hades Peak is
+// authored 90 degrees differently; Ascheberg and Muttrah use the default.
+const VEHICLE_SPRITE_OFFSET: Record<string, number> = {
+  hades_peak: 0,
+}
+
+export function vehicleSpriteOffset(layerId: string): number {
+  return VEHICLE_SPRITE_OFFSET[layerId.split('__')[0]] ?? 90
+}
+
+export function vehicleSpriteRotation(layerId: string, rotation: number): number {
+  return (displayRotation(rotation) + vehicleSpriteOffset(layerId)) % 360
 }
