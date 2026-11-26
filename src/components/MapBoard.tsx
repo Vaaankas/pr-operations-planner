@@ -76,7 +76,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
   const [previewRotation, setPreviewRotation] = useState<number | null>(null)
-  const [dragScreen, setDragScreen] = useState<{ x: number; y: number } | null>(null)
+  const [dragVehicle, setDragVehicle] = useState<{ id: string; x: number; z: number; screenX: number; screenY: number } | null>(null)
   const rotateStart = useRef<{ angle: number; rotation: number } | null>(null)
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
@@ -1251,12 +1251,15 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const claimPrefix = commanderClaim ? '[★] ' : claimIndex >= 0 ? `[${claimIndex + 1}] ` : ''
             const turns = stage.turns?.[v.id] ?? []
             const base = baseVehiclePos(v)
+            const drag = dragVehicle?.id === v.id ? dragVehicle : null
+            const endpoint = drag ? { x: drag.x, z: drag.z } : move
             const route = move
-              ? [base, ...turns, move].map((q) => {
+              ? [base, ...turns, endpoint].map((q) => {
                   const d = worldToDisplayNorm(q.x, q.z, layer.world)
                   return [d.x * mapW, d.y * mapH] as [number, number]
                 })
               : []
+            const dp = drag ? worldToDisplayNorm(drag.x, drag.z, layer.world) : p
             return (
               <Group key={v.id}>
                 {route.length > 1 && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && (
@@ -1330,18 +1333,21 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   }}
                   onDragStart={() => planner.checkpoint()}
                   onDragMove={(e) => {
-                    if (!selected) return
                     const node = e.target
-                    setDragScreen({
-                      x: node.x() * view.scale + view.x,
-                      y: node.y() * view.scale + view.y,
+                    const world = displayNormToWorld({ x: node.x() / mapW, y: node.y() / mapH }, layer.world)
+                    setDragVehicle({
+                      id: v.id,
+                      x: world.x,
+                      z: world.z,
+                      screenX: node.x() * view.scale + view.x,
+                      screenY: node.y() * view.scale + view.y,
                     })
                   }}
                   onDragEnd={(e) => {
                     const node = e.target
                     const world = displayNormToWorld({ x: node.x() / mapW, y: node.y() / mapH }, layer.world)
                     planner.moveVehicle(v.id, { x: world.x, z: world.z, rotation: pos.rotation })
-                    setDragScreen(null)
+                    setDragVehicle(null)
                   }}
                   onTransformEnd={(e) => {
                     const node = e.target
@@ -1380,10 +1386,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={p.y * mapH + s * 0.56}
+                    y={dp.y * mapH + s * 0.56}
                     width={240 * iconScale}
                     align="center"
-                    x={p.x * mapW - 120 * iconScale}
+                    x={dp.x * mapW - 120 * iconScale}
                     listening={false}
                   />
                 )}
@@ -1397,8 +1403,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
       </Stage>
 
-      {(dragScreen ?? selectedScreen) && selectedVehicle && ui.tool === 'select' && (() => {
-        const screen = dragScreen ?? selectedScreen!
+      {(dragVehicle || selectedScreen) && selectedVehicle && ui.tool === 'select' && (() => {
+        const screen = dragVehicle?.id === selectedVehicle.id
+          ? { x: dragVehicle.screenX, y: dragVehicle.screenY }
+          : selectedScreen!
         const angle = selectedVehiclePos
           ? vehicleSpriteRotation(layer.id, previewRotation ?? selectedVehiclePos.rotation)
           : 0
