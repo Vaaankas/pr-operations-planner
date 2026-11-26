@@ -8,6 +8,8 @@ ROOT = Path(__file__).resolve().parents[2]
 LAYERS = ROOT / "public" / "data" / "layers"
 OUT = ROOT / "public" / "vehicle-audit.html"
 
+assets = json.loads((ROOT / "public" / "data" / "assets.json").read_text(encoding="utf-8"))
+icon_paths = assets.get("vehicles", {})
 vehicles: dict[str, dict] = {}
 for path in glob.glob(str(LAYERS / "*.json")):
     layer = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -18,7 +20,7 @@ for path in glob.glob(str(LAYERS / "*.json")):
         vehicles.setdefault(template, {
             "label": vehicle["label"],
             "category": vehicle["category"],
-            "icon": vehicle["icon"],
+            "icon": icon_paths.get(vehicle["icon"]) or icon_paths.get(vehicle["category"]) or f"icons/vehicles/{vehicle['category']}.webp",
         })
 
 by_category: dict[str, list[tuple[str, dict]]] = defaultdict(list)
