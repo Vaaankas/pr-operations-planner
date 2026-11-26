@@ -485,15 +485,15 @@ export async function renderStageCanvas(
         ctx.font = `600 ${size * 0.012}px "Inter", "Segoe UI", sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'top'
-        ctx.fillText(formatTime(vehicleDelayRemaining(v, stage.time)), x, y + s * 0.53)
+        ctx.fillText(formatTime(vehicleDelayRemaining(v, stage.time)), x, y + s * 0.62 + size * 0.014)
         ctx.restore()
       }
       const squadId = plan.claims[v.id]
       const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
       if (squadId === 'commander') {
-        label(ctx, `[★] ${v.label}`, x, y + s * (ready ? 0.62 : 0.85), size * 0.009, color)
+        label(ctx, `[★] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
       } else if (squadIndex >= 0) {
-        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * (ready ? 0.62 : 0.85), size * 0.009, color)
+        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
       }
     }
   }
