@@ -256,7 +256,7 @@ function SpecialistKitsCard({ plan, layer }: { plan: Plan; layer: LayerData }) {
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-1.5 py-1.5">
         {mode === 'assets' ? (
           layer.vehicles
-            .filter((vehicle) => vehicle.team === plan.side && !isHiddenVehicle(vehicle.template))
+            .filter((vehicle) => vehicle.team === plan.side && !isHiddenVehicle(vehicle.template) && !plan.claims[vehicle.id])
             .map((vehicle) => (
               <div
                 key={vehicle.id}
