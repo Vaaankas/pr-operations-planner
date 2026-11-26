@@ -65,9 +65,22 @@ function MemberRow({
   const planner = usePlanner()
   const plan = usePlanner((s) => s.plan)
   const [over, setOver] = useState(false)
+  const namePointer = useRef(false)
   const assignedKit = specialistKit(plan?.roster.specialistAssignments?.[member.id])
   return (
     <div
+      draggable
+      onPointerDown={(e) => {
+        namePointer.current = (e.target as HTMLElement).tagName === 'INPUT'
+      }}
+      onDragStart={(e) => {
+        if (namePointer.current || (e.target as HTMLElement).tagName === 'INPUT') {
+          e.preventDefault()
+          return
+        }
+        e.dataTransfer.setData('text/pr-member', member.id)
+        e.dataTransfer.effectAllowed = 'move'
+      }}
       onDragOver={(e) => {
         e.preventDefault()
         setOver(true)
@@ -85,26 +98,18 @@ function MemberRow({
         const id = e.dataTransfer.getData('text/pr-member')
         if (id) planner.moveMember(id, target, index)
       }}
-      className={`group flex items-center gap-2 rounded border px-2 py-1.5 ${
+      className={`group flex cursor-grab select-none items-center gap-2 rounded border px-2 py-1.5 active:cursor-grabbing ${
         over ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/10 bg-black/25'
       }`}
     >
-      <span
-        draggable
-        onDragStart={(e) => {
-          e.dataTransfer.setData('text/pr-member', member.id)
-          e.dataTransfer.effectAllowed = 'move'
-        }}
-        className="cursor-grab active:cursor-grabbing"
-        title="Drag player"
-      >
+      <span className="cursor-grab active:cursor-grabbing" title="Drag player">
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 group-hover:text-slate-400" />
       </span>
       {accent && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: accent }} />}
       <EditableName
         value={member.name}
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
-        className="min-w-0 flex-1 select-text truncate bg-transparent text-[14px] font-medium text-slate-200 outline-none"
+        className="min-w-0 flex-1 cursor-text select-text truncate bg-transparent text-[14px] font-medium text-slate-200 outline-none"
       />
       {assignedKit && (
         <button
@@ -192,16 +197,20 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
           const limit = specialistLimit(kit, players)
           const count = counts[kit.id] ?? 0
           return (
-            <div key={kit.id} className="flex min-h-0 flex-1 items-center gap-2 rounded border border-white/10 bg-black/25 px-1.5">
+            <div
+              key={kit.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/pr-kit', kit.id)
+                e.dataTransfer.effectAllowed = 'copy'
+              }}
+              className="flex min-h-0 flex-1 cursor-grab select-none items-center gap-2 rounded border border-white/10 bg-black/25 px-1.5 active:cursor-grabbing"
+            >
               <img
                 src={dataUrl(`icons/kits/${kit.id}.webp`)}
                 alt={kit.short}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('text/pr-kit', kit.id)
-                  e.dataTransfer.effectAllowed = 'copy'
-                }}
-                className="h-5 w-5 shrink-0 cursor-grab object-contain active:cursor-grabbing"
+                draggable={false}
+                className="h-5 w-5 shrink-0 object-contain"
                 title={`${kit.name} — drag onto a player or squad`}
               />
               <span className="min-w-0 flex-1 truncate text-[12px] text-slate-300" title={`${kit.name} · PR limit ${limit}`}>{kit.name}</span>
