@@ -1847,8 +1847,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const capturable = isCapturable(hoverFlag.cp)
         return (
           <div
-            className="pointer-events-none absolute z-30 w-fit min-w-[7.5rem] max-w-[9rem] rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
-            style={{ left: clamp(hoverFlag.x + 18, 8, box.w - 220), top: clamp(hoverFlag.y - 8, 8, box.h - 110) }}
+            className="pointer-events-none absolute right-3 top-3 z-30 w-fit min-w-[7.5rem] max-w-[9rem] rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
           >
             <div className="text-[12px] font-semibold text-slate-100">{hoverFlag.cp.name}</div>
             <div className="mt-1 font-mono uppercase tracking-wider text-slate-500">Owner · {teamName(layer, team)}</div>
@@ -1870,8 +1869,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const members = squad ? squad.members : commanderMember ? [commanderMember] : []
         return (
           <div
-            className="pointer-events-none absolute z-30 w-fit min-w-32 max-w-40 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
-            style={{ left: clamp(hoverSquad.x + 18, 8, box.w - 250), top: clamp(hoverSquad.y - 8, 8, box.h - 260) }}
+            className="pointer-events-none absolute right-3 top-3 z-30 w-fit min-w-32 max-w-40 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
           >
             <div className="text-[12px] font-semibold text-slate-100">
               {(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}
@@ -1909,8 +1907,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const squad = plan.roster.squads.find((item) => item.id === plan.claims[vehicle.id])
         return (
           <div
-            className="pointer-events-none absolute z-30 w-fit min-w-[7.5rem] max-w-36 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
-            style={{ left: clamp(hoverCrew.x + 18, 8, box.w - 235), top: clamp(hoverCrew.y - 8, 8, box.h - 150) }}
+            className="pointer-events-none absolute right-3 top-3 z-30 w-fit min-w-[7.5rem] max-w-36 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
           >
             <div className="text-[12px] font-semibold text-slate-100">{vehicle.label}</div>
             {squad && <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">{squad.name}</div>}
