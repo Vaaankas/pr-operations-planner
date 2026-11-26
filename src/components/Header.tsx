@@ -107,10 +107,12 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
       </div>
 
       <span
-        className={`flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider ${playerCount(plan) > 50 ? 'text-amber-300' : 'text-slate-400'}`}
-        title={`${playerCount(plan)}/50 players · ${confirmed}/50 confirmed · ${members.length - confirmed} unconfirmed`}
+        className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
+        title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} unconfirmed`}
       >
-        <Users className="h-3 w-3" /> {playerCount(plan)}/50
+        <Users className="h-3 w-3 text-emerald-400" />
+        <span className="text-emerald-400">{confirmed}</span>
+        <span className="text-slate-500">/50</span>
       </span>
 
       <div className="ml-auto flex items-center gap-1.5">
