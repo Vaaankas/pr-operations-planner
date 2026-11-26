@@ -4,6 +4,7 @@ import type { LayerData, MapMeta, Plan, Stage } from '../types'
 import { usePlanner } from '../store'
 import { useAssets } from '../lib/assets'
 import { formatTime } from '../lib/utils'
+import { stageSlideData } from '../lib/slide'
 import { captureStageDataUrl } from '../lib/konvaExport'
 
 interface Props {
@@ -36,19 +37,49 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   }, [assets, cacheKey, images, layer, map, plan, stage])
 
   const src = images[cacheKey]
+  const slide = stageSlideData(plan, map, layer, stage)
 
   return (
     <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#070b08] p-4">
-      {src ? (
-        <img src={src} alt={`${stage.name} preview`} className="block max-h-full max-w-full object-contain" draggable={false} />
-      ) : (
-        <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-slate-500">
-          Capturing frame
+      <div className="relative aspect-video w-full max-w-[1280px] overflow-hidden bg-[#f8fafc] shadow-2xl">
+        <div className="absolute inset-x-0 top-0 h-[0.8%] bg-amber-400" />
+
+        <div className="absolute left-[3.4%] top-[4.3%] w-[35%]">
+          <div className="font-semibold leading-none text-[#0f172a]" style={{ fontSize: 'clamp(18px, 2.4vw, 32px)' }}>
+            {slide.title}
+          </div>
+          <div className="mt-[4%] font-mono font-bold text-[#b45309]" style={{ fontSize: 'clamp(10px, 1.05vw, 15px)' }}>
+            {slide.timeLabel}
+          </div>
+          <div className="mt-[3%] text-[#64748b]" style={{ fontSize: 'clamp(8px, 0.8vw, 12px)' }}>
+            {slide.meta}
+          </div>
         </div>
-      )}
+
+        <div className="absolute left-[3.4%] top-[24%] w-[35%] whitespace-pre-wrap text-[#334155]" style={{ fontSize: 'clamp(10px, 0.98vw, 15px)', lineHeight: 1.55 }}>
+          {slide.notes || <span className="italic text-slate-400">No stage notes.</span>}
+        </div>
+
+        <div className="absolute bottom-[2.5%] left-[3.4%] font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>
+          {slide.footer}
+        </div>
+
+        {src ? (
+          <img
+            src={src}
+            alt={`${stage.name} preview`}
+            draggable={false}
+            className="pointer-events-none absolute right-[2.6%] top-[5%] aspect-square w-[49.5%] select-none object-contain"
+          />
+        ) : (
+          <div className="absolute right-[2.6%] top-[5%] flex aspect-square w-[49.5%] items-center justify-center bg-[#eef2f1] font-mono text-[9px] uppercase tracking-[0.18em] text-slate-400">
+            Rendering preview
+          </div>
+        )}
+      </div>
 
       {stages.length > 1 && (
-        <div className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded border border-white/15 bg-[#080d0a]/90 px-2 py-1.5 shadow-2xl">
+        <div className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded border border-white/15 bg-[#080d0a]/90 px-2 py-1.5 shadow-2xl">
           <button
             onClick={() => stageIndex > 0 && planner.setActiveStage(stages[stageIndex - 1].id)}
             disabled={stageIndex <= 0}

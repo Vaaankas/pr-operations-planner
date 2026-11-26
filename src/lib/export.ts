@@ -1,6 +1,7 @@
 import type { AssetManifest, LayerData, MapMeta, Plan, Stage } from '../types'
 import { formatTime, safeName } from './utils'
 import { captureStageDataUrl } from './konvaExport'
+import { stageSlideData } from './slide'
 
 export type ExportFormat = 'pptx' | 'pdf' | 'png'
 
@@ -162,14 +163,15 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
   const images = await renderAll(src, opts, onProgress)
 
   for (const { stage, data } of images) {
+    const slideData = stageSlideData(src.plan, src.map, src.layer, stage)
     const slide = pptx.addSlide()
     slide.background = { color: 'FFFFFF' }
     slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: PAGE_W, h: 0.07, fill: { color: amber } })
-    slide.addText(`${stage.name}`, { x: 0.45, y: 0.32, w: 4.6, h: 0.55, fontFace: 'Segoe UI', fontSize: 24, bold: true, color: ink })
-    slide.addText(`T+${formatTime(stage.time)}`, { x: 0.45, y: 0.9, w: 3, h: 0.3, fontFace: 'Consolas', fontSize: 12, bold: true, color: 'B45309' })
-    slide.addText(subtitle(src), { x: 0.45, y: 1.2, w: 4.7, h: 0.45, fontFace: 'Segoe UI', fontSize: 9, color: '64748B' })
+    slide.addText(slideData.title, { x: 0.45, y: 0.32, w: 4.6, h: 0.55, fontFace: 'Segoe UI', fontSize: 24, bold: true, color: ink })
+    slide.addText(slideData.timeLabel, { x: 0.45, y: 0.9, w: 3, h: 0.3, fontFace: 'Consolas', fontSize: 12, bold: true, color: 'B45309' })
+    slide.addText(slideData.meta, { x: 0.45, y: 1.2, w: 4.7, h: 0.45, fontFace: 'Segoe UI', fontSize: 9, color: '64748B' })
 
-    const notes = stage.notes.trim()
+    const notes = slideData.notes
     if (notes) {
       slide.addText(notes, {
         x: 0.45, y: 1.78, w: 4.55, h: 4.9, fontFace: 'Segoe UI', fontSize: 11, color: '334155',
@@ -181,7 +183,7 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
 
     const mapSize = 6.55
     slide.addImage({ data, x: PAGE_W - mapSize - 0.35, y: 0.38, w: mapSize, h: mapSize })
-    slide.addText(`${src.plan.operation}  ·  ${stage.name}  ·  ${formatTime(stage.time)}`, {
+    slide.addText(slideData.footer, {
       x: 0.45, y: 7.12, w: 8, h: 0.2, fontFace: 'Segoe UI', fontSize: 8, color: '94A3B8',
     })
     if (notes) slide.addNotes(notes)
@@ -300,6 +302,7 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
 
   const images = await renderAll(src, opts, onProgress)
   for (const { stage, data } of images) {
+    const slideData = stageSlideData(src.plan, src.map, src.layer, stage)
     newPage()
     doc.setFillColor(255, 255, 255)
     doc.rect(0, 0, PAGE_W, PAGE_H, 'F')
@@ -308,27 +311,27 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
     doc.setTextColor(15, 23, 42)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(20)
-    doc.text(stage.name, 0.45, 0.6)
+    doc.text(slideData.title, 0.45, 0.6)
     doc.setFont('courier', 'bold')
     doc.setFontSize(10)
     doc.setTextColor(180, 83, 9)
-    doc.text(`T+${formatTime(stage.time)}`, 0.45, 1.0)
+    doc.text(slideData.timeLabel, 0.45, 1.0)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     doc.setTextColor(100, 116, 139)
-    doc.text(subtitle(src), 0.45, 1.25, { maxWidth: 4.7 })
+    doc.text(slideData.meta, 0.45, 1.25, { maxWidth: 4.7 })
 
-    if (stage.notes.trim()) {
+    if (slideData.notes) {
       doc.setFontSize(10)
       doc.setTextColor(51, 65, 85)
-      const lines = doc.splitTextToSize(stage.notes.trim(), 4.55)
+      const lines = doc.splitTextToSize(slideData.notes, 4.55)
       doc.text(lines, 0.45, 1.65, { lineHeightFactor: 1.35 })
     }
     const mapSize = 6.55
     doc.addImage(data, 'JPEG', PAGE_W - mapSize - 0.35, 0.38, mapSize, mapSize)
     doc.setFontSize(7)
     doc.setTextColor(148, 163, 184)
-    doc.text(`${src.plan.operation}  ·  ${stage.name}  ·  ${formatTime(stage.time)}`, 0.45, 7.2)
+    doc.text(slideData.footer, 0.45, 7.2)
   }
 
   return doc.output('blob')
