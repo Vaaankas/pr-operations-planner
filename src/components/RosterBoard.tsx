@@ -7,22 +7,43 @@ import { SPECIALIST_KITS, specialistKit, specialistLimit } from '../lib/kits'
 
 function EditableName({ value, onCommit, className, placeholder }: { value: string; onCommit: (v: string) => void; className?: string; placeholder?: string }) {
   const [v, setV] = useState(value)
-  useEffect(() => setV(value), [value])
+  const [editing, setEditing] = useState(false)
+  useEffect(() => {
+    setV(value)
+    setEditing(false)
+  }, [value])
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={v}
+        placeholder={placeholder}
+        onChange={(e) => setV(e.target.value)}
+        onBlur={() => {
+          if (v.trim() !== value) onCommit(v.trim())
+          setEditing(false)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+          if (e.key === 'Escape') {
+            setV(value)
+            ;(e.target as HTMLInputElement).blur()
+          }
+        }}
+        className={`${className ?? ''} w-full`}
+      />
+    )
+  }
   return (
-    <input
-      value={v}
-      placeholder={placeholder}
-      onChange={(e) => setV(e.target.value)}
-      onBlur={() => v.trim() !== value && onCommit(v.trim())}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-        if (e.key === 'Escape') {
-          setV(value)
-          ;(e.target as HTMLInputElement).blur()
-        }
-      }}
-      className={className}
-    />
+    <div className="flex min-w-0 flex-1 items-center">
+      <span
+        data-name-text
+        onClick={() => setEditing(true)}
+        className={`${className ?? ''} max-w-full cursor-text truncate select-text`}
+      >
+        {value || <span className="text-slate-600">{placeholder}</span>}
+      </span>
+    </div>
   )
 }
 
@@ -71,10 +92,12 @@ function MemberRow({
     <div
       draggable
       onPointerDown={(e) => {
-        namePointer.current = (e.target as HTMLElement).tagName === 'INPUT'
+        const target = e.target as HTMLElement
+        namePointer.current = target.tagName === 'INPUT' || !!target.closest('[data-name-text]')
       }}
       onDragStart={(e) => {
-        if (namePointer.current || (e.target as HTMLElement).tagName === 'INPUT') {
+        const target = e.target as HTMLElement
+        if (namePointer.current || target.tagName === 'INPUT' || target.closest('[data-name-text]')) {
           e.preventDefault()
           return
         }
@@ -109,7 +132,7 @@ function MemberRow({
       <EditableName
         value={member.name}
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
-        className="min-w-0 flex-1 cursor-text select-text truncate bg-transparent text-[14px] font-medium text-slate-200 outline-none"
+        className="min-w-0 truncate bg-transparent text-[14px] font-medium text-slate-200 outline-none"
       />
       {assignedKit && (
         <button
@@ -262,10 +285,12 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       <div
         draggable
         onPointerDown={(e) => {
-          namePointer.current = (e.target as HTMLElement).tagName === 'INPUT'
+          const target = e.target as HTMLElement
+          namePointer.current = target.tagName === 'INPUT' || !!target.closest('[data-name-text]')
         }}
         onDragStart={(e) => {
-          if (namePointer.current || (e.target as HTMLElement).tagName === 'INPUT') {
+          const target = e.target as HTMLElement
+          if (namePointer.current || target.tagName === 'INPUT' || target.closest('[data-name-text]')) {
             e.preventDefault()
             return
           }
@@ -299,7 +324,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
           value={squad.name}
           onCommit={(name) => planner.updateSquad(squad.id, { name })}
           placeholder="Squad name"
-          className="min-w-0 flex-1 cursor-text select-text border-0 bg-transparent text-[14px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
+          className="min-w-0 border-0 bg-transparent text-[14px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
         />
         {assignedKit && (
           <button
