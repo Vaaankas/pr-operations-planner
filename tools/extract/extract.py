@@ -108,8 +108,11 @@ CATEGORY_RULES = [
     ("dirtbike", [r"dirtbike", r"motorbike", r"civ_bik", r"_bik_"]),
     ("atv", [r"_atv", r"quad"]),
     ("forklift", [r"forklift"]),
+    ("landrover", [r"landrover", r"land_?rover"]),
+    ("tigr_rws", [r"tigr.*rws", r"arbalet"]),
+    ("tigr", [r"tigr"]),
     ("car", [r"civ_jep_", r"civ_car", r"pickup", r"technical", r"datsun"]),
-    ("jeep", [r"jep", r"jeep", r"hmmwv", r"humvee", r"landrover", r"land_?rover", r"uaz", r"vodnik", r"tigr", r"gaz"]),
+    ("jeep", [r"jep", r"jeep", r"hmmwv", r"humvee", r"uaz", r"vodnik", r"gaz"]),
     ("emplacement", [r"tow", r"atgm", r"konkurs", r"kornet", r"h_at", r"hmg", r"mg_", r"stationary", r"deployable_", r"fixed_", r"mortar_", r"aa_?gun"]),
 ]
 
@@ -574,8 +577,6 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         # start for its spawn delay. Default (field absent) is on the pad.
         at_start = not tpl.get("atStart", False)
         label = vehicle_names.get(obj.upper()) or prettify_template(obj)
-        if cat == "supply" and "supply" not in label.lower():
-            label = f"{label} (Supply)"
         vehicles.append({
             "id": f"{inst['name']}",
             "template": obj,
@@ -730,6 +731,9 @@ VEHICLE_ICONS = {
     "atv": VEHICLE_ICON_DIR + "mini_civ_atv.tga",
     "forklift": VEHICLE_ICON_DIR + "mini_civ_forklift.tga",
     "car": VEHICLE_ICON_DIR + "mini_civ_car.tga",
+    "landrover": VEHICLE_ICON_DIR + "mini_jep_medium.tga",
+    "tigr": VEHICLE_ICON_DIR + "mini_jep_heavy.tga",
+    "tigr_rws": VEHICLE_ICON_DIR + "mini_jep_rws_mg.tga",
     "aa": VEHICLE_ICON_DIR + "mini_jep_aa.tga",
     "aa_static": VEHICLE_ICON_DIR + "mini_stw_aa_medium.tga",
     "artillery": VEHICLE_ICON_DIR + "mini_stw_artillery.tga",

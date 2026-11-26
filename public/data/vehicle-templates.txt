@@ -169,9 +169,9 @@ carrier             3 gb_carrier_invincible
 ifv                11 gb_ifv_scimitar
 ifv                14 gb_ifv_scimitar_cage
 ifv                 4 gb_ifv_scorpion
-jeep               54 gb_jep_landrover
-jeep               18 gb_jep_landrover_gmg
-jeep               50 gb_jep_landrover_support
+landrover          54 gb_jep_landrover
+landrover          18 gb_jep_landrover_gmg
+landrover          50 gb_jep_landrover_support
 jeep                5 gb_jep_panther
 jeep               18 gb_jep_panther_alt
 jet                 4 gb_jet_eurofighter
@@ -310,7 +310,7 @@ jeep               10 nl_jep_bushmaster
 jeep               10 nl_jep_bushmaster_crows
 jeep               14 nl_jep_fennek
 jeep               27 nl_jep_gwagon_support
-jeep                6 nl_jep_landrover
+landrover           6 nl_jep_landrover
 jet                 1 nl_jet_f16
 jet                 1 nl_jet_f16_cas
 jet                 2 nl_jet_f35a
@@ -383,9 +383,9 @@ jeep               15 ru_jep_ba64
 recon              22 ru_jep_brdm2
 recon               2 ru_jep_brdm2_alt
 recon               8 ru_jep_brdm2_support
-jeep               83 ru_jep_tigr
-jeep              101 ru_jep_tigr_pkp
-jeep               27 ru_jep_tigr_rws
+tigr               83 ru_jep_tigr
+tigr              101 ru_jep_tigr_pkp
+tigr_rws           27 ru_jep_tigr_rws
 jeep               10 ru_jep_willysmb
 jeep                2 ru_jep_willysmb_mg
 jet                10 ru_jet_i16

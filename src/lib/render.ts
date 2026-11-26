@@ -352,7 +352,10 @@ export async function renderStageCanvas(
     const icon = opts.assets.squads[String(index + 1)]
     if (icon) jobs.push(preloadAsset(icon, squad.color))
   })
-  if (opts.assets.markers.cache_objective) jobs.push(preloadAsset(opts.assets.markers.cache_objective, '#ef4444'))
+  if (opts.assets.markers.cache_objective) {
+    jobs.push(preloadAsset(opts.assets.markers.cache_objective, '#07110a'))
+    jobs.push(preloadAsset(opts.assets.markers.cache_objective, '#ef4444'))
+  }
   for (const path of Object.values(opts.assets.markers)) jobs.push(preloadAsset(path))
   for (const path of Object.values(opts.assets.orders)) jobs.push(preloadAsset(path))
   for (const el of stage.elements) {
@@ -417,9 +420,12 @@ export async function renderStageCanvas(
     const cacheIcon = opts.assets.markers.cache_objective
     if (cacheIcon) {
       const cacheImage = tintedAssetImage(cacheIcon, '#ef4444')
-      const cacheSize = size * 0.022
+      const cacheOutline = tintedAssetImage(cacheIcon, '#07110a')
+      const cacheSize = size * 0.021
+      const cacheOutlineSize = cacheSize + size * 0.004
       for (const cache of layer.caches ?? []) {
         const [x, y] = normPoint(worldToDisplayNorm(cache.x, cache.z, layer.world), size)
+        if (cacheOutline.complete) ctx.drawImage(cacheOutline, x - cacheOutlineSize / 2, y - cacheOutlineSize / 2, cacheOutlineSize, cacheOutlineSize)
         if (cacheImage.complete) ctx.drawImage(cacheImage, x - cacheSize / 2, y - cacheSize / 2, cacheSize, cacheSize)
       }
     }

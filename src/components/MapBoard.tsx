@@ -21,6 +21,8 @@ interface Props {
   stage: PlanStage
 }
 
+const isIconElement = (el: DrawElement) => el.type === 'icon' || el.type === 'unit' || el.type === 'squad'
+
 interface Draft {
   kind: 'pen' | 'line' | 'rect' | 'ellipse'
   points: Point[]
@@ -148,7 +150,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       jobs.push(preloadAsset(assets.commander, '#07110a'))
       jobs.push(preloadAsset(assets.commander, '#facc15'))
     }
-    if (assets.markers.cache_objective) jobs.push(preloadAsset(assets.markers.cache_objective, '#ef4444'))
+    if (assets.markers.cache_objective) {
+      jobs.push(preloadAsset(assets.markers.cache_objective, '#07110a'))
+      jobs.push(preloadAsset(assets.markers.cache_objective, '#ef4444'))
+    }
     plan.roster.squads.forEach((squad, index) => {
       const icon = assets.squads[String(index + 1)]
       if (icon) jobs.push(preloadAsset(icon, squad.color))
@@ -1104,6 +1109,22 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
           )}
         </Layer>
 
+        <Layer>
+          {stage.elements.filter((el) => !isIconElement(el)).map(drawElementNode)}
+          {polygon.length > 0 && (
+            <Line
+              points={polygon.flatMap((p) => { const s = normToScreen(p); return [s.x, s.y] })}
+              stroke={ui.color}
+              strokeWidth={Math.max(1, (ui.width * mapW) / 1000)}
+              dash={[8, 5]}
+              closed={false}
+              listening={false}
+            />
+          )}
+          {draftNode()}
+          {pendingNode()}
+        </Layer>
+
         <Layer listening={ui.tool === 'select'}>
           {ui.showFlags && layer.mode !== 'gpm_insurgency' && visibleRoutes.flatMap((r) => {
             const index = routes.findIndex((x) => x.id === r.id)
@@ -1130,17 +1151,25 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const icon = assets.markers.cache_objective
             if (!icon) return null
             const p = worldToDisplayNorm(cache.x, cache.z, layer.world)
-            const size = 20 * iconScale
+            const size = 19 * iconScale
+            const outline = size + 4 * iconScale
             return (
-              <KonvaImage
-                key={`cache-${i}`}
-                image={tintedAssetImage(icon, '#ef4444')}
-                x={p.x * mapW - size / 2}
-                y={p.y * mapH - size / 2}
-                width={size}
-                height={size}
-                listening={false}
-              />
+              <Group key={`cache-${i}`} x={p.x * mapW} y={p.y * mapH} listening={false}>
+                <KonvaImage
+                  image={tintedAssetImage(icon, '#07110a')}
+                  x={-outline / 2}
+                  y={-outline / 2}
+                  width={outline}
+                  height={outline}
+                />
+                <KonvaImage
+                  image={tintedAssetImage(icon, '#ef4444')}
+                  x={-size / 2}
+                  y={-size / 2}
+                  width={size}
+                  height={size}
+                />
+              </Group>
             )
           })}
           {ui.showFlags && activeCps.map((cp) => {
@@ -1378,19 +1407,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
 
         <Layer>
-          {stage.elements.map(drawElementNode)}
-          {polygon.length > 0 && (
-            <Line
-              points={polygon.flatMap((p) => { const s = normToScreen(p); return [s.x, s.y] })}
-              stroke={ui.color}
-              strokeWidth={Math.max(1, (ui.width * mapW) / 1000)}
-              dash={[8, 5]}
-              closed={false}
-              listening={false}
-            />
-          )}
-          {draftNode()}
-          {pendingNode()}
+          {stage.elements.filter(isIconElement).map(drawElementNode)}
         </Layer>
       </Stage>
 
@@ -1450,8 +1467,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         )
       })()}
 
-      {plan.roster.squads.length > 0 && (
+      {(plan.roster.squads.length > 0 || plan.roster.commander) && (
         <div className="absolute bottom-16 right-3 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2.5 py-2">
+          {plan.roster.commander && (
           <div
             draggable
             onDragStart={(e) => {
@@ -1473,6 +1491,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             </span>
             <span>CMD</span>
           </div>
+          )}
           {plan.roster.squads.map((s, i) => (
             <div
               key={s.id}
