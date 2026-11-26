@@ -37,8 +37,6 @@ export function StagePanel({ layer, plan, stage }: Props) {
   useEffect(() => setTime(formatTime(stage.time)), [stage.time])
   useEffect(() => setNotes(stage.notes), [stage.notes])
 
-  const moves = Object.keys(stage.moves).length
-  const draws = stage.elements.length
 
   return (
     <div className="flex h-full flex-col">
@@ -79,17 +77,6 @@ export function StagePanel({ layer, plan, stage }: Props) {
             placeholder="Intent, tasks, timing, coordination..."
             className="w-full resize-none rounded border border-white/10 bg-black/30 px-2 py-2 text-[12px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/50"
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded border border-white/10 bg-black/20 px-2 py-1.5">
-            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Drawings</div>
-            <div className="font-mono text-lg text-slate-200">{draws}</div>
-          </div>
-          <div className="rounded border border-white/10 bg-black/20 px-2 py-1.5">
-            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Moved vehicles</div>
-            <div className="font-mono text-lg text-slate-200">{moves}</div>
-          </div>
         </div>
 
         <button

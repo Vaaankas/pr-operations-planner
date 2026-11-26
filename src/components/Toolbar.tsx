@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import {
   MousePointer2, Pencil, Minus, MoveUpRight, Square, Circle, Pentagon,
-  Type, MapPin, Shield, Eraser, Ruler, Boxes, Flag, Route as RouteIcon, Tag, Truck,
+  Type, TextCursorInput, MapPin, Shield, Eraser, Ruler, Boxes, Flag, Route as RouteIcon, Tag, Truck,
 } from 'lucide-react'
 import { useUI } from '../store'
 import type { Tool } from '../types'
@@ -20,8 +20,8 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'ellipse', icon: Circle, label: 'Ellipse', key: 'O' },
   { tool: 'polygon', icon: Pentagon, label: 'Zone polygon', key: 'G' },
   { tool: 'text', icon: Type, label: 'Label', key: 'T' },
+  { tool: 'textbox', icon: TextCursorInput, label: 'Text box', key: 'B' },
   { tool: 'marker', icon: MapPin, label: 'Marker', key: 'M' },
-  { tool: 'unit', icon: Shield, label: 'Unit symbol', key: 'U' },
   { tool: 'erase', icon: Eraser, label: 'Erase', key: 'E' },
 ]
 
@@ -33,8 +33,6 @@ const MARKERS = [
 ]
 
 const ORDERS = ['move', 'attack', 'defend', 'repair', 'build', 'observe']
-
-const UNITS = ['inf', 'armor', 'recon', 'air', 'hq', 'mech', 'support', 'artillery']
 
 export function ToolbarRail() {
   const ui = useUI()
@@ -222,34 +220,6 @@ export function OptionsBar() {
               </button>
             )
           })}
-        </div>
-      )}
-
-      {tool === 'unit' && (
-        <div className="flex flex-1 items-center gap-3">
-          <div className="flex items-center gap-1">
-            {(['friend', 'hostile', 'neutral'] as const).map((a) => (
-              <button
-                key={a}
-                onClick={() => ui.setAffiliation(a)}
-                className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase ${ui.unitAffiliation === a ? 'border-amber-400/60 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500'}`}
-              >
-                {a}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {UNITS.map((u) => (
-              <button
-                key={u}
-                onClick={() => ui.setUnit(u)}
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.unitKind === u ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
-                title={u}
-              >
-                <img src={iconDataUrl(u, ui.unitKind === u ? '#fbbf24' : '#cbd5e1')} alt={u} className="h-5 w-5" />
-              </button>
-            ))}
-          </div>
         </div>
       )}
 

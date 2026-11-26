@@ -61,26 +61,12 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         <HelpCircle className="h-4 w-4" />
       </button>
 
-      <div className="min-w-0">
-        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Operation</div>
-        <input
-          value={operation}
-          onChange={(e) => setOperation(e.target.value)}
-          onBlur={() => operation.trim() && operation !== plan.operation && planner.setMeta({ operation: operation.trim() })}
-          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-          className="w-[230px] max-w-[24vw] truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[13px] font-semibold text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
-          title="Operation name"
-        />
-      </div>
-
-      <div className="hidden min-w-0 border-l border-white/10 pl-3 lg:block">
-        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Map</div>
-        <div className="max-w-[240px] truncate px-1 py-0.5 text-[12px] font-medium text-slate-300" title={`${map.name} · ${layer.displayName}`}>
-          {map.name} <span className="text-slate-600">·</span> {layer.displayName}
-        </div>
-      </div>
-
-      <div className="hidden h-7 w-px bg-white/10 lg:block" />
+      <button onClick={() => planner.undo()} disabled={!canUndo} className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Undo (Ctrl+Z)">
+        <Undo2 className="h-4 w-4" />
+      </button>
+      <button onClick={() => planner.redo()} disabled={!canRedo} className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Redo (Ctrl+Y)">
+        <Redo2 className="h-4 w-4" />
+      </button>
 
       <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
         <button
@@ -103,6 +89,27 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         </button>
       </div>
 
+      <div className="min-w-0">
+        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Operation</div>
+        <input
+          value={operation}
+          onChange={(e) => setOperation(e.target.value)}
+          onBlur={() => operation.trim() && operation !== plan.operation && planner.setMeta({ operation: operation.trim() })}
+          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          className="w-[230px] max-w-[24vw] truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[13px] font-semibold text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
+          title="Operation name"
+        />
+      </div>
+
+      <div className="hidden min-w-0 border-l border-white/10 pl-3 lg:block">
+        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Map</div>
+        <div className="max-w-[240px] truncate px-1 py-0.5 text-[12px] font-medium text-slate-300" title={`${map.name} · ${layer.displayName}`}>
+          {map.name} <span className="text-slate-600">·</span> {layer.displayName}
+        </div>
+      </div>
+
+      <div className="hidden h-7 w-px bg-white/10 lg:block" />
+
       <div className="ml-auto flex items-center gap-1.5">
         <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
           {side && cpFlag(assets, side.key) ? (
@@ -121,13 +128,6 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
           <span className="text-emerald-400">{confirmed}</span>
           <span className="text-slate-500">/50</span>
         </span>
-
-        <button onClick={() => planner.undo()} disabled={!canUndo} className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Undo (Ctrl+Z)">
-          <Undo2 className="h-4 w-4" />
-        </button>
-        <button onClick={() => planner.redo()} disabled={!canRedo} className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Redo (Ctrl+Y)">
-          <Redo2 className="h-4 w-4" />
-        </button>
 
         <div className="hidden items-center gap-1 px-2 font-mono text-[9px] uppercase tracking-wider text-slate-600 xl:flex">
           <Save className="h-3 w-3 text-emerald-500/70" /> saved {new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

@@ -103,8 +103,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [polygon, setPolygon] = useState<Point[]>([])
   const polygonRef = useRef<Point[]>([])
   const pendingText = useRef<Point | null>(null)
+  const pendingTextBox = useRef(false)
   const [textAt, setTextAt] = useState<Point | null>(null)
   const [textValue, setTextValue] = useState('')
+  const [textBoxMode, setTextBoxMode] = useState(false)
   const [tick, setTick] = useState(0)
   const [hoverFlag, setHoverFlag] = useState<{ cp: ControlPoint; x: number; y: number } | null>(null)
   const [hoverVehicleId, setHoverVehicleId] = useState<string | null>(null)
@@ -383,16 +385,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       return
     }
     const pos = mapCoords()
-    if (tool === 'text') {
+    if (tool === 'text' || tool === 'textbox') {
       pendingText.current = toNorm(pos)
+      pendingTextBox.current = tool === 'textbox'
       return
     }
     if (tool === 'marker') {
       commit({ ...base(), type: 'icon', at: toNorm(pos), icon: state.markerIcon, rotation: 0, size: 0.022 } as DrawElement)
-      return
-    }
-    if (tool === 'unit') {
-      commit({ ...base(), type: 'unit', at: toNorm(pos), unit: state.unitKind, affiliation: state.unitAffiliation, size: 0.026 } as DrawElement)
       return
     }
     if (tool === 'polygon') {
@@ -434,7 +433,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     }
   }
 
-  const onStageMove = () => {
+  const onStageMove = (e: KonvaEventObject<MouseEvent>) => {
     if (panStart.current) {
       const st = stageRef.current
       const p = st?.getPointerPosition()
@@ -453,8 +452,26 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       return
     }
     if (pendingRef.current) {
+      const current = pendingRef.current
       const n = toNorm(mapCoords())
-      setPendingShape({ ...pendingRef.current, points: [pendingRef.current.points[0], n] })
+      let end = n
+      if (e.evt.shiftKey) {
+        const start = current.points[0]
+        const dx = n.x - start.x
+        const dy = n.y - start.y
+        if (current.kind === 'rect' || current.kind === 'ellipse') {
+          const size = Math.max(Math.abs(dx), Math.abs(dy))
+          end = {
+            x: start.x + (dx < 0 ? -size : size),
+            y: start.y + (dy < 0 ? -size : size),
+          }
+        } else {
+          const length = Math.hypot(dx, dy)
+          const angle = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4)
+          end = { x: start.x + Math.cos(angle) * length, y: start.y + Math.sin(angle) * length }
+        }
+      }
+      setPendingShape({ ...current, points: [current.points[0], end] })
       return
     }
     if (!draft) return
@@ -479,11 +496,12 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       if (!moved && !middle) useUI.getState().setSelected(null, null)
       return
     }
-    if (pendingText.current && useUI.getState().tool === 'text') {
+    if (pendingText.current && ['text', 'textbox'].includes(useUI.getState().tool)) {
       const pos = pendingText.current
       pendingText.current = null
       setTextAt(pos)
       setTextValue('')
+      setTextBoxMode(pendingTextBox.current)
       return
     }
     if (pendingRef.current) {
@@ -523,9 +541,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       addingText.current = false
       return
     }
-    commit({ ...base(), type: 'text', at: textAt, text: textValue.trim(), fontSize: 0.021 } as DrawElement)
+    commit({ ...base(), type: 'text', at: textAt, text: textValue.trim(), fontSize: 0.021, box: textBoxMode } as DrawElement)
     setTextAt(null)
     setTextValue('')
+    setTextBoxMode(false)
     setTimeout(() => { addingText.current = false }, 50)
   }
 
@@ -537,9 +556,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       polygonRef.current = []
       setPolygon([])
     }
-    if (ui.tool !== 'text') {
+    if (ui.tool !== 'text' && ui.tool !== 'textbox') {
       pendingText.current = null
       setTextAt(null)
+      setTextBoxMode(false)
     }
   }, [ui.tool])
 
@@ -813,7 +833,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
-            fill={el.fill ? `${el.color}22` : undefined}
+            fill={el.fill ? el.color : undefined}
+            fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
           />
         )
       }
@@ -831,7 +852,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
-            fill={el.fill ? `${el.color}22` : undefined}
+            fill={el.fill ? el.color : undefined}
+            fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
           />
         )
       }
@@ -844,13 +866,44 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             closed
             stroke={color}
             strokeWidth={sw}
-            fill={el.fill ? `${el.color}22` : undefined}
+            fill={el.fill ? el.color : undefined}
+            fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
             hitStrokeWidth={14}
           />
         )
       case 'text': {
         const at = normToScreen(el.at)
+        const fontSize = Math.max(10, el.fontSize * mapW)
+        if (el.box) {
+          const boxW = Math.max(120, el.text.length * fontSize * 0.62 + 18)
+          const boxH = fontSize * 2
+          return (
+            <Group key={el.id} {...common} x={at.x} y={at.y - boxH / 2}>
+              <Rect
+                width={boxW}
+                height={boxH}
+                fill={el.color}
+                fillOpacity={0.16}
+                stroke={el.color}
+                strokeWidth={sw}
+                cornerRadius={3}
+              />
+              <Text
+                x={9}
+                y={boxH / 2}
+                width={boxW - 18}
+                text={el.text}
+                fontSize={fontSize}
+                fontFamily="Inter, Segoe UI, sans-serif"
+                fontStyle="bold"
+                fill={el.color}
+                offsetY={fontSize / 2}
+                perfectDrawEnabled={false}
+              />
+            </Group>
+          )
+        }
         return (
           <Text
             key={el.id}
@@ -858,7 +911,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             x={at.x}
             y={at.y}
             text={el.text}
-            fontSize={Math.max(10, el.fontSize * mapW)}
+            fontSize={fontSize}
             fontFamily="Inter, Segoe UI, sans-serif"
             fontStyle="bold"
             fill={color}
@@ -1061,7 +1114,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           width={Math.abs(b.x - a.x)}
           height={Math.abs(b.y - a.y)}
           stroke={ui.color}
-          fill={ui.fillShapes ? `${ui.color}22` : undefined}
+          fill={ui.fillShapes ? ui.color : undefined}
+          fillOpacity={ui.fillShapes ? ui.fillOpacity : 1}
           strokeWidth={sw}
           dash={[6, 4]}
           opacity={0.85}
@@ -1076,7 +1130,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         radiusX={Math.abs(b.x - a.x) / 2}
         radiusY={Math.abs(b.y - a.y) / 2}
         stroke={ui.color}
-        fill={ui.fillShapes ? `${ui.color}22` : undefined}
+        fill={ui.fillShapes ? ui.color : undefined}
+        fillOpacity={ui.fillShapes ? ui.fillOpacity : 1}
         strokeWidth={sw}
         dash={[6, 4]}
         opacity={0.85}
@@ -1176,7 +1231,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         y={view.y}
         onWheel={onWheel}
         onMouseDown={onStageDown}
-        onMouseMove={onStageMove}
+        onMouseMove={(e) => onStageMove(e)}
         onMouseUp={onStageUp}
         onDblClick={() => {
           if (ui.tool === 'polygon') finishPolygon()
@@ -1694,7 +1749,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               value={textValue}
               onChange={(e) => setTextValue(e.target.value)}
               onBlur={addText}
-              placeholder="Label text"
+              placeholder={textBoxMode ? 'Text box content' : 'Label text'}
               className="w-52 bg-transparent px-2 py-1 text-sm text-slate-100 outline-none"
             />
             <button type="submit" className="rounded bg-amber-400 px-2 py-1 text-xs font-bold text-black">OK</button>

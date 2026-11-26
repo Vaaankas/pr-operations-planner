@@ -152,7 +152,7 @@ export type DrawElement =
   | (ElementBase & { type: 'rect'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'ellipse'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'polygon'; points: Point[]; fill: boolean })
-  | (ElementBase & { type: 'text'; at: Point; text: string; fontSize: number })
+  | (ElementBase & { type: 'text'; at: Point; text: string; fontSize: number; box?: boolean })
   | (ElementBase & {
       type: 'squad'
       at: Point
@@ -243,7 +243,7 @@ export interface Plan {
 
 export type Tool =
   | 'select' | 'pen' | 'line' | 'arrow' | 'ruler' | 'rect' | 'ellipse'
-  | 'polygon' | 'text' | 'marker' | 'unit' | 'erase'
+  | 'polygon' | 'text' | 'textbox' | 'marker' | 'erase'
 
 export interface UIState {
   view: 'plan' | 'roster'
