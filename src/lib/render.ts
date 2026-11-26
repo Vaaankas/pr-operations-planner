@@ -5,7 +5,7 @@ import { cpFlag, vehicleIconPath } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
 import { mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from './coords'
 import { routeSegments } from './routes'
-import { CACHE_ICON_PX, exportPx, FLAG_ICON_PX, SQUAD_ICON_PX, vehicleIconPx } from './mapStyle'
+import { CACHE_ICON_PX, exportPx, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, vehicleIconPx } from './mapStyle'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
   const r = mirrorNorm(p)
@@ -263,14 +263,14 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
   ctx.restore()
 }
 
-function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color = '#f1f5f9') {
+function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color = MAP_TEXT_FILL, outlineWidth = Math.max(1, size * 0.28)) {
   const f = Math.max(0.5, size)
   ctx.save()
   ctx.font = `600 ${f}px "Inter", "Segoe UI", sans-serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  ctx.lineWidth = Math.max(1, f * 0.12)
-  ctx.strokeStyle = 'rgba(2,6,4,0.68)'
+  ctx.lineWidth = Math.max(1, outlineWidth)
+  ctx.strokeStyle = MAP_TEXT_OUTLINE
   ctx.strokeText(text, x, y)
   ctx.fillStyle = color
   ctx.fillText(text, x, y)
@@ -318,7 +318,7 @@ function drawFlag(
     ctx.drawImage(img, x - w / 2, y - h / 2, w, h)
     ctx.restore()
   }
-  if (showLabel) label(ctx, cp.name, x, y + h / 2 + ui * 0.003, exportPx(size, 10.5, detailScale), '#f8fafc')
+  if (showLabel) label(ctx, cp.name, x, y + h / 2 + ui * 0.003, exportPx(size, 10.5, detailScale), MAP_TEXT_FILL, exportPx(size, MAP_TEXT_OUTLINE_PX, detailScale))
 }
 
 export async function renderStageCanvas(
@@ -513,7 +513,7 @@ export async function renderStageCanvas(
           : squadIndex >= 0
             ? `[${squadIndex + 1}] ${v.label}`
             : v.label
-        label(ctx, name, x, y + s * 0.62, exportPx(size, 9, ds), color)
+        label(ctx, name, x, y + s * 0.62, exportPx(size, 9, ds), color, exportPx(size, MAP_TEXT_OUTLINE_PX, ds))
       }
     }
   }

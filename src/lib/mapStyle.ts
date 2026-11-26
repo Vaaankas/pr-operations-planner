@@ -11,6 +11,10 @@ export const FLAG_ICON_PX = 30
 export const CACHE_ICON_PX = 19
 export const SQUAD_ICON_PX = 24
 
+export const MAP_TEXT_FILL = '#f8fafc'
+export const MAP_TEXT_OUTLINE = 'rgba(2,6,4,0.92)'
+export const MAP_TEXT_OUTLINE_PX = 3
+
 export function vehicleIconPx(category: string): number {
   if (category === 'mbt') return VEHICLE_ICON_PX.mbt
   if (category === 'boat' || category === 'carrier') return VEHICLE_ICON_PX.boat

@@ -14,7 +14,7 @@ import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehi
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
-import { CACHE_ICON_PX, FLAG_ICON_PX, SQUAD_ICON_PX, vehicleIconPx } from '../lib/mapStyle'
+import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, vehicleIconPx } from '../lib/mapStyle'
 
 interface Props {
   map: MapMeta
@@ -1306,9 +1306,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     fontSize={10.5 * iconScale}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
-                    fill="#f8fafc"
-                    stroke="rgba(2,6,4,0.92)"
-                    strokeWidth={3 * iconScale}
+                    fill={MAP_TEXT_FILL}
+                    stroke={MAP_TEXT_OUTLINE}
+                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale}
                     fillAfterStrokeEnabled
                     y={h / 2 + 3 * iconScale}
                     width={180 * iconScale}
@@ -1499,8 +1499,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill={selected ? '#fbbf24' : color}
-                    stroke="rgba(2,6,4,0.92)"
-                    strokeWidth={3 * iconScale}
+                    stroke={MAP_TEXT_OUTLINE}
+                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale}
                     fillAfterStrokeEnabled
                     y={dp.y * mapH + s * 0.56}
                     width={240 * iconScale}
