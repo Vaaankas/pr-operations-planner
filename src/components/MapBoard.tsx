@@ -1842,7 +1842,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               onMouseLeave={() => setHoverSquad(null)}
               onClick={() => setPinnedSquadId((current) => current === s.id ? null : s.id)}
               className="flex cursor-grab items-center gap-1.5 whitespace-nowrap text-[11px] text-slate-200 active:cursor-grabbing"
-              title="Drag onto the map to place a squad badge"
+              title="Drag onto the map to place a squad marker"
             >
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#07110a]">
                 {assets.squads[String(i + 1)] ? (
