@@ -73,6 +73,15 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 
 const PENCIL = '#f8fafc'
 
+function withAlpha(color: string, alpha: number): string {
+  const hex = color.replace('#', '')
+  if (hex.length !== 6) return color
+  const r = parseInt(hex.slice(0, 2), 16)
+  const g = parseInt(hex.slice(2, 4), 16)
+  const b = parseInt(hex.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 function aasPickCount(sgid: number): number | null {
   const text = String(sgid)
   if (text.length < 2) return null
@@ -1405,7 +1414,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const w = FLAG_ICON_PX * iconScale * ui.iconSize
             const ratio = img && img.width && img.height ? img.height / img.width : 1
             const h = w * Math.min(1, Math.max(0.4, ratio))
-            const index = visibleRoutes.findIndex((r) => r.cps.includes(cp.id))
+            const index = routes.findIndex((route) => route.cps.includes(cp.id))
             const color = routeColor(Math.max(0, index))
             return (
               <Group
@@ -1430,8 +1439,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {radius > 0 && (
                   <Circle
                     radius={radius}
-                    fill={`${color}14`}
-                    stroke={`${color}70`}
+                    fill={withAlpha(color, 0.16)}
+                    stroke={withAlpha(color, 0.85)}
                     strokeWidth={1.5 * iconScale}
                     listening={false}
                   />
