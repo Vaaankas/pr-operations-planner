@@ -82,45 +82,46 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
 
       <div className="hidden h-7 w-px bg-white/10 lg:block" />
 
-      <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
-        {side && cpFlag(assets, side.key) ? (
-          <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-4 object-contain" />
-        ) : (
-          <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-        )}
-        {side?.name ?? `Team ${plan.side}`}
-      </span>
-
-      <span
-        className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
-        title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} unconfirmed`}
-      >
-        <Users className="h-3 w-3 text-emerald-400" />
-        <span className="text-emerald-400">{confirmed}</span>
-        <span className="text-slate-500">/50</span>
-      </span>
+      <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
+        <button
+          onClick={() => { ui.setView('plan'); ui.setMode('edit') }}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'edit' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Edit Plan
+        </button>
+        <button
+          onClick={() => { ui.setView('plan'); ui.setMode('preview') }}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'preview' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Preview
+        </button>
+        <button
+          onClick={() => ui.setView('roster')}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Roster
+        </button>
+      </div>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
-          <button
-            onClick={() => { ui.setView('plan'); ui.setMode('edit') }}
-            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'edit' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            Edit Plan
-          </button>
-          <button
-            onClick={() => { ui.setView('plan'); ui.setMode('preview') }}
-            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'preview' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            Preview
-          </button>
-          <button
-            onClick={() => ui.setView('roster')}
-            className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            Roster
-          </button>
-        </div>
+        <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
+          {side && cpFlag(assets, side.key) ? (
+            <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-4 object-contain" />
+          ) : (
+            <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+          )}
+          {side?.name ?? `Team ${plan.side}`}
+        </span>
+
+        <span
+          className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
+          title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} unconfirmed`}
+        >
+          <Users className="h-3 w-3 text-emerald-400" />
+          <span className="text-emerald-400">{confirmed}</span>
+          <span className="text-slate-500">/50</span>
+        </span>
+
         <button onClick={() => planner.undo()} disabled={!canUndo} className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Undo (Ctrl+Z)">
           <Undo2 className="h-4 w-4" />
         </button>
