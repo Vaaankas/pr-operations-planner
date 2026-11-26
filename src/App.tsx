@@ -231,7 +231,6 @@ function AppInner() {
         onOpenPicker={() => setPickerOpen(true)}
         onExport={() => ui.setExportOpen(true)}
         onHelp={() => setHelpOpen(true)}
-        onReset={reset}
       />
 
       {ui.view === 'roster' ? (
@@ -287,6 +286,7 @@ function AppInner() {
           currentLayerId={plan.layerId}
           onStart={startPlan}
           onClose={() => setPickerOpen(false)}
+          onDiscard={reset}
         />
       )}
 

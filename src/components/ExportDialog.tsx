@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Download, FileImage, FileText, Loader2, Presentation, X } from 'lucide-react'
+import { Download, FileImage, FileJson, FileText, Loader2, Presentation, X } from 'lucide-react'
 import type { LayerData, MapMeta, Plan } from '../types'
 import { useUI } from '../store'
 import { buildPdf, buildPngZip, buildPptx, type ExportFormat, type ExportOptions } from '../lib/export'
@@ -23,6 +23,12 @@ export function ExportDialog({ plan, map, layer }: Props) {
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState({ done: 0, total: 0, label: '' })
   const [error, setError] = useState<string | null>(null)
+
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' })
+    downloadBlob(blob, `${safeName(plan.operation)}.prplan.json`)
+    ui.setExportOpen(false)
+  }
 
   const run = async () => {
     setBusy(true)
@@ -167,6 +173,13 @@ export function ExportDialog({ plan, map, layer }: Props) {
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-white/10 px-5 py-3">
+          <button
+            onClick={exportJson}
+            disabled={busy}
+            className="mr-auto flex items-center gap-1.5 rounded border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-amber-400/50 hover:text-amber-300 disabled:opacity-30"
+          >
+            <FileJson className="h-3.5 w-3.5" /> Plan JSON
+          </button>
           <button onClick={() => ui.setExportOpen(false)} disabled={busy} className="rounded border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/5 disabled:opacity-30">
             Cancel
           </button>

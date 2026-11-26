@@ -10,12 +10,13 @@ interface Props {
   currentLayerId?: string
   onStart: (map: MapMeta, layer: LayerRef, side: Team) => void
   onClose?: () => void
+  onDiscard?: () => void
 }
 
 const MODES = ['ALL', 'AAS', 'Insurgency', 'Skirmish'] as const
 const SIZES = ['ALL', 1, 2, 4, 8] as const
 
-export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }: Props) {
+export function Picker({ index, currentMapId, currentLayerId, onStart, onClose, onDiscard }: Props) {
   const assets = useAssets()
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<(typeof MODES)[number]>('ALL')
@@ -78,6 +79,11 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose }
           </div>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {onDiscard && (
+            <button onClick={onDiscard} className="rounded border border-rose-500/30 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10">
+              Discard Current Plan
+            </button>
+          )}
           {onClose && (
             <button onClick={onClose} className="rounded border border-white/10 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5">
               {currentMapId ? 'Back to planning' : 'Close'}

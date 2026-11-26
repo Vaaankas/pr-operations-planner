@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Crosshair, Download, FileJson, HelpCircle, Map, Menu, Redo2, Save,
-  Trash2, Undo2, Upload, Users,
+  Download, HelpCircle, Map, Redo2, Save,
+  Undo2, Upload, Users,
 } from 'lucide-react'
 import type { LayerData, MapMeta, Plan } from '../types'
 import { usePlanner, useUI } from '../store'
-import { downloadBlob, playerCount, safeName } from '../lib/utils'
+import { playerCount } from '../lib/utils'
 import { cpFlag, useAssets } from '../lib/assets'
 import { dataUrl } from '../lib/utils'
 
@@ -16,26 +16,18 @@ interface Props {
   onOpenPicker: () => void
   onExport: () => void
   onHelp: () => void
-  onReset: () => void
 }
 
-export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onReset }: Props) {
+export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Props) {
   const planner = usePlanner()
   const ui = useUI()
   const assets = useAssets()
   const [operation, setOperation] = useState(plan.operation)
-  const [menu, setMenu] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const canUndo = usePlanner((s) => s.past.length > 0)
   const canRedo = usePlanner((s) => s.future.length > 0)
 
   useEffect(() => setOperation(plan.operation), [plan.operation])
-
-  const exportJson = () => {
-    const blob = new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' })
-    downloadBlob(blob, `${safeName(plan.operation)}.prplan.json`)
-    setMenu(false)
-  }
 
   const importJson = async (file: File) => {
     try {
@@ -43,7 +35,6 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
       const data = JSON.parse(text)
       if (data?.version !== 1 || !data.mapId || !Array.isArray(data.stages) || data.stages.length === 0) throw new Error('Not a planner file')
       planner.setPlan(data as Plan)
-      setMenu(false)
     } catch (err) {
       window.alert(`Import failed: ${err instanceof Error ? err.message : 'invalid file'}`)
     }
@@ -66,8 +57,8 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
       >
         <Map className="h-3.5 w-3.5" /> Menu
       </button>
-      <button onClick={() => setMenu(!menu)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Plan options">
-        <Menu className="h-4 w-4" />
+      <button onClick={onHelp} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
+        <HelpCircle className="h-4 w-4" />
       </button>
 
       <div className="min-w-0">
@@ -134,24 +125,18 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
           <Save className="h-3 w-3 text-emerald-500/70" /> saved {new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
 
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="flex h-8 w-8 items-center justify-center rounded border border-white/15 text-slate-300 hover:border-amber-400/50 hover:text-amber-300"
+          title="Import plan JSON"
+        >
+          <Upload className="h-3.5 w-3.5" />
+        </button>
+
         <button onClick={onExport} className="flex h-8 items-center gap-1.5 rounded bg-amber-400 px-3 text-[11px] font-bold uppercase tracking-wider text-black hover:bg-amber-300">
           <Download className="h-3.5 w-3.5" /> Export
         </button>
       </div>
-
-      {menu && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
-          <div className="absolute left-14 top-12 z-40 w-56 overflow-hidden rounded border border-white/15 bg-[#0d1410] py-1 shadow-2xl">
-            <MenuItem icon={<Map className="h-3.5 w-3.5" />} label="New operation" onClick={() => { setMenu(false); onOpenPicker() }} />
-            <MenuItem icon={<FileJson className="h-3.5 w-3.5" />} label="Export plan JSON" onClick={exportJson} />
-            <MenuItem icon={<Upload className="h-3.5 w-3.5" />} label="Import plan JSON" onClick={() => { setMenu(false); fileRef.current?.click() }} />
-            <div className="my-1 h-px bg-white/10" />
-            <MenuItem icon={<HelpCircle className="h-3.5 w-3.5" />} label="Controls & credits" onClick={() => { setMenu(false); onHelp() }} />
-            <MenuItem icon={<Trash2 className="h-3.5 w-3.5" />} label="Discard plan" danger onClick={() => { setMenu(false); onReset() }} />
-          </div>
-        </>
-      )}
 
       <input
         ref={fileRef}
@@ -168,14 +153,4 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, onRes
   )
 }
 
-function MenuItem({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] hover:bg-white/5 ${danger ? 'text-rose-400' : 'text-slate-300'}`}
-    >
-      {icon}
-      {label}
-    </button>
-  )
-}
+
