@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, Star } from 'lucide-react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
@@ -72,15 +72,6 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 }
 
 const PENCIL = '#f8fafc'
-
-function contrastText(color: string): string {
-  const hex = color.replace('#', '')
-  if (hex.length !== 6) return '#f8fafc'
-  const r = parseInt(hex.slice(0, 2), 16)
-  const g = parseInt(hex.slice(2, 4), 16)
-  const b = parseInt(hex.slice(4, 6), 16)
-  return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#0f172a' : '#f8fafc'
-}
 
 export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1 }: Props) {
   const ui = useUI()
@@ -1874,7 +1865,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
       {!preview && hoverSquad && (() => {
         const squad = plan.roster.squads.find((item) => item.id === hoverSquad.id)
-        const commanderMember = hoverSquad.id === 'commander' ? plan.roster.commander : null
+        const isCommander = hoverSquad.id === 'commander'
+        const commanderMember = isCommander ? plan.roster.commander : null
         const members = squad ? squad.members : commanderMember ? [commanderMember] : []
         const squadIndex = squad ? plan.roster.squads.findIndex((item) => item.id === squad.id) : -1
         const squadIcon = squad ? assets.squads[String(squadIndex + 1)] : assets.commander
@@ -1884,11 +1876,18 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           >
             <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
               {squadIcon && (
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black/50">
-                  <GameIcon path={squadIcon} tint={squad?.color ?? '#facc15'} size={24} />
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isCommander ? 'bg-[#2563eb]' : 'bg-black/50'}`}>
+                  {isCommander ? (
+                    <span className="relative flex h-5 w-5 items-center justify-center">
+                      <GameIcon path={squadIcon} tint="#07110a" size={19} className="absolute" />
+                      <GameIcon path={squadIcon} tint="#facc15" size={16} className="relative z-10" />
+                    </span>
+                  ) : (
+                    <GameIcon path={squadIcon} tint={squad?.color ?? '#facc15'} size={24} />
+                  )}
                 </span>
               )}
-              <span className="truncate">{(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}</span>
+              <span className="truncate">{isCommander ? 'CMD' : (squad?.name || 'SQUAD').toUpperCase()}</span>
             </div>
             <div className="mt-1.5 flex flex-col gap-1">
               {members.map((member, index) => {
@@ -1896,13 +1895,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 const dotColor = squad?.color ?? '#facc15'
                 return (
                   <div key={member.id} className="flex items-center gap-2">
-                    {index === 0 ? (
-                      <span
-                        className="shrink-0 rounded px-1 font-mono text-[8px] font-bold leading-4"
-                        style={{ background: dotColor, color: contrastText(dotColor) }}
-                      >
-                        SL
-                      </span>
+                    {isCommander ? (
+                      <Star className="h-3 w-3 shrink-0" style={{ color: '#facc15', fill: '#facc15' }} />
+                    ) : index === 0 ? (
+                      <Star className="h-3 w-3 shrink-0" style={{ color: dotColor, fill: dotColor }} />
                     ) : (
                       <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: dotColor }} />
                     )}
