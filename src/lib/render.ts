@@ -262,7 +262,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
 }
 
 function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color = '#f1f5f9') {
-  const f = Math.max(9, size)
+  const f = Math.max(2, size)
   ctx.save()
   ctx.font = `600 ${f}px "Inter", "Segoe UI", sans-serif`
   ctx.textAlign = 'center'
