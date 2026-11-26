@@ -76,6 +76,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
   const [previewRotation, setPreviewRotation] = useState<number | null>(null)
+  const [dragScreen, setDragScreen] = useState<{ x: number; y: number } | null>(null)
   const rotateStart = useRef<{ angle: number; rotation: number } | null>(null)
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
@@ -1328,10 +1329,19 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     }
                   }}
                   onDragStart={() => planner.checkpoint()}
+                  onDragMove={(e) => {
+                    if (!selected) return
+                    const node = e.target
+                    setDragScreen({
+                      x: node.x() * view.scale + view.x,
+                      y: node.y() * view.scale + view.y,
+                    })
+                  }}
                   onDragEnd={(e) => {
                     const node = e.target
                     const world = displayNormToWorld({ x: node.x() / mapW, y: node.y() / mapH }, layer.world)
                     planner.moveVehicle(v.id, { x: world.x, z: world.z, rotation: pos.rotation })
+                    setDragScreen(null)
                   }}
                   onTransformEnd={(e) => {
                     const node = e.target
@@ -1387,14 +1397,15 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
       </Stage>
 
-      {selectedScreen && selectedVehicle && ui.tool === 'select' && (() => {
+      {(dragScreen ?? selectedScreen) && selectedVehicle && ui.tool === 'select' && (() => {
+        const screen = dragScreen ?? selectedScreen!
         const angle = selectedVehiclePos
           ? vehicleSpriteRotation(layer.id, previewRotation ?? selectedVehiclePos.rotation)
           : 0
         const rad = (angle * Math.PI) / 180
         const handleRadius = 42
         return (
-          <div className="pointer-events-none absolute z-10" style={{ left: selectedScreen.x, top: selectedScreen.y }}>
+          <div className="pointer-events-none absolute z-10" style={{ left: screen.x, top: screen.y }}>
             <div className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-amber-400/80" />
             <button
               title="Drag to rotate asset"
