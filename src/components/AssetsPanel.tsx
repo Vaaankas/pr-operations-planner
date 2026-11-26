@@ -37,10 +37,9 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
     return layer.vehicles
       .filter((v) => (startOnly ? v.atStart : true))
       .filter((v) => (ui.showAssets ? true : !['asset', 'crate', 'emplacement'].includes(v.category)))
-      .filter((v) => (ui.showEnemy ? true : v.team === plan.side || v.team === null))
       .filter((v) => !q || `${v.label} ${v.template} ${v.category}`.toLowerCase().includes(q))
       .sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category))
-  }, [layer.vehicles, query, startOnly, ui.showAssets, ui.showEnemy, plan.side])
+  }, [layer.vehicles, query, startOnly, ui.showAssets, plan.side])
 
   const teamGroups = useMemo(() => {
     const order = [plan.side, null, plan.side === 1 ? 2 : 1] as (number | null)[]
