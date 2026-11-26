@@ -10,6 +10,8 @@ import { GameIcon } from '../lib/gameIcons'
 function EditableName({ value, onCommit, className, placeholder }: { value: string; onCommit: (v: string) => void; className?: string; placeholder?: string }) {
   const [v, setV] = useState(value)
   const [editing, setEditing] = useState(false)
+  const selectText = useRef(false)
+  const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
     setV(value)
     setEditing(false)
@@ -17,9 +19,16 @@ function EditableName({ value, onCommit, className, placeholder }: { value: stri
   if (editing) {
     return (
       <input
+        ref={inputRef}
         autoFocus
         value={v}
         placeholder={placeholder}
+        onFocus={(e) => {
+          if (selectText.current) {
+            e.currentTarget.select()
+            selectText.current = false
+          }
+        }}
         onChange={(e) => setV(e.target.value)}
         onBlur={() => {
           if (v.trim() !== value) onCommit(v.trim())
@@ -41,6 +50,10 @@ function EditableName({ value, onCommit, className, placeholder }: { value: stri
       <span
         data-name-text
         onClick={() => setEditing(true)}
+        onDoubleClick={() => {
+          selectText.current = true
+          setEditing(true)
+        }}
         className={`${className ?? ''} max-w-full cursor-text truncate select-text`}
       >
         {value || <span className="text-slate-600">{placeholder}</span>}
