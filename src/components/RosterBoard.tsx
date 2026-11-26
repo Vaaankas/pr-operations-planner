@@ -184,15 +184,15 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
   return (
     <div className="flex h-full min-h-0 flex-col rounded border border-white/10 bg-[#0b120e]/85">
       <div className="flex items-center gap-2 border-b border-white/5 px-2 py-1.5">
-        <span className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-slate-300">Specialist kits</span>
+        <span className="font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-slate-300">Specialist kits</span>
         <span className="ml-auto font-mono text-[10px] text-slate-500">{players} players</span>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col justify-center gap-0.5 px-2 py-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 px-1.5 py-1.5">
         {SPECIALIST_KITS.map((kit) => {
           const limit = specialistLimit(kit, players)
           const count = counts[kit.id] ?? 0
           return (
-            <div key={kit.id} className="flex items-center gap-1.5">
+            <div key={kit.id} className="flex min-h-0 flex-1 items-center gap-2 rounded border border-white/10 bg-black/25 px-1.5">
               <img
                 src={dataUrl(`icons/kits/${kit.id}.webp`)}
                 alt={kit.short}
@@ -201,11 +201,13 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
                   e.dataTransfer.setData('text/pr-kit', kit.id)
                   e.dataTransfer.effectAllowed = 'copy'
                 }}
-                className="h-4 w-4 shrink-0 cursor-grab object-contain active:cursor-grabbing"
+                className="h-5 w-5 shrink-0 cursor-grab object-contain active:cursor-grabbing"
                 title={`${kit.name} — drag onto a player or squad`}
               />
-              <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400" title={`${kit.name} · PR limit ${limit}`}>{kit.name}</span>
-              <span className={`w-5 text-right font-mono text-[11px] ${count ? 'text-amber-300' : 'text-slate-600'}`}>{count}</span>
+              <span className="min-w-0 flex-1 truncate text-[12px] text-slate-300" title={`${kit.name} · PR limit ${limit}`}>{kit.name}</span>
+              <span className={`shrink-0 font-mono text-[12px] ${count > limit ? 'text-rose-300' : count ? 'text-amber-300' : 'text-slate-600'}`}>
+                {count}/{limit}
+              </span>
             </div>
           )
         })}
@@ -223,7 +225,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
   const [drop, setDrop] = useState(false)
   const [colorOpen, setColorOpen] = useState(false)
   const [headerDrop, setHeaderDrop] = useState(false)
-  const overCap = squad.members.length > 8
+  const full = squad.members.length >= 9
   const assignedKit = specialistKit(plan?.roster.specialistAssignments?.[squad.id])
   return (
     <div
@@ -298,8 +300,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
           </button>
         )}
         <button onClick={() => setColorOpen(!colorOpen)} className="h-3.5 w-3.5 rounded-full border border-white/40" style={{ background: squad.color }} title="Squad colour" />
-        <span className={`font-mono text-[12px] ${overCap ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/8</span>
-        {overCap && <span className="font-bold text-amber-300" title="Over the 8-player squad limit">!</span>}
+        <span className={`font-mono text-[12px] ${full ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/9</span>
         <button onClick={() => planner.removeSquad(squad.id)} className="text-slate-600 hover:text-rose-400" title="Delete squad">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -325,7 +326,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         ))}
         {squad.members.length === 0 && <div className="px-1 py-2 text-[11px] uppercase tracking-wider text-slate-600">Empty squad</div>}
         <div className="mt-auto">
-          <AddPlayer target={squad.id} />
+          {!full && <AddPlayer target={squad.id} />}
         </div>
       </div>
     </div>
@@ -359,24 +360,21 @@ export function RosterBoard() {
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
           <div className="grid h-full auto-rows-[minmax(220px,1fr)] grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-            {Array.from({ length: 9 }).map((_, i) => {
-              const squad = plan.roster.squads[i]
-              if (squad) return <SquadCard key={squad.id} squad={squad} index={i} />
-              if (i === plan.roster.squads.length && plan.roster.squads.length < 9) {
-                return (
-                  <button
-                    key="add-squad"
-                    onClick={() => planner.addSquad()}
-                    className="flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
-                  >
-                    <Plus className="h-5 w-5" />
-                    <span className="font-mono text-[11px] uppercase tracking-wider">Add squad</span>
-                  </button>
-                )
-              }
-              return <div key={`empty-${i}`} className="rounded border border-white/5 bg-white/[0.015]" />
-            })}
-            <SpecialistKitsCard plan={plan} />
+            {plan.roster.squads.slice(0, 9).map((squad, i) => (
+              <SquadCard key={squad.id} squad={squad} index={i} />
+            ))}
+            {plan.roster.squads.length < 9 && (
+              <button
+                onClick={() => planner.addSquad()}
+                className="flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
+              >
+                <Plus className="h-5 w-5" />
+                <span className="font-mono text-[11px] uppercase tracking-wider">Add squad</span>
+              </button>
+            )}
+            <div className="h-full min-h-0 2xl:col-start-5 2xl:row-start-2">
+              <SpecialistKitsCard plan={plan} />
+            </div>
           </div>
         </div>
       </section>

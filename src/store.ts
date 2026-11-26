@@ -284,7 +284,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       // allowed
     } else {
       const squad = roster.squads.find((s) => s.id === target)
-      if (!squad) return false
+      if (!squad || squad.members.length >= 9) return false
     }
     get().mutate((draft) => {
       if (target === 'commander') draft.roster.commander = member
@@ -302,6 +302,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 
   moveMember: (memberId, target, index) =>
     get().mutate((plan) => {
+      const sourceSquad = plan.roster.squads.find((s) => s.members.some((m) => m.id === memberId))
       const member = extractMember(plan.roster, memberId)
       if (!member) return
       if (target === 'commander') {
@@ -314,6 +315,10 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       } else {
         const squad = plan.roster.squads.find((s) => s.id === target)
         if (!squad) {
+          plan.roster.unassigned.push(member)
+          return
+        }
+        if (squad.members.length >= 9 && sourceSquad?.id !== squad.id) {
           plan.roster.unassigned.push(member)
           return
         }
