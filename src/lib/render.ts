@@ -189,7 +189,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'text': {
       const [x, y] = normPoint(el.at, size)
-      const f = Math.max(9, el.fontSize * ui)
+      const f = Math.max(1, el.fontSize * ui)
       ctx.font = `600 ${f}px "Inter", "Segoe UI", sans-serif`
       ctx.textBaseline = 'middle'
       ctx.lineWidth = Math.max(2, f * 0.12)
@@ -262,7 +262,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
 }
 
 function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, color = '#f1f5f9') {
-  const f = Math.max(2, size)
+  const f = Math.max(0.5, size)
   ctx.save()
   ctx.font = `600 ${f}px "Inter", "Segoe UI", sans-serif`
   ctx.textAlign = 'center'
@@ -335,6 +335,12 @@ export async function renderStageCanvas(
 
   ctx.fillStyle = '#0a0f0c'
   ctx.fillRect(0, 0, size, size)
+
+  ctx.save()
+  if (opts.frame && opts.frame.size < 0.999) {
+    ctx.scale(1 / opts.frame.size, 1 / opts.frame.size)
+    ctx.translate(-opts.frame.x * size, -opts.frame.y * size)
+  }
 
   const squadColors = plan.roster.squads.map((s) => ({ id: s.id, color: s.color }))
   const jobs: Promise<void>[] = []
@@ -521,19 +527,7 @@ export async function renderStageCanvas(
   const side = layer.factions[String(plan.side)]
   ctx.fillText(`${map.name}  ·  ${layer.name}  ·  ${side ? side.name : `Team ${plan.side}`}`, size - size * 0.014, size - bar / 2)
   ctx.restore()
-
-  if (opts.frame && opts.frame.size < 0.999) {
-    const out = document.createElement('canvas')
-    out.width = size
-    out.height = size
-    const outCtx = out.getContext('2d')
-    if (!outCtx) return canvas
-    const fx = opts.frame.x * size
-    const fy = opts.frame.y * size
-    const fw = opts.frame.size * size
-    outCtx.drawImage(canvas, fx, fy, fw, fw, 0, 0, size, size)
-    return out
-  }
+  ctx.restore()
 
   return canvas
 }
