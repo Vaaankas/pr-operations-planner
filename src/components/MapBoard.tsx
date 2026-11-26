@@ -8,7 +8,7 @@ import { usePlanner, useUI } from '../store'
 import { affiliationColor, clamp, dataUrl, formatTime, isHiddenVehicle, SQUAD_COLORS, vehicleDelayRemaining, vehicleReady } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
-import { cpFlag, useAssets } from '../lib/assets'
+import { cpFlag, useAssets, vehicleIconPath } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
@@ -144,7 +144,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     const neutralFlag = cpFlag(assets, undefined)
     if (neutralFlag) jobs.push(preloadAsset(neutralFlag))
     for (const v of layer.vehicles) {
-      const path = assets.vehicles[v.icon] ?? assets.vehicles[v.category] ?? assets.vehicles.other
+      const path = vehicleIconPath(assets, v)
       if (!path) continue
       jobs.push(preloadAsset(path))
       jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
@@ -1376,7 +1376,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 >
                   <Circle radius={s * 0.5} fill="rgba(0,0,0,0.001)" />
                   {(() => {
-                    const iconPath = assets.vehicles[v.icon] ?? assets.vehicles[v.category] ?? assets.vehicles.other
+                    const iconPath = vehicleIconPath(assets, v)
                     if (!iconPath) {
                       return <IconGlyph icon={glyphFor('vehicle', v.category)} color={selected ? '#fbbf24' : color} size={s} x={0} y={0} />
                     }

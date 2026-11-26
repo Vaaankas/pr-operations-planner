@@ -1,7 +1,7 @@
 import type { AssetManifest, ControlPoint, DrawElement, LayerData, MapMeta, Plan, Stage, VehicleSpawn } from '../types'
 import { affiliationColor, dataUrl, formatTime, isHiddenVehicle, vehicleDelayRemaining, vehicleReady } from './utils'
 import { iconImage, glyphFor } from '../icons'
-import { cpFlag } from './assets'
+import { cpFlag, vehicleIconPath } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
 import { mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from './coords'
 import { routeSegments } from './routes'
@@ -340,7 +340,7 @@ export async function renderStageCanvas(
   if (neutralFlag) jobs.push(preloadAsset(neutralFlag))
   for (const v of layer.vehicles) {
     if (isHiddenVehicle(v.template)) continue
-    const path = opts.assets.vehicles[v.icon] ?? opts.assets.vehicles[v.category] ?? opts.assets.vehicles.other
+    const path = vehicleIconPath(opts.assets, v)
     if (!path) continue
     jobs.push(preloadAsset(path))
     jobs.push(preloadAsset(path, vehicleColor(v, plan, squadColors)))
@@ -471,7 +471,7 @@ export async function renderStageCanvas(
         }
       }
       const s = size * (v.category === 'mbt' ? 0.032 : v.category === 'boat' || v.category === 'carrier' ? 0.034 : 0.028)
-      const iconPath = opts.assets.vehicles[v.icon] ?? opts.assets.vehicles[v.category] ?? opts.assets.vehicles.other
+      const iconPath = vehicleIconPath(opts.assets, v)
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
       ctx.translate(x, y)

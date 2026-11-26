@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { AssetManifest } from '../types'
+import type { AssetManifest, VehicleSpawn } from '../types'
 
 const EMPTY: AssetManifest = { factionFlags: {}, cpFlags: {}, scoreFlags: {}, vehicles: {}, squads: {}, commander: '', markers: {}, orders: {} }
 
@@ -11,6 +11,13 @@ export function AssetProvider({ value, children }: { value: AssetManifest; child
 
 export function useAssets(): AssetManifest {
   return useContext(AssetContext)
+}
+
+export function vehicleIconPath(assets: AssetManifest, vehicle: VehicleSpawn): string | undefined {
+  return assets.vehicleTemplates?.[vehicle.template]
+    ?? assets.vehicles[vehicle.icon]
+    ?? assets.vehicles[vehicle.category]
+    ?? assets.vehicles.other
 }
 
 const FACTION_ALIASES: Record<string, string[]> = {

@@ -4,7 +4,7 @@ import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { dataUrl, formatTime, isHiddenVehicle } from '../lib/utils'
 import { vehicleColor } from '../lib/render'
-import { cpFlag, useAssets } from '../lib/assets'
+import { cpFlag, useAssets, vehicleIconPath } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
 
 interface Props {
@@ -110,7 +110,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                     title={v.template}
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/40" style={{ border: `1px solid ${color}66` }}>
-                      <GameIcon path={assets.vehicles[v.icon] ?? assets.vehicles[v.category]} tint={color} size={24} />
+                      <GameIcon path={vehicleIconPath(assets, v)} tint={color} size={24} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-center gap-2">
