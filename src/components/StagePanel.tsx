@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Flag, Pencil, Route as RouteIcon, Shield, Tag, Trash2, Truck, Type } from 'lucide-react'
+import { Clock, Flag, Pencil, Route as RouteIcon, Swords, Tag, Trash2, Truck, Type } from 'lucide-react'
 import type { LayerData, Plan, Stage, StageVisibility } from '../types'
 import { usePlanner, useUI } from '../store'
 import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
@@ -11,7 +11,7 @@ const VISIBILITY_OPTIONS: Array<{
   icon: typeof Truck
 }> = [
   { key: 'showVehicles', label: 'Vehicles', description: 'Spawns and moves', icon: Truck },
-  { key: 'showEnemy', label: 'Enemy assets', description: 'Hostile markers', icon: Shield },
+  { key: 'showEnemy', label: 'Enemy assets', description: 'Hostile markers', icon: Swords },
   { key: 'showFlags', label: 'Flags & radii', description: 'Capture points', icon: Flag },
   { key: 'showDrawings', label: 'Drawings', description: 'Lines, zones and labels', icon: Pencil },
   { key: 'showLabels', label: 'Map labels', description: 'Flag and place names', icon: Tag },
