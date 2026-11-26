@@ -1399,7 +1399,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.53}
+                    y={dp.y * mapH + s * 0.5 + iconScale}
                     width={100 * iconScale}
                     align="center"
                     x={dp.x * mapW - 50 * iconScale}
@@ -1416,7 +1416,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * (v.atStart ? 0.56 : 0.82)}
+                    y={v.atStart ? dp.y * mapH + s * 0.56 : dp.y * mapH + s * 0.5 + 14 * iconScale}
                     width={240 * iconScale}
                     align="center"
                     x={dp.x * mapW - 120 * iconScale}
