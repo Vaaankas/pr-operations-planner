@@ -116,7 +116,17 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const image = useMapImage(imageUrl)
   const mapW = map.images?.width ?? 2048
   const mapH = map.images?.height ?? 2048
-  const fitScale = Math.min(box.w / mapW, box.h / mapH) * 0.94
+  const stageFrame = stage.frame ?? { x: 0, y: 0, size: 1 }
+  const frameView = (frame: StageFrame) => {
+    const size = clamp(frame.size, 0.03, 1)
+    const scale = Math.min(box.w / (mapW * size), box.h / (mapH * size)) * 0.94
+    return {
+      scale,
+      x: box.w / 2 - (frame.x + size / 2) * mapW * scale,
+      y: box.h / 2 - (frame.y + size / 2) * mapH * scale,
+    }
+  }
+  const fitScale = frameView(stageFrame).scale
 
   useEffect(() => {
     const el = wrapRef.current
@@ -130,12 +140,11 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }, [])
 
   useEffect(() => {
-    const key = `${map.id}:${box.w}x${box.h}`
+    const key = `${map.id}:${stage.id}:${box.w}x${box.h}`
     if (fitted.current === key) return
     fitted.current = key
-    const s = Math.min(box.w / mapW, box.h / mapH) * 0.94
-    setView({ scale: s, x: (box.w - mapW * s) / 2, y: (box.h - mapH * s) / 2 })
-  }, [box, map.id, mapW, mapH])
+    setView(frameView(stage.frame ?? { x: 0, y: 0, size: 1 }))
+  }, [box, map.id, mapW, mapH, stage.id])
 
   // Warm the game-icon cache used by this layer and plan.
   useEffect(() => {
@@ -309,8 +318,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }
 
   const resetView = () => {
-    const s = Math.min(box.w / mapW, box.h / mapH) * 0.94
-    setView({ scale: s, x: (box.w - mapW * s) / 2, y: (box.h - mapH * s) / 2 })
+    setView(frameView(stage.frame ?? { x: 0, y: 0, size: 1 }))
   }
 
   const commitShape = (kind: ShapeKind, a: Point, b: Point) => {
