@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from 'lucide-react'
 import { usePlanner, useUI } from '../store'
 import type { LayerData, Plan } from '../types'
 import { cpFlag, useAssets } from '../lib/assets'
@@ -27,23 +28,25 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
             const color = routeColor(i)
             const checked = ui.visibleRoutes.includes(r.id)
             return (
-              <label
+              <button
                 key={r.id}
-                className={`flex cursor-pointer items-center gap-2 rounded border px-2.5 py-2 ${
+                type="button"
+                onClick={() => ui.toggleRoute(r.id)}
+                className={`flex w-full items-center gap-2 rounded border px-2.5 py-2 text-left ${
                   checked ? 'border-white/25 bg-white/5' : 'border-white/5 hover:border-white/15'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => ui.toggleRoute(r.id)}
-                  className="h-3.5 w-3.5"
-                  style={{ accentColor: color }}
-                />
+                <span
+                  className="flex h-4 w-4 shrink-0 items-center justify-center"
+                  style={{ color: checked ? color : undefined }}
+                  title={checked ? 'Hide route' : 'Show route'}
+                >
+                  {checked ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-slate-600" />}
+                </span>
                 <span className="h-0.5 w-6 rounded" style={{ background: color }} />
                 <span className={`text-[12px] font-medium ${checked ? 'text-slate-100' : 'text-slate-400'}`}>{r.label}</span>
                 <span className="ml-auto font-mono text-[10px] text-slate-500">{r.cps.length} flags</span>
-              </label>
+              </button>
             )
           })}
           {routes.length > 1 && (
@@ -74,14 +77,15 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                     const capturable = isCapturable(cp)
                     return (
                       <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 pl-5 text-[11px] text-slate-400">
-                        <input
-                          type="checkbox"
-                          checked={shown}
-                          onChange={() => ui.toggleCp(id)}
-                          className="h-3 w-3 shrink-0"
-                          style={{ accentColor: routeColor(index) }}
-                          title="Render this flag on the map"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => ui.toggleCp(id)}
+                          className="flex h-4 w-4 shrink-0 items-center justify-center"
+                          style={{ color: shown ? routeColor(index) : undefined }}
+                          title={shown ? 'Hide this flag' : 'Show this flag'}
+                        >
+                          {shown ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-slate-600" />}
+                        </button>
                         <span className="w-4 shrink-0 text-right font-mono text-[10px] text-slate-600">{group.number}</span>
                         <span className={`max-w-[128px] truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
                         {cp.radius > 0 && <span className="shrink-0 font-mono text-[9px] text-slate-500">{Math.round(cp.radius)}m</span>}
