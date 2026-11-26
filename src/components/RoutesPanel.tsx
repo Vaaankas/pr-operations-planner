@@ -21,7 +21,7 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
         <div className="space-y-1">
           {routes.map((r, i) => {
             const color = routeColor(i)
@@ -37,7 +37,8 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                   type="checkbox"
                   checked={checked}
                   onChange={() => ui.toggleRoute(r.id)}
-                  className="h-3.5 w-3.5 accent-amber-400"
+                  className="h-3.5 w-3.5"
+                  style={{ accentColor: color }}
                 />
                 <span className="h-0.5 w-6 rounded" style={{ background: color }} />
                 <span className={`text-[12px] font-medium ${checked ? 'text-slate-100' : 'text-slate-400'}`}>{r.label}</span>
@@ -59,8 +60,7 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
           const index = routes.findIndex((x) => x.id === r.id)
           return (
             <div key={r.id} className="mt-4">
-              <div className="mb-1.5 flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: routeColor(index) }} />
+              <div className="mb-1.5 flex items-center gap-2 pl-2 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">
                 {r.label}
               </div>
               <div className="space-y-1">
@@ -73,16 +73,16 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                     const flag = cpFlag(assets, faction?.key)
                     const capturable = isCapturable(cp)
                     return (
-                      <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                      <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 pl-5 text-[11px] text-slate-400">
                         <input
                           type="checkbox"
                           checked={shown}
                           onChange={() => ui.toggleCp(id)}
-                          className="h-3 w-3 shrink-0 accent-amber-400"
+                          className="h-3 w-3 shrink-0"
+                          style={{ accentColor: routeColor(index) }}
                           title="Render this flag on the map"
                         />
                         <span className="w-4 shrink-0 text-right font-mono text-[10px] text-slate-600">{group.number}</span>
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: routeColor(index) }} />
                         <span className={`max-w-[128px] truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
                         {cp.radius > 0 && <span className="shrink-0 font-mono text-[9px] text-slate-500">{Math.round(cp.radius)}m</span>}
                         {capturable ? (
