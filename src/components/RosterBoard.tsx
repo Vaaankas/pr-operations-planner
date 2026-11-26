@@ -49,7 +49,6 @@ function EditableName({ value, onCommit, className, placeholder }: { value: stri
     <div className="flex min-w-0 flex-1 items-center">
       <span
         data-name-text
-        onClick={() => setEditing(true)}
         onDoubleClick={() => {
           selectText.current = true
           setEditing(true)
