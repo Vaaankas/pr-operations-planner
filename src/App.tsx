@@ -277,8 +277,8 @@ function AppInner() {
             >
             <div className="flex h-10 shrink-0 items-center border-b border-white/10">
               {([
-                { id: 'assets' as const, label: 'Assets', icon: Boxes },
                 { id: 'stage' as const, label: 'Stages', icon: MapIcon },
+                { id: 'assets' as const, label: 'Assets', icon: Boxes },
                 { id: 'routes' as const, label: 'Routes', icon: RouteIcon },
               ]).map(({ id, label, icon: Icon }) => (
                 <button
