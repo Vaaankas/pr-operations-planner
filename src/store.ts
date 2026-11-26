@@ -445,7 +445,7 @@ export const useUI = create<UIState & {
   selectedKind: null,
   rightTab: 'assets',
   showVehicles: true,
-  showEnemy: true,
+  showEnemy: false,
   showFlags: true,
   showAssets: true,
   showLabels: true,
