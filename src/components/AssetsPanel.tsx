@@ -126,9 +126,17 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                         <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-200">
                           {v.label}
                         </span>
-                        <span className="flex h-[20px] shrink-0 flex-col items-end justify-center whitespace-nowrap font-mono text-[8.5px] leading-[10px] text-slate-500">
-                          {!v.atStart && <span>Delay {formatTime(v.respawn ?? 0)}</span>}
-                          <span>Respawn {v.respawn ? formatTime(v.respawn) : '—'}</span>
+                        <span className="flex h-[22px] shrink-0 items-center gap-2 whitespace-nowrap font-mono text-[8px] leading-[10px] text-slate-500">
+                          {!v.atStart && (
+                            <span className="flex flex-col items-end">
+                              <span>Delay:</span>
+                              <span className="text-[9px] text-slate-400">{formatTime(v.respawn ?? 0)}</span>
+                            </span>
+                          )}
+                          <span className="flex flex-col items-end">
+                            <span>Respawn:</span>
+                            <span className="text-[9px] text-slate-400">{v.respawn ? formatTime(v.respawn) : '—'}</span>
+                          </span>
                         </span>
                       </div>
                       {moved && (
