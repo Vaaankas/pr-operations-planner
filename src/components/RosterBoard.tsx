@@ -239,22 +239,19 @@ function SpecialistKitsCard({ plan, layer }: { plan: Plan; layer: LayerData }) {
     }, {})
   return (
     <div className="flex h-full min-h-0 flex-col rounded border border-white/10 bg-[#0b120e]/85">
-      <div className="flex items-center gap-1 border-b border-white/5 px-2 py-1.5">
-        <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-slate-300">Specialist</span>
-        <div className="ml-auto flex rounded border border-white/10 p-0.5">
-          <button
-            onClick={() => setMode('kits')}
-            className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${mode === 'kits' ? 'bg-amber-400 text-black' : 'text-slate-500 hover:text-slate-200'}`}
-          >
-            Kits
-          </button>
-          <button
-            onClick={() => setMode('assets')}
-            className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${mode === 'assets' ? 'bg-amber-400 text-black' : 'text-slate-500 hover:text-slate-200'}`}
-          >
-            Assets
-          </button>
-        </div>
+      <div className="flex items-center gap-1 border-b border-white/5 p-1">
+        <button
+          onClick={() => setMode('kits')}
+          className={`flex-1 rounded px-1 py-1 text-[9px] font-bold uppercase leading-tight ${mode === 'kits' ? 'bg-amber-400 text-black' : 'border border-white/10 text-slate-500 hover:text-slate-200'}`}
+        >
+          Specialist kits
+        </button>
+        <button
+          onClick={() => setMode('assets')}
+          className={`flex-1 rounded px-1 py-1 text-[9px] font-bold uppercase leading-tight ${mode === 'assets' ? 'bg-amber-400 text-black' : 'border border-white/10 text-slate-500 hover:text-slate-200'}`}
+        >
+          Assets
+        </button>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-1.5 py-1.5">
         {mode === 'assets' ? (
@@ -316,54 +313,43 @@ function SpecialistKitsCard({ plan, layer }: { plan: Plan; layer: LayerData }) {
 function VehicleCrewBox({ vehicle, squad, plan }: { vehicle: VehicleSpawn; squad: Squad; plan: Plan }) {
   const planner = usePlanner()
   const assets = useAssets()
-  const crew = plan.vehicleCrew?.[vehicle.id] ?? []
-  const seatCount = crew.length >= 3 ? 3 : 2
-  const seats = ['Driver', 'Gunner', 'Commander']
+  const [over, setOver] = useState(false)
+  const crew = (plan.vehicleCrew?.[vehicle.id] ?? []).filter((id) => squad.members.some((member) => member.id === id))
   const icon = vehicleIconPath(assets, vehicle)
-  const setSeat = (index: number, memberId: string) => {
-    const next = Array.from({ length: Math.max(2, crew.length) }, (_, i) => crew[i] ?? '')
-    next[index] = memberId
-    planner.setVehicleCrew(vehicle.id, next)
-  }
+  const crewMembers = crew.map((id) => squad.members.find((member) => member.id === id)).filter(Boolean)
   return (
-    <div className="rounded border border-white/15 bg-black/30 px-1.5 py-1">
+    <div
+      onDragOver={(e) => {
+        e.preventDefault()
+        setOver(true)
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setOver(false)
+        const memberId = e.dataTransfer.getData('text/pr-member')
+        if (!memberId || crew.includes(memberId)) return
+        planner.setVehicleCrew(vehicle.id, [...crew, memberId])
+      }}
+      className={`rounded border px-1.5 py-1 ${over ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/15 bg-black/30'}`}
+    >
       <div className="flex items-center gap-1.5">
         {icon && <img src={dataUrl(icon)} alt="" className="h-4 w-4 object-contain" />}
         <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-slate-200">{vehicle.label}</span>
-        <button
-          onClick={() => planner.claimVehicle(vehicle.id, null)}
-          className="text-slate-600 hover:text-rose-400"
-          title="Remove asset from squad"
-        >
-          <X className="h-3 w-3" />
-        </button>
+        <span className="font-mono text-[9px] text-slate-600">{crewMembers.length}</span>
       </div>
-      <div className="mt-1 space-y-0.5">
-        {Array.from({ length: seatCount }).map((_, index) => (
-          <div key={index} className="flex items-center gap-1">
-            <span className="w-12 shrink-0 font-mono text-[8px] uppercase tracking-wider text-slate-500">{seats[index]}</span>
-            <select
-              value={crew[index] ?? ''}
-              onChange={(e) => setSeat(index, e.target.value)}
-              className="min-w-0 flex-1 rounded border border-white/10 bg-black/40 px-1 py-0.5 text-[9px] text-slate-300 outline-none"
-            >
-              <option value="">—</option>
-              {squad.members.map((member) => (
-                <option key={member.id} value={member.id}>{member.name}</option>
-              ))}
-            </select>
-          </div>
-        ))}
+      <div className="mt-1 flex min-h-5 flex-wrap items-center gap-1">
+        {crewMembers.length > 0 ? (
+          crewMembers.map((member) => (
+            <span key={member!.id} className="rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[9px] text-slate-300">
+              {member!.name}
+            </span>
+          ))
+        ) : (
+          <span className="font-mono text-[9px] text-slate-600">Drag players here</span>
+        )}
       </div>
-      {seatCount < 3 && (
-        <button
-          onClick={() => planner.setVehicleCrew(vehicle.id, [...Array.from({ length: 2 }, (_, i) => crew[i] ?? ''), ''])}
-          className="mt-1 flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider text-slate-500 hover:text-amber-300"
-          title="Add optional commander seat"
-        >
-          <Plus className="h-3 w-3" /> commander seat
-        </button>
-      )}
     </div>
   )
 }

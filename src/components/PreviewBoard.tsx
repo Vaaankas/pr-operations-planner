@@ -27,52 +27,70 @@ function slideTextColor(color: string): string {
 function RosterSlide({ plan, map, layer }: { plan: Plan; map: MapMeta; layer: LayerData }) {
   const squads = plan.roster.squads.slice(0, 9)
   const side = layer.factions[String(plan.side)]
-  const rows = 9
+  const assignments = plan.roster.specialistAssignments ?? {}
+  const kitCounts = Object.values(assignments)
+    .flatMap((value) => (Array.isArray(value) ? value : [value as unknown as string]))
+    .reduce<Record<string, number>>((acc, kit) => {
+      acc[kit] = (acc[kit] ?? 0) + 1
+      return acc
+    }, {})
   return (
     <div className="relative h-full w-full">
       <div className="absolute inset-x-0 top-0 h-[0.8%] bg-amber-400" />
-      <div className="absolute left-[3.4%] top-[4.3%]">
-        <div className="font-semibold leading-none text-[#0f172a]" style={{ fontSize: 'clamp(18px, 2.2vw, 30px)' }}>Roster</div>
-        <div className="mt-[4%] text-[#64748b]" style={{ fontSize: 'clamp(8px, 0.8vw, 12px)' }}>
-          {map.name} · {layer.displayName} · {side?.name ?? `Team ${plan.side}`}
+      <div className="absolute left-[3.4%] top-[3%]">
+        <div className="font-semibold leading-none text-[#0f172a]" style={{ fontSize: 'clamp(16px, 1.9vw, 26px)' }}>Roster</div>
+        <div className="mt-[3%] text-[#64748b]" style={{ fontSize: 'clamp(7px, 0.68vw, 10px)' }}>
+          {map.name} · {layer.displayName} · {side?.name ?? `Team ${plan.side}`} · CMD {plan.roster.commander?.name ?? '—'}
         </div>
       </div>
 
-      <div
-        className="absolute bottom-[7%] left-[3.4%] right-[3.4%] top-[18%] grid overflow-hidden border border-[#cbd5e1]"
-        style={{ gridTemplateColumns: `0.72fr repeat(${Math.max(1, squads.length)}, minmax(0, 1fr))`, gridTemplateRows: `auto repeat(${rows}, minmax(0, 1fr))` }}
-      >
-        <div className="flex items-center justify-center bg-[#111827] px-1 font-mono text-[9px] font-bold text-[#fde68a]">CMD</div>
-        {squads.map((squad, index) => (
-          <div
-            key={squad.id}
-            className="flex min-w-0 items-center gap-1 border-l border-white/20 px-1 font-mono text-[9px] font-bold"
-            style={{ background: squad.color, color: slideTextColor(squad.color) }}
-          >
-            {squad.name.toUpperCase()}
-            <span className="ml-auto opacity-70">{squad.members.length}/9</span>
-          </div>
-        ))}
-        {Array.from({ length: rows }).map((_, row) => (
-          <div key={`row-${row}`} className="contents">
-            <div className="flex items-center justify-center border-t border-[#e2e8f0] px-1 text-center text-[9px] text-[#0f172a]">
-              {row === 0 ? plan.roster.commander?.name ?? '—' : ''}
-            </div>
-            {squads.map((squad) => {
-              const member = squad.members[row]
-              const role = row === 0 ? 'SL' : row === 1 ? '2IC' : ''
-              return (
-                <div key={`${squad.id}-${row}`} className={`flex min-w-0 items-center gap-1 border-l border-t border-[#e2e8f0] px-1 text-[9px] text-[#0f172a] ${row % 2 ? 'bg-[#f1f5f9]' : 'bg-white'}`}>
-                  {member && role && <span className="shrink-0 rounded border border-[#cbd5e1] px-0.5 font-mono text-[7px] font-bold text-[#475569]">{role}</span>}
-                  <span className="truncate">{member?.name ?? ''}</span>
+      <div className="absolute bottom-[6%] left-[3.4%] right-[3.4%] top-[16%] grid grid-cols-5 grid-rows-2 gap-1.5">
+        {Array.from({ length: 10 }).map((_, slot) => {
+          if (slot === 9) {
+            return (
+              <div key="specialists" className="flex min-h-0 flex-col overflow-hidden rounded border border-[#cbd5e1] bg-white">
+                <div className="bg-[#111827] px-1 py-0.5 font-mono text-[8px] font-bold uppercase text-[#fde68a]">Specialist kits</div>
+                <div className="flex min-h-0 flex-1 flex-col justify-center px-1 py-0.5">
+                  {Object.entries(kitCounts).map(([kit, count]) => (
+                    <div key={kit} className="flex justify-between font-mono text-[7px] text-[#334155]">
+                      <span className="truncate">{kit.toUpperCase()}</span>
+                      <span>{count}</span>
+                    </div>
+                  ))}
+                  {Object.keys(kitCounts).length === 0 && <span className="text-[7px] italic text-slate-400">None assigned</span>}
                 </div>
-              )
-            })}
-          </div>
-        ))}
+              </div>
+            )
+          }
+          const squad = squads[slot]
+          if (!squad) return <div key={`empty-${slot}`} />
+          return (
+            <div key={squad.id} className="flex min-h-0 flex-col overflow-hidden rounded border border-[#cbd5e1] bg-white">
+              <div
+                className="flex items-center gap-1 px-1 py-0.5 font-mono text-[8px] font-bold"
+                style={{ background: squad.color, color: slideTextColor(squad.color) }}
+              >
+                <span className="truncate">{squad.name.toUpperCase()}</span>
+                <span className="ml-auto opacity-70">{squad.members.length}/9</span>
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col px-1 py-0.5">
+                {squad.members.map((member, index) => (
+                  <div key={member.id} className="flex min-w-0 items-center gap-1 text-[7px] leading-[1.35] text-[#0f172a]">
+                    {(index === 0 || index === 1) && (
+                      <span className="shrink-0 rounded border border-[#cbd5e1] px-0.5 font-mono text-[6px] font-bold text-[#475569]">
+                        {index === 0 ? 'SL' : '2IC'}
+                      </span>
+                    )}
+                    <span className="truncate">{member.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
-      <div className="absolute bottom-[2.5%] left-[3.4%] font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>
+      <div className="absolute bottom-[2%] left-[3.4%] font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>
         {plan.operation} · roster
       </div>
     </div>

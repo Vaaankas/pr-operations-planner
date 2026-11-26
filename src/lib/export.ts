@@ -45,29 +45,28 @@ function textOn(hex: string): string {
   return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '0F172A' : 'FFFFFF'
 }
 
-function rosterRows(plan: Plan): any[][] {
-  const squads = plan.roster.squads
+function rosterRows(plan: Plan, squads: Plan['roster']['squads'], offset = 0): any[][] {
   const header: any[] = [
-    { text: 'CMD', options: { fill: { color: '111827' }, color: 'FDE68A', bold: true, fontSize: 10, align: 'center' } },
-    ...squads.map((s) => ({
-      text: `${squads.indexOf(s) + 1} · ${s.name}`,
+    { text: 'CMD', options: { fill: { color: '111827' }, color: 'FDE68A', bold: true, fontSize: 8, align: 'center' } },
+    ...squads.map((s, index) => ({
+      text: `${offset + index + 1} · ${s.name}`,
       options: {
         fill: { color: s.color.replace('#', '') },
         color: textOn(s.color),
         bold: true,
-        fontSize: 9,
+        fontSize: 7,
         align: 'center',
       },
     })),
   ]
   const rows: any[][] = [header]
-  const max = 8
+  const max = 9
   for (let r = 0; r < max; r++) {
     rows.push([
-      { text: r === 0 ? (plan.roster.commander?.name ?? '—') : '', options: { fontSize: 9, align: 'center', color: '0F172A' } },
+      { text: r === 0 && offset === 0 ? (plan.roster.commander?.name ?? '—') : '', options: { fontSize: 7, align: 'center', color: '0F172A' } },
       ...squads.map((s) => ({
         text: s.members[r] ? `${r === 0 ? 'SL ' : r === 1 ? '2IC ' : ''}${s.members[r].name}` : '',
-        options: { fontSize: 9, align: 'center', color: '0F172A', fill: { color: r % 2 ? 'F1F5F9' : 'FFFFFF' } },
+        options: { fontSize: 7, align: 'center', color: '0F172A', fill: { color: r % 2 ? 'F1F5F9' : 'FFFFFF' } },
       })),
     ])
   }
@@ -137,19 +136,35 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
     slide.background = { color: 'FFFFFF' }
     slide.addText('ROSTER', { x: 0.45, y: 0.32, w: 6, h: 0.35, fontFace: 'Segoe UI', fontSize: 22, bold: true, color: ink, charSpacing: 3 })
     slide.addText(subtitle(src), { x: 0.45, y: 0.72, w: 12.4, h: 0.25, fontFace: 'Segoe UI', fontSize: 10, color: '64748B' })
-    const colW = 12.4 / (src.plan.roster.squads.length + 1)
-    slide.addTable(rosterRows(src.plan), {
+    const topSquads = src.plan.roster.squads.slice(0, 5)
+    const bottomSquads = src.plan.roster.squads.slice(5, 9)
+    const topColW = 12.4 / (topSquads.length + 1)
+    slide.addTable(rosterRows(src.plan, topSquads, 0), {
       x: 0.45,
-      y: 1.12,
+      y: 1.02,
       w: 12.4,
-      colW: Array(src.plan.roster.squads.length + 1).fill(colW),
-      rowH: 0.42,
+      colW: Array(topSquads.length + 1).fill(topColW),
+      rowH: 0.27,
       border: { type: 'solid', color: 'CBD5E1', pt: 0.5 },
       fontFace: 'Segoe UI',
       valign: 'middle',
-      margin: 0.04,
+      margin: 0.03,
     })
-    const overflow = src.plan.roster.squads.flatMap((s) => s.members.slice(8).map((m) => `${s.name}: ${m.name}`))
+    if (bottomSquads.length) {
+      const bottomColW = 12.4 / (bottomSquads.length + 1)
+      slide.addTable(rosterRows(src.plan, bottomSquads, 5), {
+        x: 0.45,
+        y: 3.86,
+        w: 12.4,
+        colW: Array(bottomSquads.length + 1).fill(bottomColW),
+        rowH: 0.27,
+        border: { type: 'solid', color: 'CBD5E1', pt: 0.5 },
+        fontFace: 'Segoe UI',
+        valign: 'middle',
+        margin: 0.03,
+      })
+    }
+    const overflow = src.plan.roster.squads.flatMap((s) => s.members.slice(9).map((m) => `${s.name}: ${m.name}`))
     if (src.plan.roster.unassigned.length || overflow.length) {
       const extra = [
         src.plan.roster.unassigned.length ? `Reserve: ${src.plan.roster.unassigned.map((m) => m.name).join(' · ')}` : '',
@@ -250,48 +265,54 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
     doc.setTextColor(100, 116, 139)
     doc.text(subtitle(src), 0.45, 0.8)
 
-    const squads = src.plan.roster.squads
-    const cols = squads.length + 1
+    const groups = [
+      { squads: src.plan.roster.squads.slice(0, 5), offset: 0, y: 1.2 },
+      { squads: src.plan.roster.squads.slice(5, 9), offset: 5, y: 4.05 },
+    ]
     const x0 = 0.45
     const width = 12.4
-    const cellW = width / cols
-    const headerH = 0.38
-    const y0 = 1.15
-    doc.setFillColor(17, 24, 39)
-    doc.rect(x0, y0, width, headerH, 'F')
-    doc.setTextColor(253, 230, 138)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8)
-    doc.text('CMD', x0 + 0.05, y0 + 0.24)
-    squads.forEach((s, i) => {
-      const cx = x0 + cellW * (i + 1)
-      const hex = s.color.replace('#', '')
-      doc.setFillColor(parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16))
-      doc.rect(cx, y0, cellW, headerH, 'F')
-      const t = textOn(s.color)
-      doc.setTextColor(parseInt(t.slice(0, 2), 16), parseInt(t.slice(2, 4), 16), parseInt(t.slice(4, 6), 16))
-      doc.text(`${s.name} · ${s.type}`, cx + 0.05, y0 + 0.24)
-    })
-    doc.setFont('helvetica', 'normal')
-    const rows = 8
-    const rowH = 0.48
-    for (let r = 0; r < rows; r++) {
-      const y = y0 + headerH + rowH * r
-      if (r % 2) {
-        doc.setFillColor(241, 245, 249)
-        doc.rect(x0, y, width, rowH, 'F')
-      }
-      doc.setDrawColor(203, 213, 225)
-      doc.setLineWidth(0.006)
-      doc.rect(x0, y, width, rowH)
-      for (let c = 1; c < cols; c++) doc.line(x0 + cellW * c, y, x0 + cellW * c, y + rowH)
-      doc.setTextColor(15, 23, 42)
-      doc.setFontSize(8)
-      if (r === 0 && src.plan.roster.commander) doc.text(src.plan.roster.commander.name, x0 + 0.05, y + 0.29)
-      squads.forEach((s, i) => {
-        const m = s.members[r]
-        if (m) doc.text(`${r === 0 ? 'SL ' : r === 1 ? '2IC ' : ''}${m.name}`, x0 + cellW * (i + 1) + 0.05, y + 0.29)
+    for (const group of groups) {
+      if (!group.squads.length) continue
+      const cols = group.squads.length + 1
+      const cellW = width / cols
+      const headerH = 0.3
+      const y0 = group.y
+      doc.setFillColor(17, 24, 39)
+      doc.rect(x0, y0, width, headerH, 'F')
+      doc.setTextColor(253, 230, 138)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7)
+      doc.text('CMD', x0 + 0.05, y0 + 0.2)
+      group.squads.forEach((s, i) => {
+        const cx = x0 + cellW * (i + 1)
+        const hex = s.color.replace('#', '')
+        doc.setFillColor(parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16))
+        doc.rect(cx, y0, cellW, headerH, 'F')
+        const t = textOn(s.color)
+        doc.setTextColor(parseInt(t.slice(0, 2), 16), parseInt(t.slice(2, 4), 16), parseInt(t.slice(4, 6), 16))
+        doc.text(`${s.name}`, cx + 0.05, y0 + 0.2)
       })
+      doc.setFont('helvetica', 'normal')
+      const rows = 9
+      const rowH = 0.27
+      for (let r = 0; r < rows; r++) {
+        const y = y0 + headerH + rowH * r
+        if (r % 2) {
+          doc.setFillColor(241, 245, 249)
+          doc.rect(x0, y, width, rowH, 'F')
+        }
+        doc.setDrawColor(203, 213, 225)
+        doc.setLineWidth(0.006)
+        doc.rect(x0, y, width, rowH)
+        for (let c = 1; c < cols; c++) doc.line(x0 + cellW * c, y, x0 + cellW * c, y + rowH)
+        doc.setTextColor(15, 23, 42)
+        doc.setFontSize(7)
+        if (r === 0 && group.offset === 0 && src.plan.roster.commander) doc.text(src.plan.roster.commander.name, x0 + 0.05, y + 0.2)
+        group.squads.forEach((s, i) => {
+          const m = s.members[r]
+          if (m) doc.text(`${r === 0 ? 'SL ' : r === 1 ? '2IC ' : ''}${m.name}`, x0 + cellW * (i + 1) + 0.05, y + 0.2)
+        })
+      }
     }
     if (src.plan.roster.unassigned.length) {
       doc.setFontSize(8)
