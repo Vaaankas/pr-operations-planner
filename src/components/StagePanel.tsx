@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Eye, EyeOff, Flag, PencilRuler, RotateCcw, Shield, Trash2, Truck } from 'lucide-react'
+import { Clock, Eye, EyeOff, Flag, RotateCcw, Shield, Trash2, Truck } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { formatTime, parseTime } from '../lib/utils'
@@ -42,12 +42,6 @@ export function StagePanel({ layer, plan, stage }: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <PencilRuler className="h-3.5 w-3.5 text-amber-400" />
-        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-300">Stage brief</span>
-        <span className="ml-auto font-mono text-[10px] text-slate-500">{formatTime(stage.time)}</span>
-      </div>
-
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
         <div>
           <label className="mb-1 block font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">Stage name</label>

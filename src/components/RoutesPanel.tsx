@@ -1,6 +1,5 @@
 import { usePlanner, useUI } from '../store'
 import type { LayerData, Plan } from '../types'
-import { Route } from 'lucide-react'
 import { cpFlag, useAssets } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { groupRoute } from '../lib/routes'
@@ -22,12 +21,6 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <Route className="h-3.5 w-3.5 text-amber-400" />
-        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-300">Attack routes</span>
-        <span className="ml-auto font-mono text-[10px] text-slate-500">{visible.length}/{routes.length}</span>
-      </div>
-
       <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
         <div className="space-y-1">
           {routes.map((r, i) => {

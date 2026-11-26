@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Crosshair, Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
+import { Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { dataUrl, formatTime } from '../lib/utils'
@@ -57,11 +57,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-white/10 px-3 py-2">
-        <div className="flex items-center gap-2">
-          <Crosshair className="h-3.5 w-3.5 text-amber-400" />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-300">Asset manifest</span>
-        </div>
-        <div className="mt-2 flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-2 top-1.5 h-3.5 w-3.5 text-slate-600" />
             <input
