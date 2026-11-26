@@ -13,7 +13,7 @@ import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
-import { groupRoute, routeSegments } from '../lib/routes'
+import { groupRoute } from '../lib/routes'
 import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_ICON_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
 import { assignedKits } from '../lib/kits'
 
@@ -72,6 +72,13 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 }
 
 const PENCIL = '#f8fafc'
+
+function aasPickCount(sgid: number): number | null {
+  const text = String(sgid)
+  if (text.length < 2) return null
+  const pick = Number(text[1])
+  return pick > 0 ? pick : null
+}
 
 export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1 }: Props) {
   const ui = useUI()
@@ -1289,52 +1296,58 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         </Layer>
 
         <Layer listening={ui.tool === 'select'}>
-          {ui.showFlags && layer.mode !== 'gpm_insurgency' && visibleRoutes.flatMap((r) => {
-            const index = routes.findIndex((x) => x.id === r.id)
-            return routeSegments(layer, r)
-              .filter(([from, to]) => !ui.hiddenCps.includes(from.id) && !ui.hiddenCps.includes(to.id))
-              .map(([from, to], i) => {
-              const a = worldToDisplayNorm(from.x, from.z, layer.world)
-              const b = worldToDisplayNorm(to.x, to.z, layer.world)
-              return (
+          {ui.showFlags && layer.mode !== 'gpm_insurgency' && visibleRoutes.flatMap((route) => {
+            const routeIndex = routes.findIndex((item) => item.id === route.id)
+            const color = routeColor(routeIndex)
+            const groups = groupRoute(layer, route)
+              .map((group) => group.cps.filter((cp) => !ui.hiddenCps.includes(cp.id)))
+              .filter((group) => group.length > 0)
+            const points = groups.map((group) => group.length === 1
+              ? group[0]
+              : {
+                  x: group.reduce((sum, cp) => sum + cp.x, 0) / group.length,
+                  z: group.reduce((sum, cp) => sum + cp.z, 0) / group.length,
+                })
+            const lines: React.ReactNode[] = []
+            for (let i = 1; i < points.length; i++) {
+              const a = worldToDisplayNorm(points[i - 1].x, points[i - 1].z, layer.world)
+              const b = worldToDisplayNorm(points[i].x, points[i].z, layer.world)
+              lines.push(
                 <Line
-                  key={`lane-${r.id}-${i}`}
+                  key={`lane-${route.id}-${i}`}
                   points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
-                  stroke={routeColor(index)}
+                  stroke={color}
                   strokeWidth={2.5 * iconScale}
                   opacity={0.45}
                   lineJoin="round"
                   lineCap="round"
                   listening={false}
-                />
+                />,
               )
-            })
-          })}
-          {layer.mode === 'gpm_cq' && ui.showFlags && visibleRoutes.flatMap((route) => {
-            const groups = groupRoute(layer, route)
-              .map((group) => group.cps.filter((cp) => !ui.hiddenCps.includes(cp.id)))
-              .filter((group) => group.length > 0)
-            const lines: React.ReactNode[] = []
-            groups.forEach((group, groupIndex) => {
-              if (group.length < 2) return
-              const alternatives = new Set(group.map((cp) => cp.sgid)).size > 1
-              for (let i = 1; i < group.length; i++) {
-                const a = worldToDisplayNorm(group[i - 1].x, group[i - 1].z, layer.world)
-                const b = worldToDisplayNorm(group[i].x, group[i].z, layer.world)
-                lines.push(
-                  <Line
-                    key={`${alternatives ? 'alternative' : 'parallel'}-${route.id}-${groupIndex}-${i}`}
-                    points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
-                    stroke="#f8fafc"
-                    strokeWidth={1.5 * iconScale}
-                    opacity={0.85}
-                    dash={alternatives ? [6 * iconScale, 4 * iconScale] : undefined}
-                    lineCap="round"
-                    listening={false}
-                  />,
-                )
-              }
-            })
+            }
+            if (layer.mode === 'gpm_cq') {
+              groups.forEach((group, groupIndex) => {
+                if (group.length < 2) return
+                const picks = group.map((cp) => aasPickCount(cp.sgid)).filter((value): value is number => value !== null)
+                const alternatives = picks.length > 0 && Math.min(...picks) < group.length
+                for (let i = 1; i < group.length; i++) {
+                  const a = worldToDisplayNorm(group[i - 1].x, group[i - 1].z, layer.world)
+                  const b = worldToDisplayNorm(group[i].x, group[i].z, layer.world)
+                  lines.push(
+                    <Line
+                      key={`${alternatives ? 'alternative' : 'parallel'}-${route.id}-${groupIndex}-${i}`}
+                      points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
+                      stroke={alternatives ? color : '#f8fafc'}
+                      strokeWidth={1.5 * iconScale}
+                      opacity={0.85}
+                      dash={alternatives ? [6 * iconScale, 4 * iconScale] : undefined}
+                      lineCap="round"
+                      listening={false}
+                    />,
+                  )
+                }
+              })
+            }
             return lines
           })}
           {ui.showFlags && (layer.caches ?? []).map((cache, i) => {
