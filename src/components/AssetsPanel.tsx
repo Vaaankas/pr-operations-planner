@@ -72,7 +72,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
             className={`rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${startOnly ? 'border-amber-400/50 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500'}`}
             title="Only assets present at round start"
           >
-            Start
+            Start only
           </button>
         </div>
       </div>
