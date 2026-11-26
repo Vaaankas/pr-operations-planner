@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowUp } from 'lucide-react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
@@ -1430,7 +1431,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
               }}
               className="pointer-events-auto absolute flex h-5 w-5 cursor-grab items-center justify-center rounded-full border border-black/70 bg-amber-400 text-black shadow-lg active:cursor-grabbing"
             >
-              <span className="block h-1.5 w-1.5 rounded-full bg-black/70" />
+              <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} style={{ transform: `rotate(${angle}deg)` }} />
             </button>
           </div>
         )
