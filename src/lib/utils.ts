@@ -2,6 +2,9 @@ import type { Plan, Squad, Stage } from '../types'
 
 export const PLAYER_CAP = 50
 export const SQUAD_SIZE = 8
+export const isHiddenVehicle = (template: string): boolean =>
+  /artillery_team[12]/i.test(template)
+
 export const SQUAD_COLORS = [
   '#3b82f6', '#65a30d', '#22d3ee', '#facc15', '#e2e8f0',
   '#f472b6', '#86efac', '#a78bfa', '#fb923c', '#ef4444',

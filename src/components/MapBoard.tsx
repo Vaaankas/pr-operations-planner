@@ -5,7 +5,7 @@ import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
-import { affiliationColor, clamp, dataUrl, SQUAD_COLORS } from '../lib/utils'
+import { affiliationColor, clamp, dataUrl, isHiddenVehicle, SQUAD_COLORS } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
@@ -560,6 +560,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   }, [selectedVehicle, selectedVehiclePos, pointerAngle, planner])
 
   const vehicleVisible = (v: VehicleSpawn) => {
+    if (isHiddenVehicle(v.template)) return false
     if (v.team !== null && v.team !== plan.side && !ui.showEnemy) return false
     if (['asset', 'crate', 'emplacement'].includes(v.category) && !ui.showAssets) return false
     return ui.showVehicles
