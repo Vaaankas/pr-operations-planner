@@ -1259,7 +1259,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 ? { x: dragTurn.x, z: dragTurn.z }
                 : turn
             )
-            const route = move
+            const route = (move || drag) && endpoint
               ? [base, ...routeTurns, endpoint].map((q) => {
                   const d = worldToDisplayNorm(q.x, q.z, layer.world)
                   return [d.x * mapW, d.y * mapH] as [number, number]
