@@ -1402,30 +1402,39 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         </Layer>
       </Stage>
 
-      {selectedScreen && selectedVehicle && ui.tool === 'select' && (
-        <div className="pointer-events-none absolute z-10" style={{ left: selectedScreen.x, top: selectedScreen.y }}>
-          <div className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-amber-400/80" />
-          <div className="absolute h-4 w-px -translate-x-1/2 -translate-y-[34px] bg-amber-400/70" />
-          <button
-            title="Drag to rotate asset"
-            onPointerDown={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              planner.checkpoint()
-              if (selectedVehiclePos) {
-                rotateStart.current = {
-                  angle: pointerAngle(e.clientX, e.clientY),
-                  rotation: selectedVehiclePos.rotation,
+      {selectedScreen && selectedVehicle && ui.tool === 'select' && (() => {
+        const angle = selectedVehiclePos ? vehicleSpriteRotation(layer.id, selectedVehiclePos.rotation) : 0
+        const rad = (angle * Math.PI) / 180
+        const handleRadius = 42
+        return (
+          <div className="pointer-events-none absolute z-10" style={{ left: selectedScreen.x, top: selectedScreen.y }}>
+            <div className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-amber-400/80" />
+            <button
+              title="Drag to rotate asset"
+              onPointerDown={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                planner.checkpoint()
+                if (selectedVehiclePos) {
+                  rotateStart.current = {
+                    angle: pointerAngle(e.clientX, e.clientY),
+                    rotation: selectedVehiclePos.rotation,
+                  }
                 }
-              }
-              setRotating(true)
-            }}
-            className="pointer-events-auto absolute flex h-5 w-5 -translate-x-1/2 -translate-y-[52px] cursor-grab items-center justify-center rounded-full border border-black/70 bg-amber-400 text-black shadow-lg active:cursor-grabbing"
-          >
-            <span className="block h-1.5 w-1.5 rounded-full bg-black/70" />
-          </button>
-        </div>
-      )}
+                setRotating(true)
+              }}
+              style={{
+                left: Math.sin(rad) * handleRadius,
+                top: -Math.cos(rad) * handleRadius,
+                transform: 'translate(-50%, -50%)',
+              }}
+              className="pointer-events-auto absolute flex h-5 w-5 cursor-grab items-center justify-center rounded-full border border-black/70 bg-amber-400 text-black shadow-lg active:cursor-grabbing"
+            >
+              <span className="block h-1.5 w-1.5 rounded-full bg-black/70" />
+            </button>
+          </div>
+        )
+      })()}
 
       {textAt && (() => {
         const at = normToScreen(textAt)
