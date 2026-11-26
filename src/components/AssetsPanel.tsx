@@ -116,19 +116,14 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                       <GameIcon path={assets.vehicles[v.icon] ?? assets.vehicles[v.category]} tint={color} size={24} />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1">
-                        <span className="truncate text-[13px] font-medium text-slate-200">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-200">
                           {v.label}
                         </span>
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9.5px] text-slate-500">
-                        {!v.atStart && (
-                          <>
-                            <span>Delay: <span className="text-slate-400">{formatTime(v.respawn ?? 0)}</span></span>
-                            <span className="text-slate-700">·</span>
-                          </>
-                        )}
-                        <span>Respawn: <span className="text-slate-400">{v.respawn ? formatTime(v.respawn) : '—'}</span></span>
+                        <span className="flex h-[20px] shrink-0 flex-col items-end justify-center whitespace-nowrap font-mono text-[8.5px] leading-[10px] text-slate-500">
+                          {!v.atStart && <span>Delay {formatTime(v.respawn ?? 0)}</span>}
+                          <span>Respawn {v.respawn ? formatTime(v.respawn) : '—'}</span>
+                        </span>
                       </div>
                       {moved && (
                         <div className="mt-0.5 flex items-center gap-1 font-mono text-[9.5px] uppercase tracking-wider text-amber-400/80">
