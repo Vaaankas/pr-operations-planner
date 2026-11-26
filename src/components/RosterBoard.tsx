@@ -78,10 +78,12 @@ function MemberRow({
   member,
   index,
   target,
+  leader = false,
 }: {
   member: Member
   index: number
   target: string
+  leader?: boolean
 }) {
   const planner = usePlanner()
   const plan = usePlanner((s) => s.plan)
@@ -129,6 +131,11 @@ function MemberRow({
       <span className="cursor-grab active:cursor-grabbing" title="Drag player">
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 group-hover:text-slate-400" />
       </span>
+      {leader && (
+        <span className="shrink-0 rounded border border-amber-400/40 bg-amber-400/10 px-1 font-mono text-[9px] font-bold text-amber-300" title="Squad leader">
+          SL
+        </span>
+      )}
       <EditableName
         value={member.name}
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
@@ -378,9 +385,13 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       )}
       <div className="flex min-h-0 flex-1 flex-col gap-1 p-1.5">
         {squad.members.map((m, i) => (
-          <MemberRow key={m.id} member={m} index={i} target={squad.id} />
+          <MemberRow key={m.id} member={m} index={i} target={squad.id} leader={i === 0} />
         ))}
-        {squad.members.length === 0 && <div className="px-1 py-2 text-[11px] uppercase tracking-wider text-slate-600">Empty squad</div>}
+        {squad.members.length === 0 && (
+          <div className="rounded border border-dashed border-amber-400/20 px-2 py-2 text-[10px] uppercase tracking-wider text-amber-300/60">
+            Squad leader slot empty
+          </div>
+        )}
         <div className="mt-auto">
           {!full && <AddPlayer target={squad.id} />}
         </div>
@@ -402,7 +413,7 @@ export function RosterBoard() {
     ...plan.roster.unassigned,
   ]
   const confirmed = allMembers.filter((m) => m.confirmed).length
-  const uncertain = allMembers.length - confirmed
+  const uncertain = allMembers.filter((member) => member.unconfirmed).length
 
   return (
     <div className="flex min-h-0 flex-1">
