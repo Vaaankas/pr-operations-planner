@@ -1356,7 +1356,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 })
               : []
             const dp = drag ? worldToDisplayNorm(drag.x, drag.z, layer.world) : p
-            const showName = ui.showLabels && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0)
+            const showName = ui.showVehicleNames && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0)
             return (
               <Group key={v.id}>
                 {route.length > 1 && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && (

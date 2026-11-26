@@ -423,7 +423,7 @@ export const useUI = create<UIState & {
   setAffiliation: (a: UIState['unitAffiliation']) => void
   setSelected: (id: string | null, kind: UIState['selectedKind']) => void
   setRightTab: (tab: UIState['rightTab']) => void
-  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels' | 'showVehiclePaths') => void
+  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels' | 'showVehicleNames' | 'showVehiclePaths') => void
   toggleVehiclePath: (vehicleId: string) => void
   setExportOpen: (open: boolean) => void
   setHelpOpen: (open: boolean) => void
@@ -453,6 +453,7 @@ export const useUI = create<UIState & {
   showFlags: true,
   showAssets: true,
   showLabels: true,
+  showVehicleNames: true,
   showVehiclePaths: true,
   hiddenVehiclePaths: [],
   exportOpen: false,

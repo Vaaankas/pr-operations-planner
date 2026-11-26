@@ -270,6 +270,7 @@ export interface UIState {
   showFlags: boolean
   showAssets: boolean
   showLabels: boolean
+  showVehicleNames: boolean
   showVehiclePaths: boolean
   hiddenVehiclePaths: string[]
   exportOpen: boolean

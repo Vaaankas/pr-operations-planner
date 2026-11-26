@@ -73,6 +73,7 @@ export function ToolbarRail() {
         <VisibilityButton icon={<Flag className="h-3.5 w-3.5" />} active={ui.showFlags} title="Flags and capture radii" onClick={() => ui.toggle('showFlags')} />
         <VisibilityButton icon={<Boxes className="h-3.5 w-3.5" />} active={ui.showAssets} title="Static assets and emplacements" onClick={() => ui.toggle('showAssets')} />
         <VisibilityButton icon={<Tag className="h-3.5 w-3.5" />} active={ui.showLabels} title="Map labels" onClick={() => ui.toggle('showLabels')} />
+        <VisibilityButton icon={<Type className="h-3.5 w-3.5" />} active={ui.showVehicleNames} title="Vehicle names" onClick={() => ui.toggle('showVehicleNames')} />
         <VisibilityButton icon={<RouteIcon className="h-3.5 w-3.5" />} active={ui.showVehiclePaths} title="Vehicle paths" onClick={() => ui.toggle('showVehiclePaths')} />
       </div>
     </div>
