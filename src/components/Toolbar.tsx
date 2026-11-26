@@ -8,6 +8,7 @@ import type { Tool } from '../types'
 import { iconDataUrl } from '../icons'
 import { useAssets } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
+import { SQUAD_COLORS } from '../lib/utils'
 
 const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: string }[] = [
   { tool: 'select', icon: MousePointer2, label: 'Select / move', key: 'V' },
@@ -24,7 +25,7 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'erase', icon: Eraser, label: 'Erase', key: 'E' },
 ]
 
-const COLORS = ['#f8fafc', '#facc15', '#fb923c', '#f87171', '#f472b6', '#a78bfa', '#38bdf8', '#34d399']
+const COLORS = SQUAD_COLORS
 
 const MARKERS = [
   'objective', 'fob', 'rally', 'lz', 'observe', 'attack', 'defend', 'waypoint',

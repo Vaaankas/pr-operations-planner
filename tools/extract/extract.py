@@ -53,6 +53,7 @@ LAYER_NAMES = {
 
 ROUTE_COLORS = ["#38bdf8", "#fb923c", "#a78bfa", "#34d399"]
 EXCLUDED_LEVELS = {"saaremaa_winter"}
+SIZE_KM_OVERRIDES = {"gaza_2": 2, "fallujah_west": 2}
 
 FACTIONS = {
     "us": ("United States", "US"),
@@ -94,7 +95,7 @@ CATEGORY_RULES = [
     ("jet", [r"jet", r"_f16", r"f16", r"f18", r"f_18", r"mig", r"su_?2", r"su_?3", r"a10", r"a_10", r"tornado", r"eurofighter", r"j10", r"j_10", r"j20", r"mirage", r"harrier"]),
     ("bomber", [r"bomber", r"b_?52"]),
     ("attack_heli", [r"ah_?1", r"ah1", r"ah_?64", r"apache", r"cobra", r"mi_?24", r"mi24", r"mi_?28", r"mi28", r"ka_?52", r"havoc", r"z_?10", r"z10", r"atkheli", r"attackheli"]),
-    ("transport_heli", [r"the_", r"hel", r"uh_?60", r"uh_?1", r"mh_?6", r"mh6", r"mi_?8", r"mi8", r"mi_?17", r"mi17", r"lynx", r"merlin", r"orca", r"z_?8", r"z_?9", r"z8", r"z9", r"huey", r"blackhawk", r"cas_?heli", r"trans"]),
+    ("transport_heli", [r"the_", r"hel", r"uh_?60", r"uh_?1", r"mh_?6", r"mh6", r"mi_?8", r"mi8", r"mi_?17", r"mi17", r"lynx", r"merlin", r"orca", r"z_?8", r"z_?9", r"z8", r"z9", r"huey", r"blackhawk", r"cas_?heli"]),
     ("mbt", [r"mbt", r"tank", r"t_?72", r"t72", r"t_?90", r"t90", r"m1a1", r"m1a2", r"challenger", r"leopard", r"leclerc", r"ztz", r"type_?99", r"type99", r"merkava", r"pt_?76", r"t_?62", r"t62"]),
     ("ifv", [r"ifv", r"bmp", r"bradley", r"warrior", r"scimitar", r"sprut", r"cv90", r"puma"]),
     ("apc", [r"apc", r"btr", r"lav", r"m113", r"aav", r"stryker", r"piranha", r"vab", r"mastiff", r"wz551", r"wz_?551"]),
@@ -104,7 +105,11 @@ CATEGORY_RULES = [
     ("crate", [r"crate", r"supply_crate", r"ammo_?cache", r"weapon_?cache"]),
     ("asset", [r"repair", r"commandpost", r"command_post", r"fob_", r"supply_drop"]),
     ("logistics", [r"logi", r"truck", r"ural", r"kamaz", r"m35", r"mtvr", r"hemtt", r"trans_?land", r"transport_?truck"]),
-    ("jeep", [r"jep", r"jeep", r"hmmwv", r"humvee", r"landrover", r"land_?rover", r"uaz", r"technical", r"vodnik", r"datsun", r"pickup", r"quad", r"atv", r"dirtbike", r"motorbike", r"tigr", r"gaz"]),
+    ("dirtbike", [r"dirtbike", r"motorbike", r"civ_bik", r"_bik_"]),
+    ("atv", [r"_atv", r"quad"]),
+    ("forklift", [r"forklift"]),
+    ("car", [r"civ_jep_", r"civ_car", r"pickup", r"technical", r"datsun"]),
+    ("jeep", [r"jep", r"jeep", r"hmmwv", r"humvee", r"landrover", r"land_?rover", r"uaz", r"vodnik", r"tigr", r"gaz"]),
     ("emplacement", [r"tow", r"atgm", r"konkurs", r"kornet", r"h_at", r"hmg", r"mg_", r"stationary", r"deployable_", r"fixed_", r"mortar_", r"aa_?gun"]),
 ]
 
@@ -180,6 +185,8 @@ def load_vehicle_names() -> dict[str, str]:
 
 def classify(template: str) -> str:
     t = template.lower()
+    if ("trk" in t or "truck" in t) and re.search(r"supp(?:ly|ort)?", t):
+        return "supply"
     for cat, pats in CATEGORY_RULES:
         if any(re.search(p, t) for p in pats):
             return cat
@@ -551,10 +558,13 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         # In BF2, spawnDelayAtStart=1 marks an asset that is held back at round
         # start for its spawn delay. Default (field absent) is on the pad.
         at_start = not tpl.get("atStart", False)
+        label = vehicle_names.get(obj.upper()) or prettify_template(obj)
+        if cat == "supply" and "supply" not in label.lower():
+            label = f"{label} (Supply)"
         vehicles.append({
             "id": f"{inst['name']}",
             "template": obj,
-            "label": vehicle_names.get(obj.upper()) or prettify_template(obj),
+            "label": label,
             "category": cat,
             "icon": vehicle_icon_key(cat, obj),
             "team": team,
@@ -629,7 +639,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         "layerTypeLabel": display,
         "displayName": display,
         "name": display,
-        "sizeKm": size_km(world),
+        "sizeKm": SIZE_KM_OVERRIDES.get(level, size_km(world)),
         "world": world,
         "factions": {str(k): v for k, v in factions.items()},
         "tickets": tickets,
@@ -699,6 +709,11 @@ VEHICLE_ICONS = {
     "apc": VEHICLE_ICON_DIR + "mini_apc_medium.tga",
     "jeep": VEHICLE_ICON_DIR + "mini_jep_light.tga",
     "logistics": VEHICLE_ICON_DIR + "mini_trk_logi.tga",
+    "supply": VEHICLE_ICON_DIR + "mini_trk_supp.tga",
+    "dirtbike": VEHICLE_ICON_DIR + "mini_civ_dirtbike.tga",
+    "atv": VEHICLE_ICON_DIR + "mini_civ_atv.tga",
+    "forklift": VEHICLE_ICON_DIR + "mini_civ_forklift.tga",
+    "car": VEHICLE_ICON_DIR + "mini_civ_car.tga",
     "aa": VEHICLE_ICON_DIR + "mini_jep_aa.tga",
     "aa_static": VEHICLE_ICON_DIR + "mini_stw_aa_medium.tga",
     "artillery": VEHICLE_ICON_DIR + "mini_stw_artillery.tga",
@@ -961,7 +976,7 @@ def main() -> None:
             "id": level,
             "name": desc["name"],
             "world": map_world,
-            "sizeKm": size_km(map_world),
+            "sizeKm": SIZE_KM_OVERRIDES.get(level, size_km(map_world)),
             "factions": {str(k): v for k, v in factions.items()},
             "images": images,
             "layers": layers_meta,

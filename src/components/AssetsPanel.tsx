@@ -14,7 +14,8 @@ interface Props {
 }
 
 const ORDER = [
-  'mbt', 'ifv', 'apc', 'recon', 'jeep', 'logistics', 'aa', 'artillery',
+  'mbt', 'ifv', 'apc', 'recon', 'jeep', 'car', 'dirtbike', 'atv', 'forklift',
+  'logistics', 'supply', 'aa', 'artillery',
   'transport_heli', 'attack_heli', 'jet', 'bomber', 'boat', 'carrier',
   'emplacement', 'asset', 'crate', 'other',
 ]
