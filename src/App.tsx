@@ -275,7 +275,7 @@ function AppInner() {
               className="flex flex-col"
               style={{ zoom: 1.2, width: '100%', height: '100%' }}
             >
-            <div className="relative flex h-10 shrink-0 items-center border-b border-white/10">
+            <div className="relative flex h-[33.333px] shrink-0 items-center border-b border-white/10">
               {([
                 { id: 'stage' as const, label: 'Stages', icon: MapIcon },
                 { id: 'assets' as const, label: 'Assets', icon: Boxes },
