@@ -199,8 +199,10 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     return { x: r.x * mapW, y: r.y * mapH }
   }, [mapW, mapH])
 
-  const clientToFrameNorm = useCallback((clientX: number, clientY: number): Point =>
-    toNorm(mapCoords(clientX, clientY)), [mapCoords, toNorm])
+  const clientToFrameNorm = useCallback((clientX: number, clientY: number): Point => {
+    const p = mapCoords(clientX, clientY)
+    return { x: p.x / mapW, y: p.y / mapH }
+  }, [mapCoords, mapW, mapH])
 
   useEffect(() => {
     const next = stage.frame ?? { x: 0, y: 0, size: 1 }
