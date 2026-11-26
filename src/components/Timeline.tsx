@@ -9,7 +9,6 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
   const [playing, setPlaying] = useState(false)
   const stages = useMemo(() => [...plan.stages].sort((a, b) => a.time - b.time), [plan.stages])
   const index = stages.findIndex((s) => s.id === stage.id)
-  const maxTime = Math.max(0, ...stages.map((s) => s.time))
 
   useEffect(() => {
     if (!playing) return
@@ -50,13 +49,9 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-        <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-slate-600">
-          {stages.length} stages · {formatTime(maxTime)}
-        </div>
       </div>
 
       <div className="relative flex min-w-0 flex-1 items-center gap-2 overflow-x-auto px-3">
-        <div className="pointer-events-none absolute left-3 right-3 top-[38px] h-px bg-white/10" />
         {stages.map((s, i) => {
           const active = s.id === stage.id
           return (
@@ -76,9 +71,6 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
                 {s.time === 0 && <span className="rounded bg-white/10 px-1 font-mono text-[8px] uppercase text-slate-400">start</span>}
               </div>
               <div className="mt-1 truncate text-[12px] font-semibold text-slate-200">{s.name}</div>
-              <div className="font-mono text-[8px] uppercase tracking-wider text-slate-600">
-                {s.elements.length} marks · {Object.keys(s.moves).length} moves
-              </div>
               {active && <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-amber-400" />}
             </button>
           )
