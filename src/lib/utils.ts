@@ -1,9 +1,18 @@
-import type { Plan, Squad, Stage } from '../types'
+import type { Plan, Squad, Stage, VehicleSpawn } from '../types'
 
 export const PLAYER_CAP = 50
 export const SQUAD_SIZE = 8
 export const isHiddenVehicle = (template: string): boolean =>
   /artillery_team[12]/i.test(template)
+
+export function vehicleDelayRemaining(v: VehicleSpawn, stageTime: number): number {
+  if (v.atStart) return 0
+  return Math.max(0, (v.respawn ?? 0) - stageTime)
+}
+
+export function vehicleReady(v: VehicleSpawn, stageTime: number): boolean {
+  return v.atStart || vehicleDelayRemaining(v, stageTime) === 0
+}
 
 export const SQUAD_COLORS = [
   '#3b82f6', '#65a30d', '#22d3ee', '#facc15', '#e2e8f0',

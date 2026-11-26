@@ -5,7 +5,7 @@ import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
-import { affiliationColor, clamp, dataUrl, formatTime, isHiddenVehicle, SQUAD_COLORS } from '../lib/utils'
+import { affiliationColor, clamp, dataUrl, formatTime, isHiddenVehicle, SQUAD_COLORS, vehicleDelayRemaining, vehicleReady } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, useAssets } from '../lib/assets'
@@ -1254,6 +1254,8 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const turns = stage.turns?.[v.id] ?? []
             const base = baseVehiclePos(v)
             const drag = dragVehicle?.id === v.id ? dragVehicle : null
+            const ready = vehicleReady(v, stage.time)
+            const delayRemaining = vehicleDelayRemaining(v, stage.time)
             const endpoint = drag ? { x: drag.x, z: drag.z } : move
             const routeTurns = turns.map((turn, index) =>
               dragTurn?.vehicleId === v.id && dragTurn.index === index
@@ -1278,9 +1280,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     lineCap="round"
                     lineJoin="round"
                     hitStrokeWidth={20 * iconScale}
-                    listening={ui.tool === 'select' && v.atStart}
+                    listening={ui.tool === 'select' && ready}
                     onClick={(e) => {
-                      if (ui.tool !== 'select' || !v.atStart) return
+                      if (ui.tool !== 'select' || !ready) return
                       e.cancelBubble = true
                       if (!selected) {
                         useUI.getState().setSelected(nodeId, 'vehicle')
@@ -1304,7 +1306,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                       fill="#fbbf24"
                       stroke="#07110a"
                       strokeWidth={1.5 * iconScale}
-                      draggable
+                      draggable={ready}
                       onDragStart={() => planner.checkpoint()}
                       onDragMove={(e) => {
                         const node = e.target
@@ -1330,7 +1332,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   x={p.x * mapW}
                   y={p.y * mapH}
                   rotation={vehicleSpriteRotation(layer.id, pos.rotation)}
-                  draggable={ui.tool === 'select' && v.atStart}
+                  draggable={ui.tool === 'select' && ready}
                   listening={ui.tool === 'select' || ui.tool === 'erase'}
                   opacity={1}
                   onClick={(e) => {
@@ -1389,9 +1391,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     )
                   })()}
                 </Group>
-                {!v.atStart && (
+                {!ready && (
                   <Text
-                    text={formatTime(v.respawn ?? 0)}
+                    text={formatTime(delayRemaining)}
                     fontSize={10 * iconScale}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
@@ -1416,7 +1418,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     stroke="rgba(2,6,4,0.92)"
                     strokeWidth={3 * iconScale}
                     fillAfterStrokeEnabled
-                    y={v.atStart ? dp.y * mapH + s * 0.56 : dp.y * mapH + s * 0.5 + 14 * iconScale}
+                    y={ready ? dp.y * mapH + s * 0.56 : dp.y * mapH + s * 0.5 + 20 * iconScale}
                     width={240 * iconScale}
                     align="center"
                     x={dp.x * mapW - 120 * iconScale}
@@ -1445,7 +1447,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
         return (
           <div className="pointer-events-none absolute z-10" style={{ left: screen.x, top: screen.y }}>
             <div className="absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-amber-400/80" />
-            {selectedVehicle.atStart && (
+            {vehicleReady(selectedVehicle, stage.time) && (
             <button
               title="Drag to rotate asset"
               onPointerDown={(e) => {
