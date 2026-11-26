@@ -58,11 +58,16 @@ function RosterSlide({ plan, map, layer }: { plan: Plan; map: MapMeta; layer: La
             <div className="flex items-center justify-center border-t border-[#e2e8f0] px-1 text-center text-[9px] text-[#0f172a]">
               {row === 0 ? plan.roster.commander?.name ?? '—' : ''}
             </div>
-            {squads.map((squad) => (
-              <div key={`${squad.id}-${row}`} className={`flex min-w-0 items-center border-l border-t border-[#e2e8f0] px-1 text-[9px] text-[#0f172a] ${row % 2 ? 'bg-[#f1f5f9]' : 'bg-white'}`}>
-                <span className="truncate">{squad.members[row]?.name ?? ''}</span>
-              </div>
-            ))}
+            {squads.map((squad) => {
+              const member = squad.members[row]
+              const role = row === 0 ? 'SL' : row === 1 ? '2IC' : ''
+              return (
+                <div key={`${squad.id}-${row}`} className={`flex min-w-0 items-center gap-1 border-l border-t border-[#e2e8f0] px-1 text-[9px] text-[#0f172a] ${row % 2 ? 'bg-[#f1f5f9]' : 'bg-white'}`}>
+                  {member && role && <span className="shrink-0 rounded border border-[#cbd5e1] px-0.5 font-mono text-[7px] font-bold text-[#475569]">{role}</span>}
+                  <span className="truncate">{member?.name ?? ''}</span>
+                </div>
+              )
+            })}
           </div>
         ))}
       </div>

@@ -66,7 +66,7 @@ function rosterRows(plan: Plan): any[][] {
     rows.push([
       { text: r === 0 ? (plan.roster.commander?.name ?? '—') : '', options: { fontSize: 9, align: 'center', color: '0F172A' } },
       ...squads.map((s) => ({
-        text: s.members[r]?.name ?? '',
+        text: s.members[r] ? `${r === 0 ? 'SL ' : r === 1 ? '2IC ' : ''}${s.members[r].name}` : '',
         options: { fontSize: 9, align: 'center', color: '0F172A', fill: { color: r % 2 ? 'F1F5F9' : 'FFFFFF' } },
       })),
     ])
@@ -290,7 +290,7 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
       if (r === 0 && src.plan.roster.commander) doc.text(src.plan.roster.commander.name, x0 + 0.05, y + 0.29)
       squads.forEach((s, i) => {
         const m = s.members[r]
-        if (m) doc.text(m.name, x0 + cellW * (i + 1) + 0.05, y + 0.29)
+        if (m) doc.text(`${r === 0 ? 'SL ' : r === 1 ? '2IC ' : ''}${m.name}`, x0 + cellW * (i + 1) + 0.05, y + 0.29)
       })
     }
     if (src.plan.roster.unassigned.length) {

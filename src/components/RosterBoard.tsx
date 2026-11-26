@@ -91,6 +91,15 @@ function MemberRow({
   const namePointer = useRef(false)
   const memberKitId = assignedKits(plan?.roster.specialistAssignments, member.id)[0]
   const memberKit = specialistKit(memberKitId)
+  useEffect(() => {
+    const clear = () => setOver(false)
+    window.addEventListener('dragend', clear)
+    window.addEventListener('drop', clear)
+    return () => {
+      window.removeEventListener('dragend', clear)
+      window.removeEventListener('drop', clear)
+    }
+  }, [])
   return (
     <div
       draggable
@@ -272,6 +281,18 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
   const namePointer = useRef(false)
   const full = squad.members.length >= 9
   const assignedKitIds = assignedKits(plan?.roster.specialistAssignments, squad.id)
+  useEffect(() => {
+    const clear = () => {
+      setDrop(false)
+      setHeaderDrop(false)
+    }
+    window.addEventListener('dragend', clear)
+    window.addEventListener('drop', clear)
+    return () => {
+      window.removeEventListener('dragend', clear)
+      window.removeEventListener('drop', clear)
+    }
+  }, [])
   return (
     <div
       onDragOver={(e) => {
