@@ -275,7 +275,7 @@ function AppInner() {
               className="flex flex-col"
               style={{ zoom: 1.2, width: '100%', height: '100%' }}
             >
-            <div className="flex h-10 shrink-0 items-center border-b border-white/10">
+            <div className="relative flex h-10 shrink-0 items-center border-b border-white/10">
               {([
                 { id: 'stage' as const, label: 'Stages', icon: MapIcon },
                 { id: 'assets' as const, label: 'Assets', icon: Boxes },
@@ -284,11 +284,12 @@ function AppInner() {
                 <button
                   key={id}
                   onClick={() => ui.setRightTab(id)}
-                  className={`flex h-full flex-1 items-center justify-center gap-1.5 border-b-2 text-[10px] font-bold uppercase tracking-[0.14em] ${
-                    ui.rightTab === id ? 'border-amber-400 text-amber-300' : 'border-transparent text-slate-500 hover:text-slate-300'
+                  className={`relative flex h-full flex-1 items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                    ui.rightTab === id ? 'text-amber-300' : 'text-slate-500 hover:text-slate-300'
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" /> {label}
+                  {ui.rightTab === id && <span className="absolute inset-x-0 bottom-[-1px] h-0.5 bg-amber-400" />}
                 </button>
               ))}
             </div>
