@@ -429,7 +429,7 @@ export const useUI = create<UIState & {
 }>((set) => ({
   view: 'plan',
   tool: 'select',
-  color: '#f8fafc',
+  color: '#e2e8f0',
   width: 4,
   opacity: 1,
   fillOpacity: 0.18,
