@@ -1363,6 +1363,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 key={v.id}
                 onMouseEnter={() => setHoverVehicleId(v.id)}
                 onMouseLeave={() => setHoverVehicleId(null)}
+                onContextMenu={(e) => {
+                  e.evt.preventDefault()
+                  e.cancelBubble = true
+                  if (!move) return
+                  planner.checkpoint()
+                  planner.clearVehicleMove(v.id)
+                }}
               >
                 {route.length > 1 && ui.showVehiclePaths && !ui.hiddenVehiclePaths.includes(v.id) && (
                   <Line
