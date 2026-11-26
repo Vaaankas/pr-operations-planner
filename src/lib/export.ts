@@ -99,6 +99,7 @@ async function renderAll(
       visibleRoutes: opts.visibleRoutes,
       hiddenCps: opts.hiddenCps,
       frame: stages[i].frame,
+      detailScale: stages[i].frame?.size ?? 1,
     })
     images.push({ stage: stages[i], data: canvas.toDataURL(`image/${format}`, format === 'jpeg' ? 0.9 : undefined) })
   }

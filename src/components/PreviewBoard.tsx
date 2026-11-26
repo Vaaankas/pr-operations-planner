@@ -37,6 +37,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
       visibleRoutes: ui.visibleRoutes,
       hiddenCps: ui.hiddenCps,
       frame: stage.frame,
+      detailScale: stage.frame?.size ?? 1,
     }).then((canvas) => {
       if (cancelled) return
       canvas.style.maxWidth = '100%'

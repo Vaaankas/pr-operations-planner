@@ -48,6 +48,7 @@ export interface RenderOptions {
   visibleRoutes: string[]
   hiddenCps: number[]
   frame?: StageFrame
+  detailScale?: number
 }
 
 const LANE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
@@ -79,8 +80,9 @@ function drawArrowHead(ctx: CanvasRenderingContext2D, x: number, y: number, angl
   ctx.restore()
 }
 
-export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number, assets?: AssetManifest, world?: number): void {
-  const lw = Math.max(1, (el.width * size) / 1000)
+export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size: number, assets?: AssetManifest, world?: number, detailScale = 1): void {
+  const ui = size * detailScale
+  const lw = Math.max(1, (el.width * ui) / 1000)
   ctx.save()
   ctx.globalAlpha = el.opacity
   ctx.strokeStyle = el.color
@@ -187,7 +189,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'text': {
       const [x, y] = normPoint(el.at, size)
-      const f = Math.max(9, el.fontSize * size)
+      const f = Math.max(9, el.fontSize * ui)
       ctx.font = `600 ${f}px "Inter", "Segoe UI", sans-serif`
       ctx.textBaseline = 'middle'
       ctx.lineWidth = Math.max(2, f * 0.12)
@@ -200,7 +202,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'squad': {
       const [x, y] = normPoint(el.at, size)
-      const r = size * 0.006
+      const r = ui * 0.006
       const commander = el.squadNumber === 0
       const icon = commander ? assets?.commander : assets?.squads[String(el.squadNumber)]
       ctx.beginPath()
@@ -208,7 +210,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       ctx.fillStyle = commander ? '#2563eb' : '#07110a'
       ctx.fill()
       ctx.strokeStyle = '#07110a'
-      ctx.lineWidth = Math.max(1, size * 0.0012)
+      ctx.lineWidth = Math.max(1, ui * 0.0012)
       ctx.stroke()
       if (icon) {
         if (commander) {
@@ -231,7 +233,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'icon': {
       const [x, y] = normPoint(el.at, size)
-      const s = Math.max(10, el.size * size)
+      const s = Math.max(10, el.size * ui)
       const path = el.icon.startsWith('order_') ? assets?.orders[el.icon.slice(6)] : assets?.markers[el.icon]
       const img = path ? assetImage(path) : iconImage(glyphFor('marker', el.icon), el.color)
       ctx.translate(x, y)
@@ -241,7 +243,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'unit': {
       const [x, y] = normPoint(el.at, size)
-      const s = Math.max(10, el.size * size)
+      const s = Math.max(10, el.size * ui)
       const color = affiliationColor(el.affiliation)
       const img = iconImage(glyphFor('marker', el.unit), color)
       if (el.affiliation === 'hostile') {
@@ -282,11 +284,13 @@ function drawFlag(
   assets: AssetManifest,
   color: string,
   team: number,
+  detailScale = 1,
 ) {
+  const ui = size * detailScale
   const p = worldToDisplayNorm(cp.x, cp.z, layer.world)
   const x = p.x * size
   const y = p.y * size
-  const w = size * 0.034
+  const w = ui * 0.034
   const radius = (cp.radius / layer.world) * size
   const key = team ? layer.factions[String(team)]?.key : undefined
   const flagPath = cpFlag(assets, key)
@@ -300,18 +304,18 @@ function drawFlag(
     ctx.fillStyle = `${color}14`
     ctx.fill()
     ctx.strokeStyle = `${color}70`
-    ctx.lineWidth = size * 0.0012
+    ctx.lineWidth = ui * 0.0012
     ctx.stroke()
     ctx.restore()
   }
   if (img?.complete) {
     ctx.save()
     ctx.shadowColor = 'rgba(2,6,4,0.85)'
-    ctx.shadowBlur = size * 0.004
+    ctx.shadowBlur = ui * 0.004
     ctx.drawImage(img, x - w / 2, y - h / 2, w, h)
     ctx.restore()
   }
-  if (showLabel) label(ctx, cp.name, x, y + h / 2 + size * 0.003, size * 0.015, '#f8fafc')
+  if (showLabel) label(ctx, cp.name, x, y + h / 2 + ui * 0.003, ui * 0.015, '#f8fafc')
 }
 
 export async function renderStageCanvas(
@@ -323,6 +327,7 @@ export async function renderStageCanvas(
 ): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   const size = opts.size
+  const ds = opts.detailScale ?? 1
   canvas.width = size
   canvas.height = size
   const ctx = canvas.getContext('2d')
@@ -397,7 +402,7 @@ export async function renderStageCanvas(
       ctx.save()
       ctx.strokeStyle = laneColor(index)
       ctx.globalAlpha = 0.45
-      ctx.lineWidth = size * 0.002
+      ctx.lineWidth = size * ds * 0.002
       ctx.lineJoin = 'round'
       ctx.lineCap = 'round'
       for (const [from, to] of routeSegments(layer, route)) {
@@ -416,15 +421,15 @@ export async function renderStageCanvas(
       if (!cp || opts.hiddenCps.includes(id)) continue
       const routeIndex = Math.max(0, visibleRoutes.findIndex((r) => r.cps.includes(id)))
       const team = plan.flagTeams?.[String(id)] ?? cp.team
-      drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex), team)
+      drawFlag(ctx, cp, layer, size, opts.showLabels, opts.assets, laneColor(routeIndex), team, ds)
     }
 
     const cacheIcon = opts.assets.markers.cache_objective
     if (cacheIcon) {
       const cacheImage = tintedAssetImage(cacheIcon, '#ef4444')
       const cacheOutline = tintedAssetImage(cacheIcon, '#07110a')
-      const cacheSize = size * 0.021
-      const cacheOutlineSize = cacheSize + size * 0.004
+      const cacheSize = size * ds * 0.021
+      const cacheOutlineSize = cacheSize + size * ds * 0.004
       for (const cache of layer.caches ?? []) {
         const [x, y] = normPoint(worldToDisplayNorm(cache.x, cache.z, layer.world), size)
         if (cacheOutline.complete) ctx.drawImage(cacheOutline, x - cacheOutlineSize / 2, y - cacheOutlineSize / 2, cacheOutlineSize, cacheOutlineSize)
@@ -461,7 +466,7 @@ export async function renderStageCanvas(
           ctx.save()
           ctx.globalAlpha = 0.82
           ctx.strokeStyle = color
-          ctx.lineWidth = size * 0.0022
+          ctx.lineWidth = size * ds * 0.0022
           ctx.lineCap = 'round'
           ctx.lineJoin = 'round'
           ctx.beginPath()
@@ -471,7 +476,7 @@ export async function renderStageCanvas(
           ctx.restore()
         }
       }
-      const s = size * (v.category === 'mbt' ? 0.032 : v.category === 'boat' || v.category === 'carrier' ? 0.034 : 0.028)
+      const s = size * ds * (v.category === 'mbt' ? 0.032 : v.category === 'boat' || v.category === 'carrier' ? 0.034 : 0.028)
       const iconPath = vehicleIconPath(opts.assets, v)
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
@@ -483,7 +488,7 @@ export async function renderStageCanvas(
       if (!ready && opts.showLabels) {
         ctx.save()
         ctx.fillStyle = '#94a3b8'
-        ctx.font = `600 ${size * 0.012}px "Inter", "Segoe UI", sans-serif`
+        ctx.font = `600 ${size * ds * 0.012}px "Inter", "Segoe UI", sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'top'
         ctx.fillText(formatTime(vehicleDelayRemaining(v, stage.time)), x, y + s * 0.62 + size * 0.010)
@@ -492,27 +497,27 @@ export async function renderStageCanvas(
       const squadId = plan.claims[v.id]
       const squadIndex = plan.roster.squads.findIndex((sq) => sq.id === squadId)
       if (squadId === 'commander') {
-        label(ctx, `[★] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
+        label(ctx, `[★] ${v.label}`, x, y + s * 0.62, size * ds * 0.009, color)
       } else if (squadIndex >= 0) {
-        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * 0.009, color)
+        label(ctx, `[${squadIndex + 1}] ${v.label}`, x, y + s * 0.62, size * ds * 0.009, color)
       }
     }
   }
 
-  for (const el of stage.elements) drawElement(ctx, el, size, opts.assets, layer.world)
+  for (const el of stage.elements) drawElement(ctx, el, size, opts.assets, layer.world, ds)
 
   // footer
-  const bar = size * 0.036
+  const bar = size * ds * 0.036
   ctx.save()
   ctx.fillStyle = 'rgba(4,8,6,0.72)'
   ctx.fillRect(0, size - bar, size, bar)
   ctx.fillStyle = '#e2e8f0'
-  ctx.font = `600 ${size * 0.0125}px "Inter", "Segoe UI", sans-serif`
+  ctx.font = `600 ${size * ds * 0.0125}px "Inter", "Segoe UI", sans-serif`
   ctx.textBaseline = 'middle'
   ctx.fillText(`${stage.name.toUpperCase()}  ·  T+${formatTime(stage.time)}  ·  ${plan.operation}`, size * 0.014, size - bar / 2)
   ctx.textAlign = 'right'
   ctx.fillStyle = '#94a3b8'
-  ctx.font = `500 ${size * 0.0105}px "Inter", "Segoe UI", sans-serif`
+  ctx.font = `500 ${size * ds * 0.0105}px "Inter", "Segoe UI", sans-serif`
   const side = layer.factions[String(plan.side)]
   ctx.fillText(`${map.name}  ·  ${layer.name}  ·  ${side ? side.name : `Team ${plan.side}`}`, size - size * 0.014, size - bar / 2)
   ctx.restore()
