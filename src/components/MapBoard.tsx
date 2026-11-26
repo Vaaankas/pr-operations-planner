@@ -1711,7 +1711,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           <div className="pointer-events-none absolute z-10" style={{ left: screen.x, top: screen.y }}>
             <div className={`absolute h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed ${locked ? 'border-slate-400/80' : 'border-amber-400/80'}`} />
             {locked && (
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full border border-slate-400/60 bg-[#0b110d]">
+              <span className="absolute left-0 top-[-34px] flex h-4 w-4 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-slate-400/60 bg-[#0b110d]">
                 <Lock className="h-2.5 w-2.5 text-slate-300" />
               </span>
             )}
