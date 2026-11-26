@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Crosshair, Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
@@ -23,8 +23,13 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
   const planner = usePlanner()
   const ui = useUI()
   const assets = useAssets()
+  const selectedRowRef = useRef<HTMLDivElement | null>(null)
   const [query, setQuery] = useState('')
   const [startOnly, setStartOnly] = useState(false)
+
+  useEffect(() => {
+    selectedRowRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [ui.selectedId, ui.showAssets])
 
   const vehicles = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -104,12 +109,13 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
                 return (
                   <div
                     key={v.id}
+                    ref={selected ? selectedRowRef : undefined}
                     onClick={() => {
                       if (ui.tool !== 'select') ui.setTool('select')
                       ui.setSelected(`veh_${v.id}`, 'vehicle')
                       ui.setRightTab('assets')
                     }}
-                    className={`group flex cursor-pointer items-center gap-1.5 rounded border px-1.5 py-1 ${selected ? 'border-amber-400/60 bg-amber-400/10' : 'border-transparent hover:border-white/10 hover:bg-white/5'}`}
+                    className={`group flex cursor-pointer items-center gap-1.5 rounded border px-1.5 py-1 ${selected ? 'border-amber-400 bg-amber-400/15 shadow-[0_0_0_1px_rgba(251,191,36,0.25)]' : 'border-transparent hover:border-white/10 hover:bg-white/5'}`}
                     title={v.template}
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/40" style={{ border: `1px solid ${color}66` }}>
