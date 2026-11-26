@@ -75,7 +75,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const planner = usePlanner()
   const wrapRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
-  const [rotating, setRotating] = useState(false)
+  const [previewRotation, setPreviewRotation] = useState<number | null>(null)
   const rotateStart = useRef<{ angle: number; rotation: number } | null>(null)
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
@@ -549,29 +549,13 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
     while (delta > 180) delta -= 360
     while (delta < -180) delta += 360
     const rotation = (rotateStart.current.rotation - delta + 720) % 360
+    setPreviewRotation(rotation)
     planner.moveVehicle(selectedVehicle.id, {
       x: selectedVehiclePos.x,
       z: selectedVehiclePos.z,
       rotation,
     })
   }, [selectedVehicle, selectedVehiclePos, pointerAngle, planner])
-
-  useEffect(() => {
-    if (!rotating) return
-    const move = (e: PointerEvent) => rotateFromPointer(e.clientX, e.clientY)
-    const up = () => {
-      rotateStart.current = null
-      setRotating(false)
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', up)
-    return () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', up)
-    }
-  }, [rotating, rotateFromPointer])
 
   const vehicleVisible = (v: VehicleSpawn) => {
     if (v.team !== null && v.team !== plan.side && !ui.showEnemy) return false
@@ -1404,7 +1388,9 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       </Stage>
 
       {selectedScreen && selectedVehicle && ui.tool === 'select' && (() => {
-        const angle = selectedVehiclePos ? vehicleSpriteRotation(layer.id, selectedVehiclePos.rotation) : 0
+        const angle = selectedVehiclePos
+          ? vehicleSpriteRotation(layer.id, previewRotation ?? selectedVehiclePos.rotation)
+          : 0
         const rad = (angle * Math.PI) / 180
         const handleRadius = 42
         return (
@@ -1416,13 +1402,28 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                 e.preventDefault()
                 e.stopPropagation()
                 planner.checkpoint()
+                e.currentTarget.setPointerCapture(e.pointerId)
                 if (selectedVehiclePos) {
                   rotateStart.current = {
                     angle: pointerAngle(e.clientX, e.clientY),
                     rotation: selectedVehiclePos.rotation,
                   }
+                  setPreviewRotation(selectedVehiclePos.rotation)
                 }
-                setRotating(true)
+              }}
+              onPointerMove={(e) => {
+                if (rotateStart.current) rotateFromPointer(e.clientX, e.clientY)
+              }}
+              onPointerUp={(e) => {
+                if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                  e.currentTarget.releasePointerCapture(e.pointerId)
+                }
+                rotateStart.current = null
+                setPreviewRotation(null)
+              }}
+              onPointerCancel={() => {
+                rotateStart.current = null
+                setPreviewRotation(null)
               }}
               style={{
                 left: Math.sin(rad) * handleRadius,
