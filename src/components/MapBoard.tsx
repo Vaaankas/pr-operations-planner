@@ -96,7 +96,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     setPending(value)
   }
   const pointerDown = useRef(false)
-  const panStart = useRef<{ px: number; py: number; vx: number; vy: number } | null>(null)
+  const panStart = useRef<{ px: number; py: number; wx: number; wy: number } | null>(null)
   const panMoved = useRef(false)
   const panMiddle = useRef(false)
   const [panning, setPanning] = useState(false)
@@ -304,11 +304,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     if (!st) return
     const pointer = st.getPointerPosition()
     if (!pointer) return
-    if (panStart.current) {
-      panStart.current = null
-      panMoved.current = false
-      setPanning(false)
-    }
     const dir = e.evt.deltaY > 0 ? 0.9 : 1.1
     setView((current) => {
       const old = current.scale
@@ -366,7 +361,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       e.evt.preventDefault()
       const p = st.getPointerPosition()
       if (!p) return
-      panStart.current = { px: p.x, py: p.y, vx: view.x, vy: view.y }
+      panStart.current = { px: p.x, py: p.y, wx: (p.x - view.x) / view.scale, wy: (p.y - view.y) / view.scale }
       panMoved.current = false
       panMiddle.current = true
       setPanning(false)
@@ -378,7 +373,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       if (e.target !== st) return
       const p = st.getPointerPosition()
       if (!p) return
-      panStart.current = { px: p.x, py: p.y, vx: view.x, vy: view.y }
+      panStart.current = { px: p.x, py: p.y, wx: (p.x - view.x) / view.scale, wy: (p.y - view.y) / view.scale }
       panMoved.current = false
       setPanning(false)
       return
@@ -450,7 +445,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         panMoved.current = true
         setPanning(true)
       }
-      setView((v) => ({ ...v, x: panStart.current!.vx + dx, y: panStart.current!.vy + dy }))
+      setView((v) => ({
+        ...v,
+        x: p.x - panStart.current!.wx * v.scale,
+        y: p.y - panStart.current!.wy * v.scale,
+      }))
       return
     }
     if (pendingRef.current) {
