@@ -1395,17 +1395,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {ui.showLabels && (
                   <Text
                     text={cp.name}
-                    fontSize={10.5 * iconScale}
+                    fontSize={10.5 * iconScale * ui.iconSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill={MAP_TEXT_FILL}
                     stroke={MAP_TEXT_OUTLINE}
-                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale}
+                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * ui.iconSize}
                     fillAfterStrokeEnabled
-                    y={h / 2 + 3 * iconScale}
-                    width={180 * iconScale}
+                    y={h / 2 + 3 * iconScale * ui.iconSize}
+                    width={180 * iconScale * ui.iconSize}
                     align="center"
-                    x={-90 * iconScale}
+                    x={-90 * iconScale * ui.iconSize}
                     listening={false}
                   />
                 )}

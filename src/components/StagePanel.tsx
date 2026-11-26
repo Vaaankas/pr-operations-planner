@@ -139,7 +139,7 @@ export function StagePanel({ layer, plan, stage }: Props) {
               step={0.1}
               value={ui.iconSize}
               onChange={(e) => ui.setIconSize(Number(e.target.value))}
-              className="mt-1 h-1 w-full accent-amber-400"
+              className="icon-scale-slider mt-1 h-1 w-full rounded-full bg-white/15 accent-amber-400"
               title="Map icon scale"
             />
           </div>
