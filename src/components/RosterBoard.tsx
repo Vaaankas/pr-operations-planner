@@ -91,18 +91,25 @@ function MemberRow({
   index,
   target,
   role,
+  layer,
 }: {
   member: Member
   index: number
   target: string
   role?: 'SL' | '2IC'
+  layer: LayerData
 }) {
   const planner = usePlanner()
   const plan = usePlanner((s) => s.plan)
+  const assets = useAssets()
   const [over, setOver] = useState(false)
   const namePointer = useRef(false)
   const memberKitId = assignedKits(plan?.roster.specialistAssignments, member.id)[0]
   const memberKit = specialistKit(memberKitId)
+  const memberVehicle = layer.vehicles.find((vehicle) =>
+    plan?.claims[vehicle.id] === target
+    && (plan?.vehicleCrew?.[vehicle.id] ?? []).includes(member.id),
+  )
   useEffect(() => {
     const clear = () => setOver(false)
     window.addEventListener('dragend', clear)
@@ -182,6 +189,12 @@ function MemberRow({
           <img src={dataUrl(`icons/kits/${memberKit.id}.webp`)} alt={memberKit.short} className="h-4 w-4 object-contain" />
         </button>
       )}
+      {memberVehicle && (() => {
+        const icon = vehicleIconPath(assets, memberVehicle)
+        return icon ? (
+          <img src={dataUrl(icon)} alt={memberVehicle.label} title={memberVehicle.label} className="h-4 w-4 shrink-0 object-contain" />
+        ) : null
+      })()}
       <ConfirmationToggle member={member} />
       <button onClick={() => planner.removeMember(member.id)} title="Remove player">
         <X className="h-3.5 w-3.5 text-slate-500 hover:text-rose-400" />
@@ -539,7 +552,7 @@ function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer
       )}
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-1.5">
         {squad.members.map((m, i) => (
-          <MemberRow key={m.id} member={m} index={i} target={squad.id} role={i === 0 ? 'SL' : i === 1 ? '2IC' : undefined} />
+          <MemberRow key={m.id} member={m} index={i} target={squad.id} role={i === 0 ? 'SL' : i === 1 ? '2IC' : undefined} layer={layer} />
         ))}
         {claimedVehicles.length > 0 && (
           <div className="space-y-1 border-t border-white/5 pt-1">
@@ -633,7 +646,7 @@ export function RosterBoard({ layer }: { layer: LayerData }) {
             className={`mt-1.5 rounded border px-2 py-2 ${dropCommander ? 'border-amber-400/70 bg-amber-400/5' : 'border-white/10 bg-black/20'}`}
           >
             {plan.roster.commander ? (
-              <MemberRow member={plan.roster.commander} index={0} target="commander" />
+              <MemberRow member={plan.roster.commander} index={0} target="commander" layer={layer} />
             ) : (
               <AddPlayer target="commander" />
             )}
@@ -660,7 +673,7 @@ export function RosterBoard({ layer }: { layer: LayerData }) {
           </div>
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-2">
             {plan.roster.unassigned.map((m, i) => (
-              <MemberRow key={m.id} member={m} index={i} target="unassigned" />
+              <MemberRow key={m.id} member={m} index={i} target="unassigned" layer={layer} />
             ))}
             {plan.roster.unassigned.length === 0 && (
               <div className="rounded border border-dashed border-white/10 px-2 py-6 text-center text-[10px] uppercase tracking-wider text-slate-600">
