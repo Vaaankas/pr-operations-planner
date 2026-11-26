@@ -15,7 +15,7 @@ import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gam
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
 import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_DETAIL_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
-import { assignedKits, specialistKit } from '../lib/kits'
+import { assignedKits } from '../lib/kits'
 
 interface Props {
   map: MapMeta
@@ -1867,45 +1867,31 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       {!preview && hoverSquad && (() => {
         const squad = plan.roster.squads.find((item) => item.id === hoverSquad.id)
         const commanderMember = hoverSquad.id === 'commander' ? plan.roster.commander : null
-        const strength = squad ? squad.members.length : commanderMember ? 1 : 0
-        const counts = new Map<string, number>()
-        const targetIds = squad
-          ? [squad.id, ...squad.members.map((member) => member.id)]
-          : commanderMember ? [commanderMember.id] : []
-        for (const target of targetIds) {
-          for (const kitId of assignedKits(plan.roster.specialistAssignments, target)) {
-            counts.set(kitId, (counts.get(kitId) ?? 0) + 1)
-          }
-        }
+        const members = squad ? squad.members : commanderMember ? [commanderMember] : []
         return (
           <div
-            className="pointer-events-none absolute z-30 w-56 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
-            style={{ left: clamp(hoverSquad.x + 18, 8, box.w - 235), top: clamp(hoverSquad.y - 8, 8, box.h - 150) }}
+            className="pointer-events-none absolute z-30 w-60 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
+            style={{ left: clamp(hoverSquad.x + 18, 8, box.w - 250), top: clamp(hoverSquad.y - 8, 8, box.h - 260) }}
           >
             <div className="text-[12px] font-semibold text-slate-100">
               {(squad?.name || commanderMember?.name || 'Squad').toUpperCase()}
             </div>
-            <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">
-              Strength · {strength}{squad ? '/8' : ''}
+            <div className="mt-1.5 flex flex-col gap-1">
+              {members.map((member) => {
+                const kits = assignedKits(plan.roster.specialistAssignments, member.id)
+                return (
+                  <div key={member.id} className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-slate-300">{member.name}</span>
+                    <span className="flex shrink-0 items-center gap-0.5">
+                      {kits.map((kitId, index) => (
+                        <img key={`${kitId}-${index}`} src={dataUrl(`icons/kits/${kitId}.webp`)} alt="" className="h-4 w-4 object-contain" />
+                      ))}
+                    </span>
+                  </div>
+                )
+              })}
+              {members.length === 0 && <span className="text-[9px] text-slate-600">No players</span>}
             </div>
-            <div className="mt-1.5 text-[9px] uppercase tracking-wider text-slate-500">Specialist kits</div>
-            {counts.size > 0 ? (
-              <div className="mt-1 flex flex-col gap-0.5">
-                {[...counts.entries()].map(([kitId, count]) => {
-                  const kit = specialistKit(kitId)
-                  if (!kit) return null
-                  return (
-                    <div key={kitId} className="flex items-center gap-1.5 text-slate-300">
-                      <img src={dataUrl(`icons/kits/${kitId}.webp`)} alt="" className="h-4 w-4 object-contain" />
-                      <span className="min-w-0 flex-1 truncate">{kit.name}</span>
-                      <span className="font-mono text-amber-300">×{count}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="mt-1 text-[9px] text-slate-600">None assigned</div>
-            )}
           </div>
         )
       })()}
@@ -1919,8 +1905,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           ...plan.roster.squads.flatMap((squad) => squad.members),
           ...plan.roster.unassigned,
         ]
-        const memberName = (id: string | undefined) => id ? allMembers.find((member) => member.id === id)?.name ?? '—' : '—'
-        const seats = ['Driver', 'Gunner', 'Commander']
+        const names = crew.map((id) => allMembers.find((member) => member.id === id)?.name).filter(Boolean)
         const squad = plan.roster.squads.find((item) => item.id === plan.claims[vehicle.id])
         return (
           <div
@@ -1930,14 +1915,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             <div className="text-[12px] font-semibold text-slate-100">{vehicle.label}</div>
             {squad && <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">{squad.name}</div>}
             <div className="mt-1.5 text-[9px] uppercase tracking-wider text-slate-500">Crew</div>
-            <div className="mt-1 flex flex-col gap-0.5">
-              {Array.from({ length: Math.max(2, crew.length) }).map((_, index) => (
-                <div key={index} className="flex items-center gap-1.5 text-slate-300">
-                  <span className="w-14 font-mono text-[8px] uppercase tracking-wider text-slate-500">{seats[index]}</span>
-                  <span className="truncate">{memberName(crew[index])}</span>
-                </div>
-              ))}
-            </div>
+            {names.length > 0 ? (
+              <div className="mt-1 flex flex-col gap-0.5 text-slate-300">
+                {names.map((name, index) => <div key={`${name}-${index}`}>{name}</div>)}
+              </div>
+            ) : (
+              <div className="mt-1 text-[9px] text-slate-600">No crew assigned</div>
+            )}
           </div>
         )
       })()}

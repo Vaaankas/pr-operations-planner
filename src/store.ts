@@ -426,8 +426,14 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
 
   claimVehicle: (vehicleId, squadId) =>
     get().mutate((plan) => {
-      if (squadId) plan.claims[vehicleId] = squadId
-      else delete plan.claims[vehicleId]
+      const changed = plan.claims[vehicleId] !== (squadId ?? '')
+      if (squadId) {
+        if (changed) delete plan.vehicleCrew?.[vehicleId]
+        plan.claims[vehicleId] = squadId
+      } else {
+        delete plan.claims[vehicleId]
+        delete plan.vehicleCrew?.[vehicleId]
+      }
     }),
 
   setVehicleCrew: (vehicleId, crew) =>
