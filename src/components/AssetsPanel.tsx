@@ -74,9 +74,6 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
           >
             Start
           </button>
-          <button onClick={() => ui.toggle('showAssets')} className={`rounded border p-1 ${ui.showAssets ? 'border-white/20 text-slate-300' : 'border-white/10 text-slate-600'}`} title="Show static assets and emplacements">
-            {ui.showAssets ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-          </button>
         </div>
       </div>
 
