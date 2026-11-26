@@ -14,7 +14,7 @@ import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehi
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
-import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_DETAIL_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
+import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_ICON_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
 import { assignedKits } from '../lib/kits'
 
 interface Props {
@@ -1420,7 +1420,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const p = worldToDisplayNorm(pos.x, pos.z, layer.world)
             const move = stage.moves[v.id]
             const color = vehicleColor(v, plan, squadColors)
-            const s = vehicleIconPx(v.category) * iconScale * ui.iconSize * VEHICLE_DETAIL_SCALE
+            const s = vehicleIconPx(v.category) * iconScale * ui.iconSize * VEHICLE_ICON_SCALE
             const nodeId = `veh_${v.id}`
             const selected = !preview && ui.selectedId === nodeId
             const commanderClaim = plan.claims[v.id] === 'commander'

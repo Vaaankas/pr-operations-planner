@@ -156,7 +156,6 @@ function AppInner() {
       showVehicles: visibility.showVehicles,
       showEnemy: visibility.showEnemy,
       showFlags: visibility.showFlags,
-      showAssets: visibility.showAssets,
       showLabels: visibility.showLabels,
       showDrawings: visibility.showDrawings,
       showVehicleNames: visibility.showVehicleNames,

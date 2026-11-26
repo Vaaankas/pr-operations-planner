@@ -83,7 +83,6 @@ export const DEFAULT_STAGE_VISIBILITY: StageVisibility = {
   showVehicles: true,
   showEnemy: true,
   showFlags: true,
-  showAssets: true,
   showLabels: true,
   showDrawings: true,
   showVehicleNames: true,

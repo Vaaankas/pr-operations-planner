@@ -14,8 +14,8 @@ export const SQUAD_ICON_PX = 24
 export const MAP_TEXT_FILL = '#f8fafc'
 export const MAP_TEXT_OUTLINE = 'rgba(2,6,4,0.92)'
 export const MAP_TEXT_OUTLINE_PX = 3
-export const VEHICLE_DETAIL_SCALE = 1.5
-export const VEHICLE_TEXT_SCALE = VEHICLE_DETAIL_SCALE * 0.8
+export const VEHICLE_ICON_SCALE = 1.35
+export const VEHICLE_TEXT_SCALE = 1.2
 
 export function vehicleIconPx(category: string): number {
   if (category === 'mbt') return VEHICLE_ICON_PX.mbt

@@ -194,7 +194,6 @@ export interface StageVisibility {
   showVehicles: boolean
   showEnemy: boolean
   showFlags: boolean
-  showAssets: boolean
   showLabels: boolean
   showDrawings: boolean
   showVehicleNames: boolean

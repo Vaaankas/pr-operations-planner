@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Boxes, Clock, Flag, Pencil, Route as RouteIcon, Shield, Tag, Trash2, Truck, Type } from 'lucide-react'
+import { Clock, Flag, Pencil, Route as RouteIcon, Shield, Tag, Trash2, Truck, Type } from 'lucide-react'
 import type { LayerData, Plan, Stage, StageVisibility } from '../types'
-import { usePlanner } from '../store'
+import { usePlanner, useUI } from '../store'
 import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
 
 const VISIBILITY_OPTIONS: Array<{
@@ -13,7 +13,6 @@ const VISIBILITY_OPTIONS: Array<{
   { key: 'showVehicles', label: 'Vehicles', description: 'Spawns and moves', icon: Truck },
   { key: 'showEnemy', label: 'Enemy assets', description: 'Hostile markers', icon: Shield },
   { key: 'showFlags', label: 'Flags & radii', description: 'Capture points', icon: Flag },
-  { key: 'showAssets', label: 'Static assets', description: 'Emplacements and crates', icon: Boxes },
   { key: 'showDrawings', label: 'Drawings', description: 'Lines, zones and labels', icon: Pencil },
   { key: 'showLabels', label: 'Map labels', description: 'Flag and place names', icon: Tag },
   { key: 'showVehicleNames', label: 'Vehicle names', description: 'Names and timers', icon: Type },
@@ -47,6 +46,7 @@ function CommitInput({
 
 export function StagePanel({ layer, plan, stage }: Props) {
   const planner = usePlanner()
+  const ui = useUI()
   const [time, setTime] = useState(formatTime(stage.time))
   const [notes, setNotes] = useState(stage.notes)
   useEffect(() => setTime(formatTime(stage.time)), [stage.time])
@@ -127,6 +127,22 @@ export function StagePanel({ layer, plan, stage }: Props) {
               </button>
             )
           })}
+          <div className="flex min-h-0 flex-col justify-center rounded border border-white/10 bg-black/20 px-1.5 py-1">
+            <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wider text-slate-400">
+              <span>Icon scale</span>
+              <span className="text-slate-300">{ui.iconSize.toFixed(1)}×</span>
+            </div>
+            <input
+              type="range"
+              min={0.5}
+              max={2.5}
+              step={0.1}
+              value={ui.iconSize}
+              onChange={(e) => ui.setIconSize(Number(e.target.value))}
+              className="mt-1 h-1 w-full accent-amber-400"
+              title="Map icon scale"
+            />
+          </div>
         </div>
       </div>
 
