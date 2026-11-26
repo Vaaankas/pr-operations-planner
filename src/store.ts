@@ -81,6 +81,8 @@ interface PlannerStore {
   setCommander: (memberId: string) => void
   addSquad: () => void
   setSpecialistCount: (kit: string, count: number) => void
+  assignSpecialist: (targetId: string, kit: string) => void
+  clearSpecialist: (targetId: string) => void
   updateSquad: (squadId: string, patch: Partial<Omit<Squad, 'members'>>) => void
   removeSquad: (squadId: string) => void
   reorderSquads: (fromId: string, toId: string) => void
@@ -365,6 +367,21 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       }
     }),
 
+  assignSpecialist: (targetId, kit) =>
+    get().mutate((plan) => {
+      plan.roster.specialistAssignments = {
+        ...(plan.roster.specialistAssignments ?? {}),
+        [targetId]: kit,
+      }
+    }),
+
+  clearSpecialist: (targetId) =>
+    get().mutate((plan) => {
+      const assignments = { ...(plan.roster.specialistAssignments ?? {}) }
+      delete assignments[targetId]
+      plan.roster.specialistAssignments = assignments
+    }),
+
   updateSquad: (squadId, patch) =>
     get().mutate((plan) => {
       const squad = plan.roster.squads.find((s) => s.id === squadId)
@@ -458,7 +475,7 @@ export const useUI = create<UIState & {
   selectedKind: null,
   rightTab: 'assets',
   showVehicles: true,
-  showEnemy: false,
+  showEnemy: true,
   showFlags: true,
   showAssets: true,
   showLabels: true,

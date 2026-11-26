@@ -15,6 +15,7 @@ import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gam
 import { routeColor } from './RoutesPanel'
 import { routeSegments } from '../lib/routes'
 import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_DETAIL_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
+import { specialistKit } from '../lib/kits'
 
 interface Props {
   map: MapMeta
@@ -110,6 +111,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [tick, setTick] = useState(0)
   const [hoverFlag, setHoverFlag] = useState<{ cp: ControlPoint; x: number; y: number } | null>(null)
   const [hoverVehicleId, setHoverVehicleId] = useState<string | null>(null)
+  const [hoverSquad, setHoverSquad] = useState<{ id: string; x: number; y: number } | null>(null)
   const fitted = useRef<string>('')
 
   const routes = layer.routes ?? []
@@ -929,7 +931,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const commander = el.squadNumber === 0
         const icon = commander ? assets.commander : assets.squads[String(el.squadNumber)]
         return (
-          <Group key={el.id} {...common} x={at.x} y={at.y}>
+          <Group
+            key={el.id}
+            {...common}
+            x={at.x}
+            y={at.y}
+            onMouseEnter={() => setHoverSquad({ id: el.squadId, x: at.x, y: at.y })}
+            onMouseLeave={() => setHoverSquad(null)}
+          >
             <Circle
               radius={r * 0.82}
               fill={commander ? '#2563eb' : '#07110a'}
@@ -1834,6 +1843,51 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               </>
             ) : (
               <div className="mt-1 text-slate-400">Deployment flag · cannot be captured or switched.</div>
+            )}
+          </div>
+        )
+      })()}
+
+      {!preview && hoverSquad && (() => {
+        const squad = plan.roster.squads.find((item) => item.id === hoverSquad.id)
+        const commanderMember = hoverSquad.id === 'commander' ? plan.roster.commander : null
+        const strength = squad ? squad.members.length : commanderMember ? 1 : 0
+        const targetIds = squad
+          ? [squad.id, ...squad.members.map((member) => member.id)]
+          : commanderMember ? [commanderMember.id] : []
+        const counts = new Map<string, number>()
+        for (const target of targetIds) {
+          const kit = plan.roster.specialistAssignments?.[target]
+          if (kit) counts.set(kit, (counts.get(kit) ?? 0) + 1)
+        }
+        return (
+          <div
+            className="pointer-events-none absolute z-30 w-56 rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
+            style={{ left: clamp(hoverSquad.x + 18, 8, box.w - 235), top: clamp(hoverSquad.y - 8, 8, box.h - 150) }}
+          >
+            <div className="text-[12px] font-semibold text-slate-100">
+              {squad?.name || commanderMember?.name || 'Squad'}
+            </div>
+            <div className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-500">
+              Strength · {strength}{squad ? '/8' : ''}
+            </div>
+            <div className="mt-1.5 text-[9px] uppercase tracking-wider text-slate-500">Specialist kits</div>
+            {counts.size > 0 ? (
+              <div className="mt-1 flex flex-col gap-0.5">
+                {[...counts.entries()].map(([kitId, count]) => {
+                  const kit = specialistKit(kitId)
+                  if (!kit) return null
+                  return (
+                    <div key={kitId} className="flex items-center gap-1.5 text-slate-300">
+                      <img src={dataUrl(`icons/kits/${kitId}.webp`)} alt="" className="h-4 w-4 object-contain" />
+                      <span className="min-w-0 flex-1 truncate">{kit.name}</span>
+                      <span className="font-mono text-amber-300">×{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="mt-1 text-[9px] text-slate-600">None assigned</div>
             )}
           </div>
         )

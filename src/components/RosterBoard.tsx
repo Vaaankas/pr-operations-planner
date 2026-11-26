@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { GripVertical, Minus, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
+import { GripVertical, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-react'
 import type { Member, Plan, Squad } from '../types'
 import { usePlanner } from '../store'
 import { dataUrl, playerCount, SQUAD_COLORS } from '../lib/utils'
-import { SPECIALIST_KITS, specialistLimit } from '../lib/kits'
+import { SPECIALIST_KITS, specialistKit, specialistLimit } from '../lib/kits'
 
 function EditableName({ value, onCommit, className, placeholder }: { value: string; onCommit: (v: string) => void; className?: string; placeholder?: string }) {
   const [v, setV] = useState(value)
@@ -63,7 +63,9 @@ function MemberRow({
   target: string
 }) {
   const planner = usePlanner()
+  const plan = usePlanner((s) => s.plan)
   const [over, setOver] = useState(false)
+  const assignedKit = specialistKit(plan?.roster.specialistAssignments?.[member.id])
   return (
     <div
       onDragOver={(e) => {
@@ -75,10 +77,15 @@ function MemberRow({
         e.preventDefault()
         e.stopPropagation()
         setOver(false)
+        const kit = e.dataTransfer.getData('text/pr-kit')
+        if (kit) {
+          planner.assignSpecialist(member.id, kit)
+          return
+        }
         const id = e.dataTransfer.getData('text/pr-member')
         if (id) planner.moveMember(id, target, index)
       }}
-      className={`group flex items-center gap-1.5 rounded border px-1.5 py-1 ${
+      className={`group flex items-center gap-2 rounded border px-2 py-1.5 ${
         over ? 'border-amber-400/70 bg-amber-400/10' : 'border-white/10 bg-black/25'
       }`}
     >
@@ -97,8 +104,20 @@ function MemberRow({
       <EditableName
         value={member.name}
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
-        className="min-w-0 flex-1 select-text truncate bg-transparent text-[12px] font-medium text-slate-200 outline-none"
+        className="min-w-0 flex-1 select-text truncate bg-transparent text-[14px] font-medium text-slate-200 outline-none"
       />
+      {assignedKit && (
+        <button
+          onContextMenu={(e) => {
+            e.preventDefault()
+            planner.clearSpecialist(member.id)
+          }}
+          title={`${assignedKit.name} — right-click to clear`}
+          className="shrink-0"
+        >
+          <img src={dataUrl(`icons/kits/${assignedKit.id}.webp`)} alt={assignedKit.short} className="h-4 w-4 object-contain" />
+        </button>
+      )}
       <ConfirmationToggle member={member} />
       <button onClick={() => planner.removeMember(member.id)} title="Remove player">
         <X className="h-3.5 w-3.5 text-slate-500 hover:text-rose-400" />
@@ -156,45 +175,43 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
 }
 
 function SpecialistKitsCard({ plan }: { plan: Plan }) {
-  const planner = usePlanner()
   const players = playerCount(plan)
-  const counts = plan.roster.specialists ?? {}
+  const assignments = plan.roster.specialistAssignments ?? {}
+  const counts = Object.values(assignments).reduce<Record<string, number>>((acc, kit) => {
+    acc[kit] = (acc[kit] ?? 0) + 1
+    return acc
+  }, {})
   return (
-    <div className="flex min-h-[260px] flex-col rounded border border-white/10 bg-[#0b120e]/85">
+    <div className="flex h-full min-h-0 flex-col rounded border border-white/10 bg-[#0b120e]/85">
       <div className="flex items-center gap-2 border-b border-white/5 px-2 py-1.5">
-        <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-slate-300">Specialist kits</span>
-        <span className="ml-auto font-mono text-[9px] text-slate-500">{players} players</span>
+        <span className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-slate-300">Specialist kits</span>
+        <span className="ml-auto font-mono text-[10px] text-slate-500">{players} players</span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-0.5 px-2 py-1">
         {SPECIALIST_KITS.map((kit) => {
           const limit = specialistLimit(kit, players)
-          const count = Math.min(counts[kit.id] ?? 0, limit)
+          const count = counts[kit.id] ?? 0
           return (
             <div key={kit.id} className="flex items-center gap-1.5">
-              <img src={dataUrl(`icons/kits/${kit.id}.webp`)} alt="" className="h-4 w-4 shrink-0 object-contain" />
-              <span className="min-w-0 flex-1 truncate text-[10px] text-slate-400" title={kit.name}>{kit.name}</span>
-              <button
-                onClick={() => planner.setSpecialistCount(kit.id, count - 1)}
-                disabled={count <= 0}
-                className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:bg-white/10 hover:text-slate-200 disabled:opacity-20"
-                title={`Remove ${kit.name}`}
-              >
-                <Minus className="h-3 w-3" />
-              </button>
-              <span className={`w-8 shrink-0 text-center font-mono text-[10px] ${count >= limit ? 'text-amber-300' : 'text-slate-300'}`}>
-                {count}/{limit}
-              </span>
-              <button
-                onClick={() => planner.setSpecialistCount(kit.id, count + 1)}
-                disabled={count >= limit}
-                className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:bg-white/10 hover:text-slate-200 disabled:opacity-20"
-                title={`Add ${kit.name}`}
-              >
-                <Plus className="h-3 w-3" />
-              </button>
+              <img
+                src={dataUrl(`icons/kits/${kit.id}.webp`)}
+                alt={kit.short}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/pr-kit', kit.id)
+                  e.dataTransfer.effectAllowed = 'copy'
+                }}
+                className="h-4 w-4 shrink-0 cursor-grab object-contain active:cursor-grabbing"
+                title={`${kit.name} — drag onto a player or squad`}
+              />
+              <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400" title={`${kit.name} · PR limit ${limit}`}>{kit.name}</span>
+              <span className={`w-5 text-right font-mono text-[11px] ${count ? 'text-amber-300' : 'text-slate-600'}`}>{count}</span>
             </div>
           )
         })}
+      </div>
+      <div className="border-t border-white/5 px-2 py-1 font-mono text-[8px] uppercase tracking-wider text-slate-600">
+        Drag a kit onto a player or squad
       </div>
     </div>
   )
@@ -202,10 +219,12 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
 
 function SquadCard({ squad, index }: { squad: Squad; index: number }) {
   const planner = usePlanner()
+  const plan = usePlanner((s) => s.plan)
   const [drop, setDrop] = useState(false)
   const [colorOpen, setColorOpen] = useState(false)
   const [headerDrop, setHeaderDrop] = useState(false)
   const overCap = squad.members.length > 8
+  const assignedKit = specialistKit(plan?.roster.specialistAssignments?.[squad.id])
   return (
     <div
       onDragOver={(e) => {
@@ -216,12 +235,17 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       onDrop={(e) => {
         e.preventDefault()
         setDrop(false)
+        const kit = e.dataTransfer.getData('text/pr-kit')
+        if (kit) {
+          planner.assignSpecialist(squad.id, kit)
+          return
+        }
         const memberId = e.dataTransfer.getData('text/pr-member')
         const squadId = e.dataTransfer.getData('text/pr-squad')
         if (memberId) planner.moveMember(memberId, squad.id)
         else if (squadId) planner.reorderSquads(squadId, squad.id)
       }}
-      className={`flex min-h-[260px] flex-col rounded border bg-[#0b120e]/85 ${drop ? 'border-amber-400/70 bg-amber-400/5' : 'border-white/10'}`}
+      className={`flex h-full min-h-0 flex-col rounded border bg-[#0b120e]/85 ${drop ? 'border-amber-400/70 bg-amber-400/5' : 'border-white/10'}`}
     >
       <div
         onDragOver={(e) => {
@@ -252,17 +276,29 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         >
           <GripVertical className="h-3.5 w-3.5 text-slate-600" />
         </span>
-        <span className="w-6 shrink-0 border-0 text-left font-mono text-[18px] font-bold leading-none text-slate-100 outline-none">
+        <span className="w-6 shrink-0 border-0 text-left font-mono text-[20px] font-bold leading-none text-slate-100 outline-none">
           {index + 1}
         </span>
         <EditableName
           value={squad.name}
           onCommit={(name) => planner.updateSquad(squad.id, { name })}
           placeholder="Squad name"
-          className="min-w-0 flex-1 border-0 bg-transparent text-[12px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
+          className="min-w-0 flex-1 border-0 bg-transparent text-[14px] font-semibold text-slate-100 outline-none placeholder:text-slate-600"
         />
+        {assignedKit && (
+          <button
+            onContextMenu={(e) => {
+              e.preventDefault()
+              planner.clearSpecialist(squad.id)
+            }}
+            title={`${assignedKit.name} — right-click to clear`}
+            className="shrink-0"
+          >
+            <img src={dataUrl(`icons/kits/${assignedKit.id}.webp`)} alt={assignedKit.short} className="h-4 w-4 object-contain" />
+          </button>
+        )}
         <button onClick={() => setColorOpen(!colorOpen)} className="h-3.5 w-3.5 rounded-full border border-white/40" style={{ background: squad.color }} title="Squad colour" />
-        <span className={`font-mono text-[11px] ${overCap ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/8</span>
+        <span className={`font-mono text-[12px] ${overCap ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/8</span>
         {overCap && <span className="font-bold text-amber-300" title="Over the 8-player squad limit">!</span>}
         <button onClick={() => planner.removeSquad(squad.id)} className="text-slate-600 hover:text-rose-400" title="Delete squad">
           <Trash2 className="h-3.5 w-3.5" />
@@ -287,7 +323,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
         {squad.members.map((m, i) => (
           <MemberRow key={m.id} member={m} accent={squad.color} index={i} target={squad.id} />
         ))}
-        {squad.members.length === 0 && <div className="px-1 py-2 text-[10px] uppercase tracking-wider text-slate-600">Empty squad</div>}
+        {squad.members.length === 0 && <div className="px-1 py-2 text-[11px] uppercase tracking-wider text-slate-600">Empty squad</div>}
         <div className="mt-auto">
           <AddPlayer target={squad.id} />
         </div>
@@ -322,19 +358,24 @@ export function RosterBoard() {
           <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-500">Drag players or squad headers to reorder</span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-            {plan.roster.squads.map((squad, i) => (
-              <SquadCard key={squad.id} squad={squad} index={i} />
-            ))}
-            {plan.roster.squads.length < 9 && (
-              <button
-                onClick={() => planner.addSquad()}
-                className="flex min-h-[260px] flex-col items-center justify-center gap-2 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
-              >
-                <Plus className="h-5 w-5" />
-                <span className="font-mono text-[10px] uppercase tracking-wider">Add squad</span>
-              </button>
-            )}
+          <div className="grid h-full auto-rows-[minmax(220px,1fr)] grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+            {Array.from({ length: 9 }).map((_, i) => {
+              const squad = plan.roster.squads[i]
+              if (squad) return <SquadCard key={squad.id} squad={squad} index={i} />
+              if (i === plan.roster.squads.length && plan.roster.squads.length < 9) {
+                return (
+                  <button
+                    key="add-squad"
+                    onClick={() => planner.addSquad()}
+                    className="flex h-full min-h-0 flex-col items-center justify-center gap-2 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
+                  >
+                    <Plus className="h-5 w-5" />
+                    <span className="font-mono text-[11px] uppercase tracking-wider">Add squad</span>
+                  </button>
+                )
+              }
+              return <div key={`empty-${i}`} className="rounded border border-white/5 bg-white/[0.015]" />
+            })}
             <SpecialistKitsCard plan={plan} />
           </div>
         </div>

@@ -103,8 +103,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
         )}
       </div>
 
-      {stages.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded border border-white/15 bg-[#080d0a]/90 px-2 py-1.5 shadow-2xl">
+      <div className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded border border-white/15 bg-[#080d0a]/90 px-2 py-1.5 shadow-2xl">
           <button
             onClick={() => switchStage(-1)}
             disabled={stageIndex <= 0}
@@ -128,7 +127,6 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
-      )}
     </div>
   )
 }

@@ -16,6 +16,10 @@ export const SPECIALIST_KITS: SpecialistKit[] = [
   { id: 'hat', name: 'Heavy Anti-Tank', short: 'HAT', limits: [0, 1, 1, 1, 1] },
 ]
 
+export function specialistKit(id: string | undefined): SpecialistKit | undefined {
+  return SPECIALIST_KITS.find((kit) => kit.id === id)
+}
+
 export function specialistLimit(kit: SpecialistKit, players: number): number {
   if (players <= 7) return kit.limits[0]
   if (players <= 15) return kit.limits[1]
