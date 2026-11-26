@@ -215,13 +215,16 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       const s = frameDrag.frame
       const dx = p.x - frameDrag.startX
       const dy = p.y - frameDrag.startY
-      const min = 0.12
+      const min = 0.03
       let x = s.x
       let y = s.y
       let size = s.size
       const right = s.x + s.size
       const bottom = s.y + s.size
-      if (frameDrag.mode === 'e') {
+      if (frameDrag.mode === 'move') {
+        x = clamp(s.x + dx, 0, 1 - s.size)
+        y = clamp(s.y + dy, 0, 1 - s.size)
+      } else if (frameDrag.mode === 'e') {
         size = clamp(s.size + dx, min, 1 - s.x)
       } else if (frameDrag.mode === 'w') {
         x = clamp(s.x + dx, 0, right - min)
@@ -1104,6 +1107,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
       ref={wrapRef}
       className="relative h-full w-full overflow-hidden bg-[#080c0a]"
       style={{ cursor: stageCursor }}
+      onPointerDown={() => setFrameSelected(false)}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes('text/pr-squad')) {
           e.preventDefault()
@@ -1529,14 +1533,14 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             <div className="absolute bg-black/55" style={{ left: mapX, top: Math.min(mapBottom, Math.max(mapY, fy)), width: Math.max(0, Math.min(fx, mapRight) - mapX), height: Math.max(0, Math.min(mapBottom, fy + fh) - Math.max(mapY, fy)) }} />
             <div className="absolute bg-black/55" style={{ left: Math.min(mapRight, Math.max(mapX, fx + fw)), top: Math.min(mapBottom, Math.max(mapY, fy)), width: Math.max(0, mapRight - Math.max(mapX, fx + fw)), height: Math.max(0, Math.min(mapBottom, fy + fh) - Math.max(mapY, fy)) }} />
             <div
-              className={`absolute border-2 shadow-[0_0_0_1px_rgba(0,0,0,0.8)] ${frameSelected ? 'border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.35)]' : 'border-amber-400/90'}`}
+              className={`absolute border-2 shadow-[0_0_0_1px_rgba(0,0,0,0.8)] ${frameSelected ? 'border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.35)]' : 'border-amber-400/35'}`}
               style={{ left: fx, top: fy, width: fw, height: fh }}
             />
             {([
-              { mode: 'n', x: fx, y: fy, w: fw, h: 8, cursor: 'ns-resize' },
-              { mode: 's', x: fx, y: fy + fh - 8, w: fw, h: 8, cursor: 'ns-resize' },
-              { mode: 'w', x: fx, y: fy, w: 8, h: fh, cursor: 'ew-resize' },
-              { mode: 'e', x: fx + fw - 8, y: fy, w: 8, h: fh, cursor: 'ew-resize' },
+              { mode: 'n', x: fx, y: fy, w: fw, h: 8, cursor: 'move' },
+              { mode: 's', x: fx, y: fy + fh - 8, w: fw, h: 8, cursor: 'move' },
+              { mode: 'w', x: fx, y: fy, w: 8, h: fh, cursor: 'move' },
+              { mode: 'e', x: fx + fw - 8, y: fy, w: 8, h: fh, cursor: 'move' },
             ] as const).map((edge) => (
               <div
                 key={`edge-${edge.mode}`}
@@ -1546,13 +1550,14 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                   e.preventDefault()
                   e.stopPropagation()
                   setFrameSelected(true)
+                  if (!frameSelected) return
                   planner.checkpoint()
                   const p = clientToFrameNorm(e.clientX, e.clientY)
-                  setFrameDrag({ mode: edge.mode, startX: p.x, startY: p.y, frame: frameDraft })
+                  setFrameDrag({ mode: 'move', startX: p.x, startY: p.y, frame: frameDraft })
                 }}
               />
             ))}
-            {handles.map((h) => {
+            {frameSelected && handles.map((h) => {
               const hx = clamp(h.x, 6, box.w - 6)
               const hy = clamp(h.y, 6, box.h - 6)
               return (
