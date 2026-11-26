@@ -248,7 +248,11 @@ function AppInner() {
             <Timeline plan={plan} stage={stage} />
           </div>
 
-          <aside className="flex w-[352px] shrink-0 flex-col border-l border-white/10 bg-[#080d0a]">
+          <aside className="flex w-[422.4px] shrink-0 flex-col overflow-hidden border-l border-white/10 bg-[#080d0a]">
+            <div
+              className="flex flex-col"
+              style={{ zoom: 1.2, width: 'calc(100% / 1.2)', height: 'calc(100% / 1.2)' }}
+            >
             <div className="flex h-10 shrink-0 items-center border-b border-white/10">
               {([
                 { id: 'assets' as const, label: 'Assets', icon: Boxes },
@@ -270,6 +274,7 @@ function AppInner() {
               {ui.rightTab === 'assets' && <AssetsPanel layer={layer} plan={plan} stage={stage} />}
               {ui.rightTab === 'stage' && <StagePanel layer={layer} plan={plan} stage={stage} />}
               {ui.rightTab === 'routes' && <RoutesPanel layer={layer} plan={plan} />}
+            </div>
             </div>
           </aside>
         </div>
