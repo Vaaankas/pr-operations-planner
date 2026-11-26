@@ -119,7 +119,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
 
       <span
         className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
-        title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} unconfirmed`}
+        title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.length - confirmed} uncertain`}
       >
         <Users className="h-3 w-3 text-emerald-400" />
         <span className="text-emerald-400">{confirmed}</span>

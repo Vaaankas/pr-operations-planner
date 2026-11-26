@@ -44,7 +44,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
               Asset glyphs are the in-game vehicle silhouettes, tinted by team or claiming squad. Flags use the in-game capture-point flag sprites and real capture radii.
               Attack lanes follow the layer's AASv4 SupplyGroupId order; toggle any combination of routes and flags.
               Delayed spawns are dimmed with their timer. Vehicle trails start at the previous stage's position and use the vehicle's colour.
-              Player status cycles blank → green ✓ (confirmed) → amber ? (unconfirmed).
+              Player status cycles blank → green ✓ (confirmed) → amber ? (uncertain).
             </p>
           </section>
 

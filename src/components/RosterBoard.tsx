@@ -63,9 +63,9 @@ function ConfirmationToggle({ member }: { member: Member }) {
       }`}
       title={
         state === 'unconfirmed'
-          ? 'Unconfirmed — click to clear'
+          ? 'Uncertain — click to clear'
           : state === 'confirmed'
-            ? 'Confirmed — click to mark unconfirmed'
+            ? 'Confirmed — click to mark uncertain'
             : 'Click to confirm'
       }
     >
@@ -76,12 +76,10 @@ function ConfirmationToggle({ member }: { member: Member }) {
 
 function MemberRow({
   member,
-  accent,
   index,
   target,
 }: {
   member: Member
-  accent?: string
   index: number
   target: string
 }) {
@@ -131,7 +129,6 @@ function MemberRow({
       <span className="cursor-grab active:cursor-grabbing" title="Drag player">
         <GripVertical className="h-3.5 w-3.5 shrink-0 text-slate-600 group-hover:text-slate-400" />
       </span>
-      {accent && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: accent }} />}
       <EditableName
         value={member.name}
         onCommit={(name) => planner.renameMember(member.id, name || 'Unnamed')}
@@ -218,7 +215,6 @@ function SpecialistKitsCard({ plan }: { plan: Plan }) {
     <div className="flex h-full min-h-0 flex-col rounded border border-white/10 bg-[#0b120e]/85">
       <div className="flex items-center gap-2 border-b border-white/5 px-2 py-1.5">
         <span className="font-mono text-[12px] font-bold uppercase tracking-[0.14em] text-slate-300">Specialist kits</span>
-        <span className="ml-auto font-mono text-[10px] text-slate-500">{players} players</span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-1 px-1.5 py-1.5">
         {SPECIALIST_KITS.map((kit) => {
@@ -382,7 +378,7 @@ function SquadCard({ squad, index }: { squad: Squad; index: number }) {
       )}
       <div className="flex min-h-0 flex-1 flex-col gap-1 p-1.5">
         {squad.members.map((m, i) => (
-          <MemberRow key={m.id} member={m} accent={squad.color} index={i} target={squad.id} />
+          <MemberRow key={m.id} member={m} index={i} target={squad.id} />
         ))}
         {squad.members.length === 0 && <div className="px-1 py-2 text-[11px] uppercase tracking-wider text-slate-600">Empty squad</div>}
         <div className="mt-auto">
@@ -406,7 +402,7 @@ export function RosterBoard() {
     ...plan.roster.unassigned,
   ]
   const confirmed = allMembers.filter((m) => m.confirmed).length
-  const unconfirmed = allMembers.length - confirmed
+  const uncertain = allMembers.length - confirmed
 
   return (
     <div className="flex min-h-0 flex-1">
@@ -416,7 +412,7 @@ export function RosterBoard() {
           <span className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-slate-200">Roster</span>
           <span className={`font-mono text-[11px] ${count > 50 ? 'text-amber-300' : 'text-slate-400'}`}>{count}/50 players</span>
           <span className="font-mono text-[11px] text-emerald-400/90">{confirmed}/50 confirmed</span>
-          <span className="font-mono text-[11px] text-amber-400/90">{unconfirmed} unconfirmed</span>
+          <span className="font-mono text-[11px] text-amber-400/90">{uncertain} uncertain</span>
           <span className="ml-auto text-[10px] uppercase tracking-wider text-slate-500">Drag players or squad headers to reorder</span>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -444,7 +440,12 @@ export function RosterBoard() {
         <div className="border-b border-white/10 px-3 py-2">
           <div className="flex items-center gap-2">
             {assets.commander ? (
-              <GameIcon path={assets.commander} tint="#facc15" size={18} />
+              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black/70 bg-[#2563eb]">
+                <span className="relative flex h-5 w-5 items-center justify-center">
+                  <GameIcon path={assets.commander} tint="#07110a" size={19} className="absolute" />
+                  <GameIcon path={assets.commander} tint="#facc15" size={16} className="relative z-10" />
+                </span>
+              </span>
             ) : (
               <Star className="h-4 w-4 text-amber-300" />
             )}
@@ -465,7 +466,7 @@ export function RosterBoard() {
             className={`mt-1.5 rounded border px-2 py-2 ${dropCommander ? 'border-amber-400/70 bg-amber-400/5' : 'border-white/10 bg-black/20'}`}
           >
             {plan.roster.commander ? (
-              <MemberRow member={plan.roster.commander} accent="#facc15" index={0} target="commander" />
+              <MemberRow member={plan.roster.commander} index={0} target="commander" />
             ) : (
               <AddPlayer target="commander" />
             )}
