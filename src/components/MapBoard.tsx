@@ -77,6 +77,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
   const stageRef = useRef<Konva.Stage>(null)
   const [previewRotation, setPreviewRotation] = useState<number | null>(null)
   const [dragVehicle, setDragVehicle] = useState<{ id: string; x: number; z: number; screenX: number; screenY: number } | null>(null)
+  const [dragTurn, setDragTurn] = useState<{ vehicleId: string; index: number; x: number; z: number } | null>(null)
   const rotateStart = useRef<{ angle: number; rotation: number } | null>(null)
   const [box, setBox] = useState({ w: 800, h: 600 })
   const [view, setView] = useState({ scale: 0.4, x: 0, y: 0 })
@@ -1253,8 +1254,13 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             const base = baseVehiclePos(v)
             const drag = dragVehicle?.id === v.id ? dragVehicle : null
             const endpoint = drag ? { x: drag.x, z: drag.z } : move
+            const routeTurns = turns.map((turn, index) =>
+              dragTurn?.vehicleId === v.id && dragTurn.index === index
+                ? { x: dragTurn.x, z: dragTurn.z }
+                : turn
+            )
             const route = move
-              ? [base, ...turns, endpoint].map((q) => {
+              ? [base, ...routeTurns, endpoint].map((q) => {
                   const d = worldToDisplayNorm(q.x, q.z, layer.world)
                   return [d.x * mapW, d.y * mapH] as [number, number]
                 })
@@ -1299,9 +1305,15 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                       strokeWidth={1.5 * iconScale}
                       draggable
                       onDragStart={() => planner.checkpoint()}
+                      onDragMove={(e) => {
+                        const node = e.target
+                        const world = displayNormToWorld({ x: node.x() / mapW, y: node.y() / mapH }, layer.world)
+                        setDragTurn({ vehicleId: v.id, index: i, x: world.x, z: world.z })
+                      }}
                       onDragEnd={(e) => {
                         const node = e.target
                         updateVehicleTurn(v.id, i, displayNormToWorld({ x: node.x() / mapW, y: node.y() / mapH }, layer.world))
+                        setDragTurn(null)
                       }}
                       onContextMenu={(e) => {
                         e.evt.preventDefault()
@@ -1376,7 +1388,7 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
                     )
                   })()}
                 </Group>
-                {ui.showLabels && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0) && (
+                {ui.showLabels && !drag && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0) && (
                   <Text
                     text={`${claimPrefix}${v.label}`}
                     fontSize={9 * iconScale}
@@ -1453,6 +1465,26 @@ export function MapBoard({ map, layer, plan, stage }: Props) {
             >
               <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} style={{ transform: `rotate(${angle}deg)` }} />
             </button>
+          </div>
+        )
+      })()}
+
+      {dragVehicle && (() => {
+        const v = layer.vehicles.find((item) => item.id === dragVehicle.id)
+        if (!v) return null
+        const commander = plan.claims[v.id] === 'commander'
+        const index = plan.roster.squads.findIndex((s) => s.id === plan.claims[v.id])
+        const prefix = commander ? '[★] ' : index >= 0 ? `[${index + 1}] ` : ''
+        return (
+          <div
+            className="pointer-events-none absolute z-20 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold text-amber-300"
+            style={{
+              left: dragVehicle.screenX,
+              top: dragVehicle.screenY + 14,
+              textShadow: '0 1px 3px #000, 0 0 3px #000',
+            }}
+          >
+            {prefix}{v.label}
           </div>
         )
       })()}
