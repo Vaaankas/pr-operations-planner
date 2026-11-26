@@ -23,19 +23,14 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   useEffect(() => {
     if (images[cacheKey] || pending.current.has(cacheKey)) return
     pending.current.add(cacheKey)
-    let cancelled = false
     captureStageDataUrl({ map, layer, plan }, stage, 2048, 'png')
       .then((src) => {
-        if (cancelled) return
         setImages((current) => ({ ...current, [cacheKey]: src }))
       })
       .catch((err) => console.error(err))
       .finally(() => {
         pending.current.delete(cacheKey)
       })
-    return () => {
-      cancelled = true
-    }
   }, [cacheKey, images, layer, map, plan, stage])
 
   const src = images[cacheKey]
