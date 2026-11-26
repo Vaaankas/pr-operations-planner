@@ -113,13 +113,9 @@ export function StagePanel({ layer, plan, stage }: Props) {
               <button
                 key={key}
                 onClick={() => planner.toggleStageVisibility(key)}
-                className={`flex min-h-0 items-center gap-1.5 rounded border px-1.5 py-1 text-left ${
-                  active
-                    ? 'border-amber-400/40 bg-amber-400/10 text-amber-200'
-                    : 'border-white/10 bg-black/20 text-slate-500 hover:border-white/20 hover:text-slate-300'
-                }`}
+                className="flex min-h-0 items-center gap-1.5 rounded border border-white/10 bg-black/20 px-1.5 py-1 text-left text-slate-400 hover:border-white/20 hover:text-slate-300"
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-amber-300' : 'text-slate-600'}`} />
                 <span className="min-w-0">
                   <span className="block truncate text-[10px] font-semibold uppercase tracking-wider">{label}</span>
                   <span className="block truncate text-[8px] text-slate-500">{description}</span>

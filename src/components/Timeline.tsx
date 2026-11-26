@@ -61,7 +61,7 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
                 planner.setActiveStage(s.id)
                 useUI.getState().setRightTab('stage')
               }}
-              className={`relative z-10 flex h-[48px] w-[168px] shrink-0 items-center rounded border px-2 text-left transition ${
+              className={`relative z-10 flex h-[48px] w-[140px] shrink-0 items-center rounded border px-2 text-left transition ${
                 active ? 'border-amber-400/70 bg-[#221b07]' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
               }`}
             >
@@ -76,7 +76,7 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
         })}
         <button
           onClick={() => planner.addStage()}
-          className="relative z-10 flex h-[48px] w-[92px] shrink-0 flex-col items-center justify-center gap-0.5 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
+          className="relative z-10 flex h-[48px] w-[80px] shrink-0 flex-col items-center justify-center gap-0.5 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
           title="Add stage"
         >
           <Plus className="h-4 w-4" />
