@@ -1958,7 +1958,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             {capturable ? (
               <>
                 <div className="mt-1 text-slate-300">Ticket loss on capture: <span className="font-mono text-amber-300">{layer.tickets?.loss ?? 30}</span></div>
-                <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-600">Click to cycle neutral / faction</div>
+                <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-600">Click to cycle faction</div>
               </>
             ) : (
               <div className="mt-1 text-slate-400">Deployment flag · cannot be captured or switched.</div>
