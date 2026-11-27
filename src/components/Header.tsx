@@ -96,7 +96,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         </div>
       </div>
 
-      <div className="flex items-center gap-2 px-3">
+      <div className="flex items-center gap-2 border-l border-white/10 px-3">
         <button onClick={onHelp} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
           <HelpCircle className="h-4 w-4" />
         </button>
