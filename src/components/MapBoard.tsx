@@ -1993,7 +1993,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             </div>
             {hoverFlag.cp.radius != null && (
               <div className="mt-1 text-slate-300">
-                Capture radius: <span className="font-mono text-amber-300">{Math.round(hoverFlag.cp.radius)} m</span>
+                Capture radius: <span className="font-mono text-amber-300">{Math.round(hoverFlag.cp.radius)}m</span>
               </div>
             )}
             {capturable ? (
