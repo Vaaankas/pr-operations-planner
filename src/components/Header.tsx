@@ -131,8 +131,6 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         </div>
       </div>
 
-      <div className="hidden h-7 w-px bg-white/10 lg:block" />
-
       <div className="ml-auto flex items-center gap-1.5">
         <div className="hidden items-center gap-1 px-2 font-mono text-[9px] uppercase tracking-wider text-slate-600 xl:flex">
           <Save className="h-3 w-3 text-emerald-500/70" /> saved {new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
