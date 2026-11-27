@@ -124,6 +124,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     setPending(value)
   }
   const pointerDown = useRef(false)
+  const erasing = useRef(false)
   const panStart = useRef<{ px: number; py: number; wx: number; wy: number } | null>(null)
   const panMoved = useRef(false)
   const panMiddle = useRef(false)
@@ -385,6 +386,26 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     }
   }
 
+  const eraseAtPointer = () => {
+    const st = stageRef.current
+    const pointer = st?.getPointerPosition()
+    if (!st || !pointer) return
+    let node: Konva.Node | null = st.getIntersection(pointer)
+    while (node && node !== st) {
+      const id = node.id()
+      if (id.startsWith('veh_')) {
+        planner.clearVehicleMove(id.slice(4))
+        return
+      }
+      if (stage.elements.some((element) => element.id === id)) {
+        planner.removeElement(id)
+        useUI.getState().setSelected(null, null)
+        return
+      }
+      node = node.getParent()
+    }
+  }
+
   const onStageDown = (e: KonvaEventObject<MouseEvent>) => {
     if (e.evt.button === 2) return
     const st = stageRef.current
@@ -411,7 +432,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       return
     }
     if (tool === 'erase') {
-      if (e.target === st) state.setSelected(null, null)
+      erasing.current = true
+      state.setSelected(null, null)
+      eraseAtPointer()
       return
     }
     const pos = mapCoords()
@@ -464,6 +487,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   }
 
   const onStageMove = (e: KonvaEventObject<MouseEvent>) => {
+    if (erasing.current) {
+      eraseAtPointer()
+      return
+    }
     if (panStart.current) {
       const st = stageRef.current
       const p = st?.getPointerPosition()
@@ -516,6 +543,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   }
 
   const onStageUp = () => {
+    erasing.current = false
     if (panStart.current) {
       const moved = panMoved.current
       const middle = panMiddle.current
@@ -1286,6 +1314,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         onMouseDown={onStageDown}
         onMouseMove={(e) => onStageMove(e)}
         onMouseUp={onStageUp}
+        onMouseLeave={() => { erasing.current = false }}
         onDblClick={() => {
           if (ui.tool === 'polygon') finishPolygon()
         }}
