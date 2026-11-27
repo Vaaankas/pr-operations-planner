@@ -810,7 +810,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       patch = { a: point(a.x, a.y), b: point(b.x, b.y) }
     } else if (el.type === 'rect') {
       const rect = node as Konva.Rect
-      const center = point(0, 0)
+      const center = toNorm({ x: node.x(), y: node.y() })
       const width = rect.width() * Math.abs(node.scaleX())
       const height = rect.height() * Math.abs(node.scaleY())
       const halfW = width / mapW / 2
