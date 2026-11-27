@@ -110,7 +110,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
 
       <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
         {side && cpFlag(assets, side.key) ? (
-          <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-4 object-contain" />
+          <img src={dataUrl(cpFlag(assets, side.key)!)} alt="" className="h-4 w-[22px] object-fill" />
         ) : (
           <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
         )}
