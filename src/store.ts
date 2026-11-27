@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { DrawElement, LayerData, MapMeta, Member, Plan, Roster, Squad, Stage, StageVisibility, Team, UIState, VehicleMove, VehicleTurn } from './types'
-import { clamp, DEFAULT_STAGE_VISIBILITY, defaultRoster, newSquad, newStage, PHONETIC, PLAYER_CAP, SQUAD_SIZE, SQUAD_TYPES, uid } from './lib/utils'
+import { clamp, DEFAULT_STAGE_VISIBILITY, defaultRoster, newSquad, newStage, PHONETIC, PLAYER_CAP, SQUAD_HARD_CAP, SQUAD_SIZE, SQUAD_TYPES, uid } from './lib/utils'
 
 const HISTORY_LIMIT = 80
 const STORAGE_KEY = 'prplanner.plan.v1'
@@ -316,7 +316,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       // allowed
     } else {
       const squad = roster.squads.find((s) => s.id === target)
-      if (!squad || squad.members.length >= 9) return false
+      if (!squad || squad.members.length >= SQUAD_HARD_CAP) return false
     }
     get().mutate((draft) => {
       if (target === 'commander') draft.roster.commander = member
@@ -350,7 +350,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
           plan.roster.unassigned.push(member)
           return
         }
-        if (squad.members.length >= 9 && sourceSquad?.id !== squad.id) {
+        if (squad.members.length >= SQUAD_HARD_CAP && sourceSquad?.id !== squad.id) {
           plan.roster.unassigned.push(member)
           return
         }

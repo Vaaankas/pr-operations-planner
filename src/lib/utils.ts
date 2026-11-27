@@ -2,6 +2,7 @@ import type { Plan, Squad, Stage, StageVisibility, VehicleSpawn } from '../types
 
 export const PLAYER_CAP = 50
 export const SQUAD_SIZE = 8
+export const SQUAD_HARD_CAP = 20
 export const isHiddenVehicle = (template: string): boolean =>
   /artillery_team[12]|(^|_)acv(_|$)|ship|shp|carrier|uss_/i.test(template)
 

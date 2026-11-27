@@ -3,7 +3,7 @@ import { GripVertical, Plus, Star, Trash2, UserPlus, Users, X } from 'lucide-rea
 import type { LayerData, Member, Plan, Squad, VehicleSpawn } from '../types'
 import { usePlanner } from '../store'
 import { useAssets, vehicleIconPath } from '../lib/assets'
-import { dataUrl, isHiddenVehicle, playerCount, SQUAD_COLORS } from '../lib/utils'
+import { dataUrl, isHiddenVehicle, playerCount, SQUAD_COLORS, SQUAD_HARD_CAP, SQUAD_SIZE } from '../lib/utils'
 import { assignedKits, SPECIALIST_KITS, specialistKit, specialistLimit } from '../lib/kits'
 import { GameIcon } from '../lib/gameIcons'
 
@@ -431,7 +431,8 @@ function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer
   const [colorOpen, setColorOpen] = useState(false)
   const [headerDrop, setHeaderDrop] = useState(false)
   const namePointer = useRef(false)
-  const full = squad.members.length >= 9
+  const full = squad.members.length >= SQUAD_HARD_CAP
+  const overNominal = squad.members.length > SQUAD_SIZE
   const assignedKitIds = assignedKits(plan?.roster.specialistAssignments, squad.id)
   const claimedVehicles = layer.vehicles.filter((vehicle) => plan?.claims[vehicle.id] === squad.id)
   useEffect(() => {
@@ -557,7 +558,7 @@ function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer
             </button>
           )
         })}
-        <span className={`font-mono text-[12px] ${full ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/9</span>
+        <span className={`font-mono text-[12px] ${overNominal ? 'text-amber-300' : 'text-slate-400'}`}>{squad.members.length}/{SQUAD_SIZE}</span>
         <button onClick={() => planner.removeSquad(squad.id)} className="text-slate-600 hover:text-rose-400" title="Delete squad">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -588,10 +589,12 @@ function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer
             ))}
           </div>
         )}
-        <div className="mt-auto">
-          {!full && <AddPlayer target={squad.id} />}
-        </div>
       </div>
+      {!full && (
+        <div className="shrink-0 border-t border-white/5 p-1.5">
+          <AddPlayer target={squad.id} />
+        </div>
+      )}
     </div>
   )
 }

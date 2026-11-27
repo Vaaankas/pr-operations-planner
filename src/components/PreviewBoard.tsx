@@ -73,7 +73,7 @@ function RosterSlide({ plan, map, layer }: { plan: Plan; map: MapMeta; layer: La
                 style={{ background: squad.color, color: slideTextColor(squad.color) }}
               >
                 <span className="truncate">{squad.name.toUpperCase()}</span>
-                <span className="ml-auto opacity-70">{squad.members.length}/9</span>
+                <span className="ml-auto opacity-70">{squad.members.length}/8</span>
               </div>
               <div className="flex min-h-0 flex-1 flex-col px-1 py-0.5">
                 {squad.members.map((member, index) => (
