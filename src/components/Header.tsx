@@ -68,27 +68,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         <Redo2 className="h-4 w-4" />
       </button>
 
-      <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
-        <button
-          onClick={() => { ui.setView('plan'); ui.setMode('edit') }}
-          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'edit' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Edit Plan
-        </button>
-        <button
-          onClick={() => { ui.setView('plan'); ui.setMode('preview') }}
-          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'preview' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Preview
-        </button>
-        <button
-          onClick={() => ui.setView('roster')}
-          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Roster
-        </button>
-      </div>
-
+      <div className="flex min-w-0 flex-1 justify-center">
       <div className="flex min-w-0 items-stretch divide-x divide-white/10 overflow-hidden rounded-md border border-white/10 bg-white/[0.02]">
         <div className="flex min-w-0 shrink flex-col justify-center px-3 py-1.5">
           <span className="font-mono text-[8px] uppercase leading-none tracking-[0.18em] text-slate-500">Operation</span>
@@ -129,6 +109,29 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
             <span className="text-slate-500">/50</span>
           </span>
         </div>
+      </div>
+
+      </div>
+
+      <div className="flex shrink-0 items-center rounded border border-white/10 p-0.5">
+        <button
+          onClick={() => { ui.setView('plan'); ui.setMode('edit') }}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'edit' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Edit Plan
+        </button>
+        <button
+          onClick={() => { ui.setView('plan'); ui.setMode('preview') }}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'plan' && ui.mode === 'preview' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Preview
+        </button>
+        <button
+          onClick={() => ui.setView('roster')}
+          className={`rounded px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider ${ui.view === 'roster' ? 'bg-amber-400 text-black' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Roster
+        </button>
       </div>
 
       <div className="ml-auto flex items-center gap-1.5">
