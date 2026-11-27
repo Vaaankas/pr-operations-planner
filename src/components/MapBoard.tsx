@@ -1526,7 +1526,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 })
               : []
             const dp = drag ? worldToDisplayNorm(drag.x, drag.z, layer.world) : p
-            const showName = hoverVehicleId === v.id || (ui.showVehicleNames && (view.scale >= 0.55 || selected || commanderClaim || claimIndex >= 0))
+            const showName = hoverVehicleId === v.id || (ui.showVehicleNames && (view.scale >= 0.55 || selected))
             return (
               <Group
                 key={v.id}
