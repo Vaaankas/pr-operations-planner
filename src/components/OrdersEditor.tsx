@@ -193,6 +193,28 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
     commit()
   }
 
+  const ensureCaret = () => {
+    const root = editor.current
+    if (!root) return
+    if (!root.firstChild) root.appendChild(document.createTextNode(' '))
+    const selection = window.getSelection()
+    if (!selection?.rangeCount) {
+      const range = document.createRange()
+      range.selectNodeContents(root)
+      range.collapse(false)
+      selection?.removeAllRanges()
+      selection?.addRange(range)
+      return
+    }
+    const range = selection.getRangeAt(0)
+    if (root.contains(range.startContainer)) return
+    const fixed = document.createRange()
+    fixed.selectNodeContents(root)
+    fixed.collapse(false)
+    selection.removeAllRanges()
+    selection.addRange(fixed)
+  }
+
   const deleteSelectedContent = () => {
     const root = editor.current
     const selection = window.getSelection()
@@ -205,12 +227,13 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
         return false
       }
     })
-    chips.forEach((chip) => chip.remove())
+    chips.forEach((chip) => chip.replaceWith(document.createTextNode(' ')))
     try {
       range.deleteContents()
     } catch {
       // The selection boundary may have been inside a removed chip.
     }
+    ensureCaret()
     commit()
   }
 
@@ -245,7 +268,13 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
         ? deepestLast(candidate)
         : deepestFirst(candidate)
     if (!(chip instanceof HTMLElement) || !chip.dataset.orderToken) return false
-    chip.remove()
+    const caretNode = document.createTextNode(' ')
+    chip.replaceWith(caretNode)
+    const fixed = document.createRange()
+    fixed.setStart(caretNode, direction === 'back' ? caretNode.length : 0)
+    fixed.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(fixed)
     commit()
     return true
   }
