@@ -1474,9 +1474,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         onMouseMove={(e) => onStageMove(e)}
         onMouseUp={onStageUp}
         onMouseLeave={() => { erasing.current = false }}
-        onDblClick={() => {
-          if (ui.tool === 'polygon') finishPolygon()
-        }}
         onContextMenu={(e) => {
           e.evt.preventDefault()
           cancelDrawing()
