@@ -194,7 +194,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     }
     if (assets.commander) {
       jobs.push(preloadAsset(assets.commander, '#07110a'))
-      jobs.push(preloadAsset(assets.commander, '#facc15'))
+      jobs.push(preloadAsset(assets.commander, '#f8fafc'))
     }
     if (assets.markers.cache_objective) {
       jobs.push(preloadAsset(assets.markers.cache_objective, '#07110a'))
@@ -983,7 +983,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               commander ? (
                 <>
                   <KonvaImage image={tintedAssetImage(icon, '#07110a')} x={-r * 0.82} y={-r * 0.82} width={r * 1.64} height={r * 1.64} listening={false} />
-                  <KonvaImage image={tintedAssetImage(icon, '#facc15')} x={-r * 0.7} y={-r * 0.7} width={r * 1.4} height={r * 1.4} listening={false} />
+                  <KonvaImage image={tintedAssetImage(icon, '#f8fafc')} x={-r * 0.7} y={-r * 0.7} width={r * 1.4} height={r * 1.4} listening={false} />
                 </>
               ) : (
                 <KonvaImage image={tintedAssetImage(icon, el.squadColor)} x={-r} y={-r} width={r * 2} height={r * 2} listening={false} />
@@ -998,7 +998,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 fontSize={r * 1.1}
                 fontFamily="Inter, Segoe UI, sans-serif"
                 fontStyle="bold"
-                fill={commander ? '#facc15' : '#f8fafc'}
+                fill="#f8fafc"
                 listening={false}
               />
             )}
@@ -1893,7 +1893,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               {assets.commander ? (
                 <span className="relative flex h-[20px] w-[20px] items-center justify-center">
                   <GameIcon path={assets.commander} tint="#07110a" size={19} className="absolute" />
-                  <GameIcon path={assets.commander} tint="#facc15" size={16} className="relative z-10" />
+                  <GameIcon path={assets.commander} tint="#f8fafc" size={16} className="relative z-10" />
                 </span>
               ) : (
                 <span className="text-[13px] font-bold text-[#facc15]">★</span>
@@ -1974,11 +1974,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           >
             <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-100">
               {squadIcon && (
-                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isCommander ? 'bg-[#2563eb]' : 'bg-black/50'}`}>
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isCommander ? 'border border-[#07110a] bg-[#2563eb]' : 'bg-black/50'}`}>
                   {isCommander ? (
                     <span className="relative flex h-5 w-5 items-center justify-center">
                       <GameIcon path={squadIcon} tint="#07110a" size={19} className="absolute" />
-                      <GameIcon path={squadIcon} tint="#facc15" size={16} className="relative z-10" />
+                      <GameIcon path={squadIcon} tint="#f8fafc" size={16} className="relative z-10" />
                     </span>
                   ) : (
                     <GameIcon path={squadIcon} tint={squad?.color ?? '#facc15'} size={24} />

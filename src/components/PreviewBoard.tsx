@@ -109,9 +109,9 @@ function OrdersText({ text, plan, assets }: { text: string; plan: Plan; assets: 
             <span
               key={index}
               title="Commander"
-              className="mx-0.5 inline-flex h-[1.35em] w-[1.35em] -translate-y-[0.15em] items-center justify-center rounded-full bg-[#2563eb] align-middle"
+              className="mx-0.5 inline-flex h-[1.35em] w-[1.35em] -translate-y-[0.15em] items-center justify-center rounded-full border border-[#0b110d] bg-[#2563eb] align-middle"
             >
-              {assets.commander && <GameIcon path={assets.commander} tint="#facc15" size={16} />}
+              {assets.commander && <GameIcon path={assets.commander} tint="#f8fafc" size={16} />}
             </span>
           )
         }

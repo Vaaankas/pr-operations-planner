@@ -626,7 +626,7 @@ export function RosterBoard({ layer }: { layer: LayerData }) {
               <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black/70 bg-[#2563eb]">
                 <span className="relative flex h-5 w-5 items-center justify-center">
                   <GameIcon path={assets.commander} tint="#07110a" size={19} className="absolute" />
-                  <GameIcon path={assets.commander} tint="#facc15" size={16} className="relative z-10" />
+                  <GameIcon path={assets.commander} tint="#f8fafc" size={16} className="relative z-10" />
                 </span>
               </span>
             ) : (

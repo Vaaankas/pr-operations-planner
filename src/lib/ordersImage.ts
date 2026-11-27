@@ -35,7 +35,7 @@ export async function renderOrdersImage(plan: Plan, stage: Stage, assets: AssetM
   for (const segment of parseOrders(stage.notes)) {
     if (segment.type === 'cmd') {
       const key = 'cmd'
-      if (!icons.has(key)) icons.set(key, await loadIcon(assets.commander, '#facc15'))
+      if (!icons.has(key)) icons.set(key, await loadIcon(assets.commander, '#f8fafc'))
     } else if (segment.type === 'squad') {
       const index = plan.roster.squads.findIndex((squad) => squad.id === segment.squadId)
       const squad = plan.roster.squads[index]
@@ -81,6 +81,9 @@ export async function renderOrdersImage(plan: Plan, stage: Stage, assets: AssetM
       ctx.arc(x + iconSize / 2, baseline - fontSize * 0.32, iconSize / 2, 0, Math.PI * 2)
       ctx.fillStyle = '#2563eb'
       ctx.fill()
+      ctx.lineWidth = 2
+      ctx.strokeStyle = '#0b110d'
+      ctx.stroke()
     }
     if (image) {
       ctx.drawImage(image, x, baseline - fontSize * 0.82, iconSize, iconSize)

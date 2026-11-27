@@ -225,7 +225,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
           if (img.complete) ctx.drawImage(img, x - r, y - r, r * 2, r * 2)
         }
       } else {
-        ctx.fillStyle = commander ? '#facc15' : '#f8fafc'
+        ctx.fillStyle = '#f8fafc'
         ctx.font = `700 ${r * 1.1}px "Inter", "Segoe UI", sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
@@ -363,7 +363,7 @@ export async function renderStageCanvas(
   }
   if (opts.assets.commander) {
     jobs.push(preloadAsset(opts.assets.commander, '#07110a'))
-    jobs.push(preloadAsset(opts.assets.commander, '#facc15'))
+    jobs.push(preloadAsset(opts.assets.commander, '#f8fafc'))
   }
   plan.roster.squads.forEach((squad, index) => {
     const icon = opts.assets.squads[String(index + 1)]
