@@ -1467,6 +1467,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             ref={transformerRef}
             rotateEnabled={selectedElement?.type !== 'text'}
             flipEnabled={false}
+            borderEnabled={selectedElement?.type !== 'rect'}
             borderStroke="#fbbf24"
             borderStrokeWidth={2}
             anchorStroke="#fde68a"
