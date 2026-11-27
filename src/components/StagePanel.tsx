@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Clock, Flag, Pencil, Route as RouteIcon, Swords, Tag, Trash2, Truck, Type } from 'lucide-react'
 import type { LayerData, Plan, Stage, StageVisibility } from '../types'
 import { usePlanner } from '../store'
 import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
-import { CMD_ORDER_TOKEN, squadOrderToken } from '../lib/orders'
+import { OrdersEditor } from './OrdersEditor'
 
 const VISIBILITY_OPTIONS: Array<{
   key: keyof StageVisibility
@@ -46,29 +46,11 @@ function CommitInput({
 
 export function StagePanel({ layer, plan, stage }: Props) {
   const planner = usePlanner()
-  const ordersRef = useRef<HTMLTextAreaElement>(null)
   const [time, setTime] = useState(formatTime(stage.time))
   const [notes, setNotes] = useState(stage.notes)
   useEffect(() => setTime(formatTime(stage.time)), [stage.time])
   useEffect(() => setNotes(stage.notes), [stage.notes])
   const visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(stage.visibility ?? {}) }
-
-  const dropSquad = (event: React.DragEvent<HTMLTextAreaElement>) => {
-    const squadId = event.dataTransfer.getData('text/pr-squad')
-    if (!squadId) return
-    event.preventDefault()
-    const token = `${squadId === 'commander' ? CMD_ORDER_TOKEN : squadOrderToken(squadId)} `
-    const textarea = ordersRef.current
-    const start = textarea?.selectionStart ?? notes.length
-    const end = textarea?.selectionEnd ?? start
-    const next = `${notes.slice(0, start)}${token}${notes.slice(end)}`
-    setNotes(next)
-    planner.updateStage(stage.id, { notes: next })
-    requestAnimationFrame(() => {
-      textarea?.focus()
-      textarea?.setSelectionRange(start + token.length, start + token.length)
-    })
-  }
 
 
   return (
@@ -113,17 +95,13 @@ export function StagePanel({ layer, plan, stage }: Props) {
 
       <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-3">
         <label className="mb-1 block font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">ORDERS</label>
-        <textarea
-          ref={ordersRef}
+        <OrdersEditor
+          key={stage.id}
           value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={() => notes !== stage.notes && planner.updateStage(stage.id, { notes })}
-          onDragOver={(e) => {
-            if (Array.from(e.dataTransfer.types).includes('text/pr-squad')) e.preventDefault()
-          }}
-          onDrop={dropSquad}
-          placeholder="Orders, tasks, timing, coordination..."
-          className="min-h-0 w-full flex-1 resize-none rounded border border-white/10 bg-black/30 px-2 py-2 text-[12px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/50"
+          stageId={stage.id}
+          plan={plan}
+          onChange={setNotes}
+          onCommit={(next) => planner.updateStage(stage.id, { notes: next })}
         />
       </div>
 

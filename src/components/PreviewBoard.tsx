@@ -122,7 +122,7 @@ function OrdersText({ text, plan, assets }: { text: string; plan: Plan; assets: 
           <span
             key={index}
             title={squad.name}
-            className="mx-0.5 inline-flex h-[1.35em] w-[1.35em] -translate-y-[0.15em] items-center justify-center rounded-full bg-[#0b110d] align-middle"
+            className="mx-0.5 inline-flex h-[1.35em] w-[1.35em] -translate-y-[0.15em] items-center justify-center align-middle"
           >
             {assets.squads[String(squadIndex + 1)] && (
               <GameIcon path={assets.squads[String(squadIndex + 1)]} tint={squad.color} size={16} />
