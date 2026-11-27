@@ -556,7 +556,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     }
   }
 
-  const onStageUp = () => {
+  const onStageUp = (e?: KonvaEventObject<MouseEvent>) => {
+    if (e?.evt.button === 2) {
+      cancelDrawing()
+      return
+    }
     erasing.current = false
     if (panStart.current) {
       const moved = panMoved.current
