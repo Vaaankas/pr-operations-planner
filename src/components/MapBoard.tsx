@@ -1504,6 +1504,20 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               listening={false}
             />
           )}
+          {polygon.length > 0 && (() => {
+            const first = normToScreen(polygon[0])
+            return (
+              <Circle
+                x={first.x}
+                y={first.y}
+                radius={5 * iconScale}
+                fill="#fbbf24"
+                stroke="#07110a"
+                strokeWidth={2 * iconScale}
+                listening={false}
+              />
+            )
+          })()}
           {draftNode()}
           {pendingNode()}
           {selectedElement?.type === 'rect' && (
