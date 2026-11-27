@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import {
   MousePointer2, Pencil, Minus, MoveUpRight, Square, Circle, Pentagon,
-  Type, TextCursorInput, MapPin, Eraser, Ruler, Undo2, Redo2,
+  Type, MapPin, Eraser, Ruler, Undo2, Redo2,
 } from 'lucide-react'
 import { usePlanner, useUI } from '../store'
 import type { Tool } from '../types'
@@ -20,7 +20,6 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'ellipse', icon: Circle, label: 'Ellipse', key: 'O' },
   { tool: 'polygon', icon: Pentagon, label: 'Polygon', key: 'G' },
   { tool: 'text', icon: Type, label: 'Label', key: 'T' },
-  { tool: 'textbox', icon: TextCursorInput, label: 'Text box', key: 'B' },
   { tool: 'marker', icon: MapPin, label: 'Marker', key: 'M' },
   { tool: 'erase', icon: Eraser, label: 'Erase', key: 'E' },
 ]
