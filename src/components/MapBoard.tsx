@@ -736,6 +736,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const transformerRef = useRef<Konva.Transformer>(null)
   const rotateConnectorRef = useRef<Konva.Line>(null)
   const transformMode = useRef<'rotate' | 'resize'>('resize')
+  const liveRotation = useRef(0)
   const [rotateConnector, setRotateConnector] = useState<number[]>([])
 
   const updateRotateConnector = (syncState = false) => {
@@ -849,7 +850,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       const height = rect.height() * Math.abs(node.scaleY())
       const halfW = width / mapW / 2
       const halfH = height / mapH / 2
-      const rotation = transformMode.current === 'rotate' ? node.rotation() : (el.rotation ?? node.rotation())
+      const rotation = transformMode.current === 'rotate' ? liveRotation.current : (el.rotation ?? node.rotation())
       patch = {
         a: { x: center.x - halfW, y: center.y - halfH },
         b: { x: center.x + halfW, y: center.y + halfH },
@@ -860,7 +861,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       const center = point(0, 0)
       const rx = (ellipse.radiusX() * Math.abs(node.scaleX())) / mapW
       const ry = (ellipse.radiusY() * Math.abs(node.scaleY())) / mapH
-      const rotation = transformMode.current === 'rotate' ? node.rotation() : (el.rotation ?? node.rotation())
+      const rotation = transformMode.current === 'rotate' ? liveRotation.current : (el.rotation ?? node.rotation())
       patch = {
         a: { x: center.x - rx, y: center.y - ry },
         b: { x: center.x + rx, y: center.y + ry },
@@ -1522,9 +1523,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             anchorCornerRadius={2}
             padding={3}
             rotateAnchorOffset={24}
-            onTransform={() => updateRotateConnector(false)}
+            onTransform={() => {
+              if (transformMode.current === 'rotate') {
+                liveRotation.current = transformerRef.current?.nodes()[0]?.rotation() ?? 0
+              }
+              updateRotateConnector(false)
+            }}
             onTransformStart={() => {
               transformMode.current = transformerRef.current?.getActiveAnchor() === 'rotater' ? 'rotate' : 'resize'
+              liveRotation.current = selectedElement && 'rotation' in selectedElement
+                ? selectedElement.rotation ?? 0
+                : 0
               planner.checkpoint()
             }}
           />
