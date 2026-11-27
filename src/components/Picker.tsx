@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Search, ChevronRight, Crosshair } from 'lucide-react'
 import type { LayerRef, MapIndex, MapMeta, Team } from '../types'
 import { dataUrl } from '../lib/utils'
-import { cpFlag, useAssets } from '../lib/assets'
+import { factionFlag, useAssets } from '../lib/assets'
 
 interface Props {
   index: MapIndex
@@ -189,8 +189,8 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose, 
                         const lf = l.factions ?? selected.factions ?? {}
                         const f1 = lf['1']
                         const f2 = lf['2']
-                        const flag1 = f1 ? cpFlag(assets, f1.key) : undefined
-                        const flag2 = f2 ? cpFlag(assets, f2.key) : undefined
+                        const flag1 = f1 ? factionFlag(assets, f1.key) : undefined
+                        const flag2 = f2 ? factionFlag(assets, f2.key) : undefined
                         return (
                           <button
                             key={l.id}
@@ -201,12 +201,12 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose, 
                               <span className="block truncate text-[13px] font-medium text-slate-100">{l.displayName}</span>
                               <span className="mt-1 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider">
                                 <span className="flex items-center gap-1 text-rose-400">
-                                  {flag1 && <img src={dataUrl(flag1)} alt="" className="h-3 w-4 object-contain" />}
+                                  {flag1 && <img src={dataUrl(flag1)} alt="" className="h-3 w-4 object-fill" />}
                                   {f1?.short ?? '—'}
                                 </span>
                                 <span className="text-slate-600">vs</span>
                                 <span className="flex items-center gap-1 text-sky-400">
-                                  {flag2 && <img src={dataUrl(flag2)} alt="" className="h-3 w-4 object-contain" />}
+                                  {flag2 && <img src={dataUrl(flag2)} alt="" className="h-3 w-4 object-fill" />}
                                   {f2?.short ?? '—'}
                                 </span>
                               </span>
@@ -227,7 +227,7 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose, 
                   {([1, 2] as Team[]).map((t) => {
                     const f = factions[String(t)]
                     const active = side === t
-                    const flag = f ? cpFlag(assets, f.key) : undefined
+                    const flag = f ? factionFlag(assets, f.key) : undefined
                     return (
                       <button
                         key={t}
@@ -241,7 +241,7 @@ export function Picker({ index, currentMapId, currentLayerId, onStart, onClose, 
                         }`}
                       >
                         <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-400">
-                          {flag && <img src={dataUrl(flag)} alt="" className="h-4 w-4 object-contain" />}
+                          {flag && <img src={dataUrl(flag)} alt="" className="h-4 w-[22px] object-fill" />}
                           {t === 1 ? 'REDFOR' : 'BLUFOR'}
                         </div>
                         <div className={`mt-1 truncate text-[13px] font-semibold ${active ? (t === 1 ? 'text-rose-300' : 'text-sky-300') : 'text-slate-200'}`}>
