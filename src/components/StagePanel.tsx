@@ -12,7 +12,7 @@ const VISIBILITY_OPTIONS: Array<{
 }> = [
   { key: 'showVehicles', label: 'Vehicles', icon: Truck },
   { key: 'showEnemy', label: 'Enemy assets', icon: Swords },
-  { key: 'showFlags', label: 'Flags & radii', icon: Flag },
+  { key: 'showFlags', label: 'Flags', icon: Flag },
   { key: 'showDrawings', label: 'Drawings', icon: Pencil },
   { key: 'showLabels', label: 'Map labels', icon: Tag },
   { key: 'showVehicleNames', label: 'Vehicle names', icon: Type },
