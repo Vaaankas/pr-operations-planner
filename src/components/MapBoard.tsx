@@ -734,13 +734,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   }, [stage.elements, ui.selectedId, ui.selectedKind])
 
   const transformerRef = useRef<Konva.Transformer>(null)
+  const rotateConnectorRef = useRef<Konva.Line>(null)
   const [rotateConnector, setRotateConnector] = useState<number[]>([])
 
-  const updateRotateConnector = () => {
+  const updateRotateConnector = (syncState = false) => {
     const transformer = transformerRef.current
     const node = transformer?.nodes()[0] as Konva.Rect | undefined
     if (!node) {
-      setRotateConnector([])
+      if (syncState) setRotateConnector([])
       return
     }
     const width = node.width() * Math.abs(node.scaleX())
@@ -751,12 +752,15 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     const topX = node.x() + sin * (height / 2)
     const topY = node.y() - cos * (height / 2)
     const offset = 27 / view.scale
-    setRotateConnector([
+    const points = [
       topX,
       topY,
       topX + sin * offset,
       topY - cos * offset,
-    ])
+    ]
+    rotateConnectorRef.current?.points(points)
+    rotateConnectorRef.current?.getLayer()?.batchDraw()
+    if (syncState) setRotateConnector(points)
   }
 
   useEffect(() => {
@@ -769,7 +773,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     transformer.nodes(node ? [node] : [])
     transformer.getLayer()?.batchDraw()
     if (node && selectedElement?.type === 'rect') {
-      requestAnimationFrame(updateRotateConnector)
+      requestAnimationFrame(() => updateRotateConnector(true))
     } else {
       setRotateConnector([])
     }
@@ -1496,8 +1500,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           )}
           {draftNode()}
           {pendingNode()}
-          {selectedElement?.type === 'rect' && rotateConnector.length === 4 && (
+          {selectedElement?.type === 'rect' && (
             <Line
+              ref={rotateConnectorRef}
               points={rotateConnector}
               stroke="#fbbf24"
               strokeWidth={2}
@@ -1518,7 +1523,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             anchorCornerRadius={2}
             padding={3}
             rotateAnchorOffset={24}
-            onTransform={() => updateRotateConnector()}
+            onTransform={() => updateRotateConnector(false)}
             onTransformStart={() => planner.checkpoint()}
           />
         </Layer>
