@@ -240,6 +240,15 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
       const img = path ? assetImage(path) : iconImage(glyphFor('marker', el.icon), el.color)
       ctx.translate(x, y)
       ctx.rotate((el.rotation * Math.PI) / 180)
+      if (el.affiliation) {
+        ctx.beginPath()
+        ctx.arc(0, 0, s * 0.72, 0, Math.PI * 2)
+        ctx.fillStyle = el.affiliation === 'enemy' ? 'rgba(239,68,68,0.24)' : 'rgba(59,130,246,0.24)'
+        ctx.fill()
+        ctx.lineWidth = Math.max(1, s * 0.03)
+        ctx.strokeStyle = el.affiliation === 'enemy' ? 'rgba(239,68,68,0.85)' : 'rgba(59,130,246,0.85)'
+        ctx.stroke()
+      }
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       break
     }

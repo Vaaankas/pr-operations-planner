@@ -173,7 +173,14 @@ export type DrawElement =
       squadColor: string
       size: number
     })
-  | (ElementBase & { type: 'icon'; at: Point; icon: string; rotation: number; size: number })
+  | (ElementBase & {
+      type: 'icon'
+      at: Point
+      icon: string
+      rotation: number
+      size: number
+      affiliation?: 'friendly' | 'enemy'
+    })
   | (ElementBase & {
       type: 'unit'
       at: Point
@@ -273,7 +280,7 @@ export interface Plan {
 
 export type Tool =
   | 'select' | 'pen' | 'line' | 'arrow' | 'ruler' | 'rect' | 'ellipse'
-  | 'polygon' | 'text' | 'textbox' | 'marker' | 'erase'
+  | 'polygon' | 'text' | 'textbox' | 'marker' | 'marker_friendly' | 'marker_enemy' | 'erase'
 
 export interface UIState {
   view: 'plan' | 'roster'

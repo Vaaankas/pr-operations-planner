@@ -551,7 +551,7 @@ export const useUI = create<UIState & {
   fillShapes: false,
   visibleRoutes: [],
   hiddenCps: [],
-  markerIcon: 'objective',
+  markerIcon: 'order_attack',
   unitKind: 'inf',
   unitAffiliation: 'hostile',
   selectedId: null,

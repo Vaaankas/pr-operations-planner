@@ -1,16 +1,15 @@
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import {
   MousePointer2, Pencil, Minus, MoveUpRight, Square, Circle, Pentagon,
-  Type, MapPin, Eraser, Ruler, Undo2, Redo2,
+  Type, MapPin, Swords, Eraser, Ruler, Undo2, Redo2,
 } from 'lucide-react'
 import { usePlanner, useUI } from '../store'
 import type { Tool } from '../types'
-import { iconDataUrl } from '../icons'
 import { useAssets } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
 import { SQUAD_COLORS } from '../lib/utils'
 
-const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: string }[] = [
+const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: string; group?: 'marker' }[] = [
   { tool: 'select', icon: MousePointer2, label: 'Select / move', key: 'V' },
   { tool: 'pen', icon: Pencil, label: 'Draw', key: 'P' },
   { tool: 'line', icon: Minus, label: 'Line', key: 'L' },
@@ -20,16 +19,12 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'ellipse', icon: Circle, label: 'Ellipse', key: 'O' },
   { tool: 'polygon', icon: Pentagon, label: 'Polygon', key: 'G' },
   { tool: 'text', icon: Type, label: 'Label', key: 'T' },
-  { tool: 'marker', icon: MapPin, label: 'Marker', key: 'M' },
+  { tool: 'marker_friendly', icon: MapPin, label: 'Friendly marker', key: 'M', group: 'marker' },
+  { tool: 'marker_enemy', icon: Swords, label: 'Enemy marker', key: 'N', group: 'marker' },
   { tool: 'erase', icon: Eraser, label: 'Erase', key: 'E' },
 ]
 
 const COLORS = SQUAD_COLORS
-
-const MARKERS = [
-  'objective', 'fob', 'rally', 'lz', 'observe', 'attack', 'defend', 'waypoint',
-  'mine', 'cache', 'repair', 'supply', 'mortar', 'tow', 'aa', 'star', 'phase',
-]
 
 const ORDERS = ['move', 'attack', 'defend', 'repair', 'build', 'observe']
 
@@ -37,16 +32,20 @@ export function ToolbarRail() {
   const ui = useUI()
   return (
     <div className="flex min-h-0 w-12 shrink-0 flex-1 flex-col items-center gap-0.5 border-r border-white/10 bg-[#080d0a] py-2">
-      {TOOLS.map(({ tool, icon: Icon, label, key }) => (
-        <button
-          key={tool}
-          onClick={() => ui.setTool(tool)}
-          title={`${label} (${key})`}
-          className={`relative flex h-8 w-8 items-center justify-center rounded transition ${ui.tool === tool ? 'bg-amber-400 text-black' : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'}`}
-        >
-          <Icon className="h-4 w-4" />
-          {ui.tool === tool && <span className="absolute -right-0.5 -top-0.5 rounded bg-black px-0.5 font-mono text-[8px] text-amber-300">{key}</span>}
-        </button>
+      {TOOLS.map(({ tool, icon: Icon, label, key, group }, index) => (
+        <Fragment key={tool}>
+          {group === 'marker' && TOOLS[index - 1]?.group !== 'marker' && (
+            <div className="my-0.5 h-px w-6 shrink-0 bg-white/15" title="Markers" />
+          )}
+          <button
+            onClick={() => ui.setTool(tool)}
+            title={`${label} (${key})`}
+            className={`relative flex h-8 w-8 items-center justify-center rounded transition ${ui.tool === tool ? 'bg-amber-400 text-black' : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'}`}
+          >
+            <Icon className="h-4 w-4" />
+            {ui.tool === tool && <span className="absolute -right-0.5 -top-0.5 rounded bg-black px-0.5 font-mono text-[8px] text-amber-300">{key}</span>}
+          </button>
+        </Fragment>
       ))}
     </div>
   )
@@ -198,26 +197,8 @@ export function OptionsBar() {
         </>
       )}
 
-      {tool === 'marker' && (
+      {(tool === 'marker_friendly' || tool === 'marker_enemy') && (
         <div className="flex flex-1 items-center gap-1 overflow-x-auto">
-          {MARKERS.map((m) => {
-            const path = assets.markers[m]
-            return (
-              <button
-                key={m}
-                onClick={() => ui.setMarker(m)}
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === m ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
-                title={m}
-              >
-                {path ? (
-                  <GameIcon path={path} size={20} />
-                ) : (
-                  <img src={iconDataUrl(m, ui.markerIcon === m ? '#fbbf24' : '#cbd5e1')} alt={m} className="h-5 w-5" />
-                )}
-              </button>
-            )
-          })}
-          <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />
           {ORDERS.map((o) => {
             const icon = `order_${o}`
             const path = assets.orders[o]
@@ -226,7 +207,7 @@ export function OptionsBar() {
                 key={icon}
                 onClick={() => ui.setMarker(icon)}
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
-                title={`commander order: ${o}`}
+                title={`Commander order: ${o}`}
               >
                 {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
               </button>

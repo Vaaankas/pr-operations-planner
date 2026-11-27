@@ -28,6 +28,9 @@ interface Props {
 }
 
 const isIconElement = (el: DrawElement) => el.type === 'icon' || el.type === 'unit' || el.type === 'squad'
+const isMarkerTool = (tool: string) => tool === 'marker' || tool === 'marker_friendly' || tool === 'marker_enemy'
+const markerAffiliation = (tool: string): 'friendly' | 'enemy' | undefined =>
+  tool === 'marker_enemy' ? 'enemy' : tool === 'marker_friendly' ? 'friendly' : undefined
 
 interface Draft {
   kind: 'pen' | 'line' | 'rect' | 'ellipse'
@@ -473,8 +476,16 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       pendingTextBox.current = tool === 'textbox'
       return
     }
-    if (tool === 'marker') {
-      commit({ ...base(), type: 'icon', at: toNorm(pos), icon: state.markerIcon, rotation: 0, size: 0.022 } as DrawElement)
+    if (isMarkerTool(tool)) {
+      commit({
+        ...base(),
+        type: 'icon',
+        at: toNorm(pos),
+        icon: state.markerIcon,
+        rotation: 0,
+        size: 0.022,
+        affiliation: markerAffiliation(tool),
+      } as DrawElement)
       return
     }
     if (tool === 'polygon') {
@@ -911,13 +922,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     const common = {
       id: el.id,
       draggable: ui.tool === 'select',
-      listening: ui.tool === 'select' || ui.tool === 'erase' || (ui.tool === 'marker' && el.type === 'icon'),
+      listening: ui.tool === 'select' || ui.tool === 'erase' || (isMarkerTool(ui.tool) && el.type === 'icon'),
       opacity: el.opacity,
       onMouseDown: (e: KonvaEventObject<MouseEvent>) => {
-        if (ui.tool === 'marker' && el.type === 'icon') e.cancelBubble = true
+        if (isMarkerTool(ui.tool) && el.type === 'icon') e.cancelBubble = true
       },
       onContextMenu: (e: KonvaEventObject<MouseEvent>) => {
-        if (ui.tool === 'marker' && el.type === 'icon') {
+        if (isMarkerTool(ui.tool) && el.type === 'icon') {
           e.evt.preventDefault()
           e.cancelBubble = true
           planner.removeElement(el.id)
@@ -1240,6 +1251,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             }}
           >
             <Circle radius={el.size * mapW * 0.62} fill="rgba(0,0,0,0.001)" />
+            {el.affiliation && (
+              <Circle
+                radius={el.size * mapW * 0.72}
+                fill={withAlpha(el.affiliation === 'enemy' ? '#ef4444' : '#3b82f6', 0.24)}
+                stroke={withAlpha(el.affiliation === 'enemy' ? '#ef4444' : '#3b82f6', 0.85)}
+                strokeWidth={1.5 * iconScale}
+              />
+            )}
             <MarkerGlyph icon={el.icon} color={color} size={el.size * mapW} />
           </Group>
         )
