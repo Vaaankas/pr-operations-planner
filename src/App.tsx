@@ -161,8 +161,10 @@ function AppInner() {
       showVehicleNames: visibility.showVehicleNames,
       showVehiclePaths: visibility.showVehiclePaths,
       iconSize: active?.iconSize ?? 1,
+      visibleRoutes: active?.visibleRoutes ?? (layer?.routes ?? []).map((route) => route.id),
+      hiddenCps: active?.hiddenCps ?? [],
     })
-  }, [plan?.activeStageId, plan?.stages])
+  }, [plan?.activeStageId, plan?.stages, layer?.id, layer?.routes])
 
   const startPlan = useCallback(async (nextMap: MapMeta, ref: LayerRef, side: Team) => {
     if (plan) {

@@ -249,6 +249,8 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       stage.turns = {}
       stage.visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(previous.visibility ?? {}) }
       stage.iconSize = previous.iconSize ?? 1
+      stage.visibleRoutes = previous.visibleRoutes ? [...previous.visibleRoutes] : undefined
+      stage.hiddenCps = [...(previous.hiddenCps ?? [])]
     }
     get().mutate((draft) => {
       draft.stages.push(stage)
@@ -494,6 +496,13 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
   },
 }))
 
+function persistStageView(patch: Pick<Stage, 'visibleRoutes' | 'hiddenCps'>): void {
+  const planner = usePlanner.getState()
+  const plan = planner.plan
+  const active = plan?.stages.find((stage) => stage.id === plan.activeStageId)
+  if (active) planner.updateStage(active.id, patch)
+}
+
 export const useUI = create<UIState & {
   setView: (view: UIState['view']) => void
   setMode: (mode: UIState['mode']) => void
@@ -565,17 +574,27 @@ export const useUI = create<UIState & {
   setArrowBoth: (arrowBoth) => set({ arrowBoth }),
   setFillShapes: (fillShapes) => set({ fillShapes }),
   setVisibleRoutes: (visibleRoutes) => set({ visibleRoutes }),
-  toggleRoute: (id) => set((s) => ({
-    visibleRoutes: s.visibleRoutes.includes(id)
-      ? s.visibleRoutes.filter((r) => r !== id)
-      : [...s.visibleRoutes, id],
-  })),
-  toggleCp: (id) => set((s) => ({
-    hiddenCps: s.hiddenCps.includes(id)
-      ? s.hiddenCps.filter((c) => c !== id)
-      : [...s.hiddenCps, id],
-  })),
-  setAllRoutes: (ids, visible) => set({ visibleRoutes: visible ? ids : [] }),
+  toggleRoute: (id) => {
+    const current = useUI.getState()
+    const visibleRoutes = current.visibleRoutes.includes(id)
+      ? current.visibleRoutes.filter((route) => route !== id)
+      : [...current.visibleRoutes, id]
+    set({ visibleRoutes })
+    persistStageView({ visibleRoutes, hiddenCps: current.hiddenCps })
+  },
+  toggleCp: (id) => {
+    const current = useUI.getState()
+    const hiddenCps = current.hiddenCps.includes(id)
+      ? current.hiddenCps.filter((cp) => cp !== id)
+      : [...current.hiddenCps, id]
+    set({ hiddenCps })
+    persistStageView({ visibleRoutes: current.visibleRoutes, hiddenCps })
+  },
+  setAllRoutes: (ids, visible) => {
+    const visibleRoutes = visible ? ids : []
+    set({ visibleRoutes })
+    persistStageView({ visibleRoutes, hiddenCps: useUI.getState().hiddenCps })
+  },
   setMarker: (markerIcon) => set({ markerIcon }),
   setUnit: (unitKind) => set({ unitKind }),
   setAffiliation: (unitAffiliation) => set({ unitAffiliation }),

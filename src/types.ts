@@ -207,6 +207,8 @@ export interface Stage {
   frame?: StageFrame
   visibility?: StageVisibility
   iconSize?: number
+  visibleRoutes?: string[]
+  hiddenCps?: number[]
   notes: string
   elements: DrawElement[]
   moves: Record<string, VehicleMove>
