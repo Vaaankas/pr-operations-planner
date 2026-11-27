@@ -24,6 +24,7 @@ interface Props {
   stage: PlanStage
   preview?: boolean
   screenScale?: number
+  iconSize?: number
 }
 
 const isIconElement = (el: DrawElement) => el.type === 'icon' || el.type === 'unit' || el.type === 'squad'
@@ -91,7 +92,7 @@ function aasPickCount(sgid: number): number | null {
   return pick > 0 ? pick : null
 }
 
-export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1 }: Props) {
+export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1, iconSize: iconSizeOverride }: Props) {
   const ui = useUI()
   const assets = useAssets()
   const planner = usePlanner()
@@ -708,6 +709,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     return ui.showVehicles
   }
 
+  const iconSize = iconSizeOverride ?? ui.iconSize
   const iconScale = (1 / view.scale) * screenScale
   const stageCursor = panning ? 'grabbing' : ui.tool === 'select' ? 'default' : 'crosshair'
 
@@ -955,7 +957,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       }
       case 'squad': {
         const at = normToScreen(el.at)
-        const r = (SQUAD_ICON_PX / 2) * iconScale * ui.iconSize
+        const r = (SQUAD_ICON_PX / 2) * iconScale * iconSize
         const commander = el.squadNumber === 0
         const icon = commander ? assets.commander : assets.squads[String(el.squadNumber)]
         return (
@@ -1384,7 +1386,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const icon = assets.markers.cache_objective
             if (!icon) return null
             const p = worldToDisplayNorm(cache.x, cache.z, layer.world)
-            const size = CACHE_ICON_PX * iconScale * ui.iconSize
+            const size = CACHE_ICON_PX * iconScale * iconSize
             const outline = size + 4 * iconScale
             return (
               <Group key={`cache-${i}`} x={p.x * mapW} y={p.y * mapH} listening={false}>
@@ -1413,7 +1415,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const key = team ? layer.factions[String(team)]?.key : undefined
             const flagPath = cpFlag(assets, key)
             const img = flagPath ? assetImage(flagPath) : null
-            const w = FLAG_ICON_PX * iconScale * ui.iconSize
+            const w = FLAG_ICON_PX * iconScale * iconSize
             const ratio = img && img.width && img.height ? img.height / img.width : 1
             const h = w * Math.min(1, Math.max(0.4, ratio))
             const index = routes.findIndex((route) => route.cps.includes(cp.id))
@@ -1465,17 +1467,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {ui.showLabels && (
                   <Text
                     text={cp.name}
-                    fontSize={10.5 * iconScale * ui.iconSize}
+                    fontSize={10.5 * iconScale * iconSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill={MAP_TEXT_FILL}
                     stroke={MAP_TEXT_OUTLINE}
-                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * ui.iconSize}
+                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * iconSize}
                     fillAfterStrokeEnabled
-                    y={h / 2 + 3 * iconScale * ui.iconSize}
-                    width={180 * iconScale * ui.iconSize}
+                    y={h / 2 + 3 * iconScale * iconSize}
+                    width={180 * iconScale * iconSize}
                     align="center"
-                    x={-90 * iconScale * ui.iconSize}
+                    x={-90 * iconScale * iconSize}
                     listening={false}
                   />
                 )}
@@ -1490,7 +1492,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const p = worldToDisplayNorm(pos.x, pos.z, layer.world)
             const move = stage.moves[v.id]
             const color = vehicleColor(v, plan, squadColors)
-            const s = vehicleIconPx(v.category) * iconScale * ui.iconSize * VEHICLE_ICON_SCALE
+            const s = vehicleIconPx(v.category) * iconScale * iconSize * VEHICLE_ICON_SCALE
             const nodeId = `veh_${v.id}`
             const selected = !preview && ui.selectedId === nodeId
             const commanderClaim = plan.claims[v.id] === 'commander'
@@ -1663,34 +1665,34 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {!ready && showName && (
                   <Text
                     text={formatTime(delayRemaining)}
-                    fontSize={10 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    fontSize={10 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill="#94a3b8"
                     stroke="rgba(2,6,4,0.92)"
-                    strokeWidth={3 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    strokeWidth={3 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.56 + 11 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
-                    width={100 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    y={dp.y * mapH + s * 0.56 + 11 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
+                    width={100 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     align="center"
-                    x={dp.x * mapW - 50 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    x={dp.x * mapW - 50 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     listening={false}
                   />
                 )}
                 {showName && (
                   <Text
                     text={`${claimPrefix}${v.label}`}
-                    fontSize={9 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    fontSize={9 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill={selected ? (ready ? '#fbbf24' : '#94a3b8') : color}
                     stroke={MAP_TEXT_OUTLINE}
-                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     fillAfterStrokeEnabled
                     y={dp.y * mapH + s * 0.56}
-                    width={240 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    width={240 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     align="center"
-                    x={dp.x * mapW - 120 * iconScale * VEHICLE_TEXT_SCALE * ui.iconSize}
+                    x={dp.x * mapW - 120 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
                     listening={false}
                   />
                 )}

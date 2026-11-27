@@ -160,6 +160,7 @@ function AppInner() {
       showDrawings: visibility.showDrawings,
       showVehicleNames: visibility.showVehicleNames,
       showVehiclePaths: visibility.showVehiclePaths,
+      iconSize: active?.iconSize ?? 1,
     })
   }, [plan?.activeStageId, plan?.stages])
 

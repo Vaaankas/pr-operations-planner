@@ -37,6 +37,7 @@ export async function captureStageDataUrl(
       plan: src.plan,
       stage,
       screenScale: resolution / 900,
+      iconSize: stage.iconSize ?? 1,
     })
     root.render(createElement(AssetProvider, { value: src.assets, children: board }))
 

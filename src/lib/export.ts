@@ -2,6 +2,8 @@ import type { AssetManifest, LayerData, MapMeta, Plan, Stage } from '../types'
 import { formatTime, safeName } from './utils'
 import { captureStageDataUrl } from './konvaExport'
 import { stageSlideData } from './slide'
+import { hasOrderTokens, ordersPlainText } from './orders'
+import { renderOrdersImage } from './ordersImage'
 
 export type ExportFormat = 'pptx' | 'pdf' | 'png'
 
@@ -187,7 +189,13 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
     slide.addText(slideData.meta, { x: 0.45, y: 1.2, w: 4.7, h: 0.45, fontFace: 'Segoe UI', fontSize: 9, color: '64748B' })
 
     const notes = slideData.notes
-    if (notes) {
+    const tokenizedOrders = Boolean(notes && hasOrderTokens(notes))
+    if (tokenizedOrders) {
+      slide.addImage({
+        data: await renderOrdersImage(src.plan, stage, src.assets),
+        x: 0.45, y: 1.78, w: 4.55, h: 4.9,
+      })
+    } else if (notes) {
       slide.addText(notes, {
         x: 0.45, y: 1.78, w: 4.55, h: 4.9, fontFace: 'Segoe UI', fontSize: 11, color: '334155',
         valign: 'top', breakLine: false, lineSpacingMultiple: 1.15, fit: 'shrink',
@@ -201,7 +209,7 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
     slide.addText(slideData.footer, {
       x: 0.45, y: 7.12, w: 8, h: 0.2, fontFace: 'Segoe UI', fontSize: 8, color: '94A3B8',
     })
-    if (notes) slide.addNotes(notes)
+    if (notes) slide.addNotes(ordersPlainText(notes, src.plan))
   }
 
   return (await pptx.write({ outputType: 'blob' })) as Blob
@@ -343,10 +351,14 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
     doc.text(slideData.meta, 0.45, 1.25, { maxWidth: 4.7 })
 
     if (slideData.notes) {
-      doc.setFontSize(10)
-      doc.setTextColor(51, 65, 85)
-      const lines = doc.splitTextToSize(slideData.notes, 4.55)
-      doc.text(lines, 0.45, 1.65, { lineHeightFactor: 1.35 })
+      if (hasOrderTokens(slideData.notes)) {
+        doc.addImage(await renderOrdersImage(src.plan, stage, src.assets), 'PNG', 0.45, 1.65, 4.55, 4.9)
+      } else {
+        doc.setFontSize(10)
+        doc.setTextColor(51, 65, 85)
+        const lines = doc.splitTextToSize(slideData.notes, 4.55)
+        doc.text(lines, 0.45, 1.65, { lineHeightFactor: 1.35 })
+      }
     }
     const mapSize = 6.55
     doc.addImage(data, 'JPEG', PAGE_W - mapSize - 0.35, 0.38, mapSize, mapSize)

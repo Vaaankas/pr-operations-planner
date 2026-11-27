@@ -95,6 +95,7 @@ export function newStage(index: number, time = 0): Stage {
     name: index === 0 ? 'Deployment' : `Stage ${index + 1}`,
     time,
     visibility: { ...DEFAULT_STAGE_VISIBILITY },
+    iconSize: 1,
     notes: '',
     elements: [],
     moves: {},

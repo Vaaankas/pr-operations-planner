@@ -3,8 +3,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { LayerData, MapMeta, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { useAssets } from '../lib/assets'
+import { GameIcon } from '../lib/gameIcons'
 import { formatTime } from '../lib/utils'
 import { stageSlideData } from '../lib/slide'
+import { parseOrders } from '../lib/orders'
 import { getStagePreview, setStagePreview, stagePreviewKey } from '../lib/previewCache'
 import { captureStageDataUrl } from '../lib/konvaExport'
 
@@ -97,7 +99,47 @@ function RosterSlide({ plan, map, layer }: { plan: Plan; map: MapMeta; layer: La
   )
 }
 
-function StageSlideType({ slide, src }: { slide: ReturnType<typeof stageSlideData>; src?: string }) {
+function OrdersText({ text, plan, assets }: { text: string; plan: Plan; assets: ReturnType<typeof useAssets> }) {
+  return (
+    <>
+      {parseOrders(text).map((segment, index) => {
+        if (segment.type === 'text') return <span key={index}>{segment.text}</span>
+        if (segment.type === 'cmd') {
+          return (
+            <span
+              key={index}
+              title="Commander"
+              className="mx-0.5 inline-flex h-[1.35em] w-[1.35em] -translate-y-[0.15em] items-center justify-center rounded-full bg-[#2563eb] align-middle"
+            >
+              {assets.commander && <GameIcon path={assets.commander} tint="#facc15" size={16} />}
+            </span>
+          )
+        }
+        const squadIndex = plan.roster.squads.findIndex((squad) => squad.id === segment.squadId)
+        const squad = plan.roster.squads[squadIndex]
+        if (!squad) return <span key={index}>SQUAD</span>
+        return (
+          <span
+            key={index}
+            title={squad.name}
+            className="mx-0.5 inline-flex h-[1.35em] w-[1.35em] -translate-y-[0.15em] items-center justify-center rounded-full bg-[#0b110d] align-middle"
+          >
+            {assets.squads[String(squadIndex + 1)] && (
+              <GameIcon path={assets.squads[String(squadIndex + 1)]} tint={squad.color} size={16} />
+            )}
+          </span>
+        )
+      })}
+    </>
+  )
+}
+
+function StageSlideType({ slide, src, plan, assets }: {
+  slide: ReturnType<typeof stageSlideData>
+  src?: string
+  plan: Plan
+  assets: ReturnType<typeof useAssets>
+}) {
   return (
     <div className="relative h-full w-full">
       <div className="absolute inset-x-0 top-0 h-[0.8%] bg-amber-400" />
@@ -107,7 +149,7 @@ function StageSlideType({ slide, src }: { slide: ReturnType<typeof stageSlideDat
         <div className="mt-[3%] text-[#64748b]" style={{ fontSize: 'clamp(8px, 0.8vw, 12px)' }}>{slide.meta}</div>
       </div>
       <div className="absolute left-[3.4%] top-[24%] w-[35%] whitespace-pre-wrap text-[#334155]" style={{ fontSize: 'clamp(10px, 0.98vw, 15px)', lineHeight: 1.55 }}>
-        {slide.notes || <span className="italic text-slate-400">No stage notes.</span>}
+        {slide.notes ? <OrdersText text={slide.notes} plan={plan} assets={assets} /> : <span className="italic text-slate-400">No stage notes.</span>}
       </div>
       <div className="absolute bottom-[2.5%] left-[3.4%] font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>{slide.footer}</div>
       {src ? (
@@ -200,7 +242,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
         {page === 0 ? (
           <RosterSlide plan={plan} map={map} layer={layer} />
         ) : (
-          <StageSlideType slide={slide} src={src} />
+          <StageSlideType slide={slide} src={src} plan={plan} assets={assets} />
         )}
       </div>
 

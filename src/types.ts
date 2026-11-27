@@ -206,6 +206,7 @@ export interface Stage {
   time: number
   frame?: StageFrame
   visibility?: StageVisibility
+  iconSize?: number
   notes: string
   elements: DrawElement[]
   moves: Record<string, VehicleMove>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Clock, Flag, Pencil, Route as RouteIcon, Swords, Tag, Trash2, Truck, Type } from 'lucide-react'
 import type { LayerData, Plan, Stage, StageVisibility } from '../types'
-import { usePlanner, useUI } from '../store'
+import { usePlanner } from '../store'
 import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
+import { CMD_ORDER_TOKEN, squadOrderToken } from '../lib/orders'
 
 const VISIBILITY_OPTIONS: Array<{
   key: keyof StageVisibility
@@ -45,24 +46,51 @@ function CommitInput({
 
 export function StagePanel({ layer, plan, stage }: Props) {
   const planner = usePlanner()
-  const ui = useUI()
+  const ordersRef = useRef<HTMLTextAreaElement>(null)
   const [time, setTime] = useState(formatTime(stage.time))
   const [notes, setNotes] = useState(stage.notes)
   useEffect(() => setTime(formatTime(stage.time)), [stage.time])
   useEffect(() => setNotes(stage.notes), [stage.notes])
   const visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(stage.visibility ?? {}) }
 
+  const dropSquad = (event: React.DragEvent<HTMLTextAreaElement>) => {
+    const squadId = event.dataTransfer.getData('text/pr-squad')
+    if (!squadId) return
+    event.preventDefault()
+    const token = `${squadId === 'commander' ? CMD_ORDER_TOKEN : squadOrderToken(squadId)} `
+    const textarea = ordersRef.current
+    const start = textarea?.selectionStart ?? notes.length
+    const end = textarea?.selectionEnd ?? start
+    const next = `${notes.slice(0, start)}${token}${notes.slice(end)}`
+    setNotes(next)
+    planner.updateStage(stage.id, { notes: next })
+    requestAnimationFrame(() => {
+      textarea?.focus()
+      textarea?.setSelectionRange(start + token.length, start + token.length)
+    })
+  }
+
 
   return (
     <div className="flex h-full flex-col">
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3">
+      <div className="shrink-0 space-y-3 px-3 pt-3">
         <div>
           <label className="mb-1 block font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">Stage name</label>
-          <CommitInput
-            value={stage.name}
-            onCommit={(v) => planner.updateStage(stage.id, { name: v || 'Untitled stage' })}
-            className="w-full rounded border border-white/10 bg-black/30 px-2 py-1.5 text-[13px] font-semibold text-slate-100 outline-none focus:border-amber-400/50"
-          />
+          <div className="flex items-stretch gap-1.5">
+            <CommitInput
+              value={stage.name}
+              onCommit={(v) => planner.updateStage(stage.id, { name: v || 'Untitled stage' })}
+              className="min-w-0 flex-1 rounded border border-white/10 bg-black/30 px-2 py-1.5 text-[13px] font-semibold text-slate-100 outline-none focus:border-amber-400/50"
+            />
+            <button
+              onClick={() => planner.removeStage(stage.id)}
+              disabled={plan.stages.length <= 1}
+              title="Delete stage"
+              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded border border-rose-500/20 text-rose-400/80 hover:bg-rose-500/10 disabled:opacity-30"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         <div>
@@ -81,26 +109,22 @@ export function StagePanel({ layer, plan, stage }: Props) {
           />
           <span className="ml-2 text-[10px] text-slate-600">mm:ss from round start</span>
         </div>
+      </div>
 
-        <div>
-          <label className="mb-1 block font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">Commander intent / notes</label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            onBlur={() => notes !== stage.notes && planner.updateStage(stage.id, { notes })}
-            rows={8}
-            placeholder="Intent, tasks, timing, coordination..."
-            className="w-full resize-none rounded border border-white/10 bg-black/30 px-2 py-2 text-[12px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/50"
-          />
-        </div>
-
-        <button
-          onClick={() => planner.removeStage(stage.id)}
-          disabled={plan.stages.length <= 1}
-          className="flex w-full items-center justify-center gap-1 rounded border border-rose-500/20 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-rose-400/80 hover:bg-rose-500/10 disabled:opacity-30"
-        >
-          <Trash2 className="h-3 w-3" /> Delete stage
-        </button>
+      <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-3">
+        <label className="mb-1 block font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">ORDERS</label>
+        <textarea
+          ref={ordersRef}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={() => notes !== stage.notes && planner.updateStage(stage.id, { notes })}
+          onDragOver={(e) => {
+            if (Array.from(e.dataTransfer.types).includes('text/pr-squad')) e.preventDefault()
+          }}
+          onDrop={dropSquad}
+          placeholder="Orders, tasks, timing, coordination..."
+          className="min-h-0 w-full flex-1 resize-none rounded border border-white/10 bg-black/30 px-2 py-2 text-[12px] leading-relaxed text-slate-200 outline-none placeholder:text-slate-600 focus:border-amber-400/50"
+        />
       </div>
 
       <div className="h-1/4 min-h-[165px] shrink-0 border-t border-white/10 bg-black/20 p-2">
@@ -122,15 +146,15 @@ export function StagePanel({ layer, plan, stage }: Props) {
           <div className="flex min-h-0 flex-col justify-center rounded border border-white/10 bg-black/20 px-1.5 py-1">
             <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wider text-slate-400">
               <span>Icon scale</span>
-              <span className="text-slate-300">{ui.iconSize.toFixed(1)}×</span>
+              <span className="text-slate-300">{(stage.iconSize ?? 1).toFixed(1)}×</span>
             </div>
             <input
               type="range"
               min={0.5}
               max={2.5}
               step={0.1}
-              value={ui.iconSize}
-              onChange={(e) => ui.setIconSize(Number(e.target.value))}
+              value={stage.iconSize ?? 1}
+              onChange={(e) => planner.setStageIconSize(Number(e.target.value))}
               className="icon-scale-slider mt-1 h-1 w-full rounded-full bg-white/15 accent-amber-400"
               title="Map icon scale"
             />

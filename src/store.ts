@@ -74,6 +74,7 @@ interface PlannerStore {
   addStage: () => void
   updateStage: (id: string, patch: Partial<Stage>) => void
   toggleStageVisibility: (key: keyof StageVisibility) => void
+  setStageIconSize: (value: number) => void
   removeStage: (id: string) => void
   setActiveStage: (id: string) => void
   addMember: (target: string, name: string, kit?: string) => boolean
@@ -247,6 +248,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       stage.moves = clone(previous.moves)
       stage.turns = {}
       stage.visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(previous.visibility ?? {}) }
+      stage.iconSize = previous.iconSize ?? 1
     }
     get().mutate((draft) => {
       draft.stages.push(stage)
@@ -273,6 +275,18 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       if (active) active.visibility = visibility
     })
     useUI.setState({ [key]: visibility[key] } as Pick<UIState, typeof key>)
+  },
+
+  setStageIconSize: (value) => {
+    const { plan } = get()
+    if (!plan) return
+    const stage = plan.stages.find((s) => s.id === plan.activeStageId)
+    if (!stage) return
+    get().mutate((draft) => {
+      const active = draft.stages.find((s) => s.id === draft.activeStageId)
+      if (active) active.iconSize = value
+    })
+    useUI.setState({ iconSize: value })
   },
 
   removeStage: (id) => {
