@@ -1369,7 +1369,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                       <Line
                         key={`parallel-${route.id}-${groupIndex}-${i}`}
                         points={[a.x * mapW, a.y * mapH, b.x * mapW, b.y * mapH]}
-                        stroke="#f8fafc"
+                        stroke={color}
                         strokeWidth={1.5 * iconScale}
                         opacity={0.85}
                         lineCap="round"
