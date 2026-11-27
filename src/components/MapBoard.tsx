@@ -1440,6 +1440,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 onMouseLeave={() => setHoverFlag(null)}
               >
                 <Circle radius={w * 0.55} fill="rgba(0,0,0,0.001)" />
+                <Rect
+                  x={-w * FLAG_ANCHOR_X}
+                  y={-h * FLAG_ANCHOR_Y}
+                  width={w}
+                  height={h}
+                  fill="rgba(0,0,0,0.001)"
+                />
                 {radius > 0 && (
                   <Circle
                     radius={radius}
