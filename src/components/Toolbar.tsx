@@ -58,7 +58,7 @@ export function ToolbarHistory() {
   const canUndo = usePlanner((state) => state.past.length > 0)
   const canRedo = usePlanner((state) => state.future.length > 0)
   return (
-    <div className="flex h-[72px] shrink-0 items-center justify-center gap-0.5 border-r border-t border-white/10 bg-[#080d0a]">
+    <div className="flex h-[72px] shrink-0 flex-col items-center justify-center gap-0.5 border-r border-t border-white/10 bg-[#080d0a]">
       <button
         onClick={() => planner.undo()}
         disabled={!canUndo}
