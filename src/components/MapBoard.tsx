@@ -848,7 +848,12 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       const height = rect.height() * Math.abs(node.scaleY())
       const halfW = width / mapW / 2
       const halfH = height / mapH / 2
-      const resized = Math.abs(node.scaleX() - 1) > 0.001 || Math.abs(node.scaleY() - 1) > 0.001
+      const originalWidth = Math.abs(el.b.x - el.a.x) * mapW
+      const originalHeight = Math.abs(el.b.y - el.a.y) * mapH
+      const resized = Math.abs(node.scaleX() - 1) > 0.001
+        || Math.abs(node.scaleY() - 1) > 0.001
+        || Math.abs(width - originalWidth) > 0.5
+        || Math.abs(height - originalHeight) > 0.5
       const rotation = node.rotation() === 0 && el.rotation && resized ? el.rotation : node.rotation()
       patch = {
         a: { x: center.x - halfW, y: center.y - halfH },
