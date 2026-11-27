@@ -133,12 +133,14 @@ export function OptionsBar() {
             />
             <span className="w-7 font-mono text-slate-300">{Math.round(ui.opacity * 100)}%</span>
           </label>
-          <button
-            onClick={() => ui.setDash(!ui.dash)}
-            className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${ui.dash ? 'border-amber-400/60 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500 hover:text-slate-300'}`}
-          >
-            Dashed
-          </button>
+          {tool !== 'text' && (
+            <button
+              onClick={() => ui.setDash(!ui.dash)}
+              className={`rounded border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${ui.dash ? 'border-amber-400/60 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500 hover:text-slate-300'}`}
+            >
+              Dashed
+            </button>
+          )}
           {tool === 'arrow' && (
             <button
               onClick={() => ui.setArrowBoth(!ui.arrowBoth)}
