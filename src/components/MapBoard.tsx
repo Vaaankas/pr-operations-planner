@@ -406,6 +406,20 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     }
   }
 
+  const cancelDrawing = () => {
+    setDraft(null)
+    setPendingShape(null)
+    pointerDown.current = false
+    polygonRef.current = []
+    setPolygon([])
+    pendingText.current = null
+    setTextAt(null)
+    setTextValue('')
+    setTextBoxMode(false)
+    addingText.current = false
+    erasing.current = false
+  }
+
   const onStageDown = (e: KonvaEventObject<MouseEvent>) => {
     if (e.evt.button === 2) return
     const st = stageRef.current
@@ -637,13 +651,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
       if (typing) return
       if (e.key === 'Escape') {
-        setDraft(null)
-        setPendingShape(null)
-        pointerDown.current = false
-        polygonRef.current = []
-        setPolygon([])
-        pendingText.current = null
-        setTextAt(null)
+        cancelDrawing()
         useUI.getState().setSelected(null, null)
       }
       if (e.key === 'Enter' && ui.tool === 'polygon') finishPolygon()
@@ -1329,7 +1337,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         onDblClick={() => {
           if (ui.tool === 'polygon') finishPolygon()
         }}
-        onContextMenu={(e) => e.evt.preventDefault()}
+        onContextMenu={(e) => {
+          e.evt.preventDefault()
+          cancelDrawing()
+        }}
       >
         <Layer listening={false}>
           {image ? (
