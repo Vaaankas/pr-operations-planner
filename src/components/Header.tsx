@@ -89,42 +89,47 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         </button>
       </div>
 
-      <div className="min-w-0">
-        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Operation</div>
-        <input
-          value={operation}
-          onChange={(e) => setOperation(e.target.value)}
-          onBlur={() => operation.trim() && operation !== plan.operation && planner.setMeta({ operation: operation.trim() })}
-          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-          className="w-[230px] max-w-[24vw] truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[13px] font-semibold text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
-          title="Operation name"
-        />
-      </div>
+      <div className="flex min-w-0 items-stretch divide-x divide-white/10 overflow-hidden rounded-md border border-white/10 bg-white/[0.02]">
+        <div className="flex min-w-0 shrink flex-col justify-center px-3 py-1.5">
+          <span className="font-mono text-[8px] uppercase leading-none tracking-[0.18em] text-slate-500">Operation</span>
+          <input
+            value={operation}
+            onChange={(e) => setOperation(e.target.value)}
+            onBlur={() => operation.trim() && operation !== plan.operation && planner.setMeta({ operation: operation.trim() })}
+            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+            className="mt-1 w-[190px] max-w-[20vw] truncate rounded-sm border border-transparent bg-transparent px-0 text-[12px] font-semibold leading-4 text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
+            title="Operation name"
+          />
+        </div>
 
-      <div className="hidden min-w-0 border-l border-white/10 pl-3 lg:block">
-        <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-slate-500">Map</div>
-        <div className="max-w-[240px] truncate px-1 py-0.5 text-[12px] font-medium text-slate-300" title={`${map.name} · ${layer.displayName}`}>
-          {map.name} <span className="text-slate-600">·</span> {layer.displayName}
+        <div className="hidden min-w-0 flex-col justify-center px-3 py-1.5 lg:flex">
+          <span className="font-mono text-[8px] uppercase leading-none tracking-[0.18em] text-slate-500">Map</span>
+          <div className="mt-1 max-w-[210px] truncate text-[12px] font-medium leading-4 text-slate-300" title={`${map.name} · ${layer.displayName}`}>
+            {map.name} <span className="text-slate-600">·</span> {layer.displayName}
+          </div>
+        </div>
+
+        <div className="hidden flex-col justify-center px-3 py-1.5 lg:flex">
+          <span className="font-mono text-[8px] uppercase leading-none tracking-[0.18em] text-slate-500">Faction</span>
+          <span className="mt-1 flex items-center gap-1.5 text-[12px] font-medium leading-4 text-slate-300">
+            {side && factionFlag(assets, side.key) ? (
+              <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-4 w-[22px] object-fill" />
+            ) : (
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+            )}
+            {side?.name ?? `Team ${plan.side}`}
+          </span>
+        </div>
+
+        <div className="flex flex-col justify-center px-3 py-1.5" title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}>
+          <span className="font-mono text-[8px] uppercase leading-none tracking-[0.18em] text-slate-500">Players</span>
+          <span className="mt-1 flex items-center gap-1 font-mono text-[11px] leading-4 tracking-wider">
+            <Users className="h-3 w-3 text-emerald-400" />
+            <span className="text-emerald-400">{confirmed}</span>
+            <span className="text-slate-500">/50</span>
+          </span>
         </div>
       </div>
-
-      <span className="hidden items-center gap-1.5 rounded border border-white/10 px-2 py-1 text-[10px] font-medium text-slate-300 lg:flex">
-        {side && factionFlag(assets, side.key) ? (
-          <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-4 w-[22px] object-fill" />
-        ) : (
-          <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-        )}
-        {side?.name ?? `Team ${plan.side}`}
-      </span>
-
-      <span
-        className="flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider"
-        title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
-      >
-        <Users className="h-3 w-3 text-emerald-400" />
-        <span className="text-emerald-400">{confirmed}</span>
-        <span className="text-slate-500">/50</span>
-      </span>
 
       <div className="hidden h-7 w-px bg-white/10 lg:block" />
 
