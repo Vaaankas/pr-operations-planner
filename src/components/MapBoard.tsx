@@ -8,7 +8,7 @@ import { usePlanner, useUI } from '../store'
 import { affiliationColor, clamp, dataUrl, formatTime, isHiddenVehicle, SQUAD_COLORS, vehicleDelayRemaining, vehicleReady } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
-import { cpFlag, useAssets, vehicleIconPath } from '../lib/assets'
+import { cpFlag, factionFlag, useAssets, vehicleIconPath } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
@@ -1946,12 +1946,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       {!preview && hoverFlag && (() => {
         const team = captureTeam(plan, hoverFlag.cp)
         const capturable = isCapturable(hoverFlag.cp)
+        const faction = team ? layer.factions[String(team)] : null
+        const flag = factionFlag(assets, faction?.key)
         return (
           <div
             className="pointer-events-none absolute right-3 top-3 z-30 w-fit min-w-[7.5rem] max-w-[9rem] rounded border border-white/15 bg-[#0b110d]/95 px-2.5 py-2 text-[10px] shadow-2xl"
           >
             <div className="text-[12px] font-semibold text-slate-100">{hoverFlag.cp.name}</div>
-            <div className="mt-1 font-mono uppercase tracking-wider text-slate-500">Controlled by {teamName(layer, team)}</div>
+            <div className="mt-1 flex items-center gap-1.5 font-mono uppercase tracking-wider text-slate-500">
+              <span>{team ? teamName(layer, team) : 'NEUTRAL'}</span>
+              {flag && <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-contain" />}
+            </div>
             {hoverFlag.cp.radius != null && (
               <div className="mt-1 text-slate-300">
                 Capture radius: <span className="font-mono text-amber-300">{Math.round(hoverFlag.cp.radius)} m</span>
