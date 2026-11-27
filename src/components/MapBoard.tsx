@@ -831,9 +831,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         rotation: node.rotation(),
       }
     } else if (el.type === 'text') {
+      const boxH = Math.max(10, el.fontSize * mapW) * 2
       patch = {
-        at: point(0, 0),
-        fontSize: el.fontSize * Math.max(0.1, Math.abs(node.scaleY())),
+        at: toNorm({
+          x: node.x(),
+          y: el.box ? node.y() + boxH / 2 : node.y(),
+        }),
+        scaleX: node.scaleX(),
+        scaleY: node.scaleY(),
       }
     }
     node.position({ x: 0, y: 0 })
@@ -1052,7 +1057,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           const boxW = Math.max(120, el.text.length * fontSize * 0.62 + 18)
           const boxH = fontSize * 2
           return (
-            <Group key={el.id} {...common} x={at.x} y={at.y - boxH / 2}>
+            <Group key={el.id} {...common} x={at.x} y={at.y - boxH / 2} scaleX={el.scaleX ?? 1} scaleY={el.scaleY ?? 1}>
               <Rect
                 width={boxW}
                 height={boxH}
@@ -1091,6 +1096,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             strokeWidth={Math.max(2, el.fontSize * mapW * 0.12)}
             fillAfterStrokeEnabled
             offsetY={(el.fontSize * mapW) / 2}
+            scaleX={el.scaleX ?? 1}
+            scaleY={el.scaleY ?? 1}
             perfectDrawEnabled={false}
           />
         )

@@ -153,7 +153,7 @@ export type DrawElement =
   | (ElementBase & { type: 'rect'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'ellipse'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'polygon'; points: Point[]; fill: boolean })
-  | (ElementBase & { type: 'text'; at: Point; text: string; fontSize: number; box?: boolean })
+  | (ElementBase & { type: 'text'; at: Point; text: string; fontSize: number; box?: boolean; scaleX?: number; scaleY?: number })
   | (ElementBase & {
       type: 'squad'
       at: Point
