@@ -844,20 +844,24 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       const height = rect.height() * Math.abs(node.scaleY())
       const halfW = width / mapW / 2
       const halfH = height / mapH / 2
+      const resized = Math.abs(node.scaleX() - 1) > 0.001 || Math.abs(node.scaleY() - 1) > 0.001
+      const rotation = node.rotation() === 0 && el.rotation && resized ? el.rotation : node.rotation()
       patch = {
         a: { x: center.x - halfW, y: center.y - halfH },
         b: { x: center.x + halfW, y: center.y + halfH },
-        rotation: node.rotation(),
+        rotation,
       }
     } else if (el.type === 'ellipse') {
       const ellipse = node as Konva.Ellipse
       const center = point(0, 0)
       const rx = (ellipse.radiusX() * Math.abs(node.scaleX())) / mapW
       const ry = (ellipse.radiusY() * Math.abs(node.scaleY())) / mapH
+      const resized = Math.abs(node.scaleX() - 1) > 0.001 || Math.abs(node.scaleY() - 1) > 0.001
+      const rotation = node.rotation() === 0 && el.rotation && resized ? el.rotation : node.rotation()
       patch = {
         a: { x: center.x - rx, y: center.y - ry },
         b: { x: center.x + rx, y: center.y + ry },
-        rotation: node.rotation(),
+        rotation,
       }
     } else if (el.type === 'text') {
       const boxH = Math.max(10, el.fontSize * mapW) * 2
