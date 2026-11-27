@@ -133,6 +133,28 @@ export function OptionsBar() {
             />
             <span className="w-7 font-mono text-slate-300">{Math.round(ui.opacity * 100)}%</span>
           </label>
+          {tool === 'text' && (
+            <div className="flex items-center gap-1">
+              {([
+                { key: 'bold', label: 'B', active: ui.textBold, set: ui.setTextBold, className: 'font-bold' },
+                { key: 'italic', label: 'I', active: ui.textItalic, set: ui.setTextItalic, className: 'italic' },
+                { key: 'underline', label: 'U', active: ui.textUnderline, set: ui.setTextUnderline, className: 'underline' },
+              ] as const).map((style) => (
+                <button
+                  key={style.key}
+                  onClick={() => style.set(!style.active)}
+                  title={style.key}
+                  className={`h-6 w-6 rounded border text-[11px] ${style.className} ${
+                    style.active
+                      ? 'border-amber-400/60 bg-amber-400/10 text-amber-300'
+                      : 'border-white/10 text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  {style.label}
+                </button>
+              ))}
+            </div>
+          )}
           {tool !== 'text' && (
             <button
               onClick={() => ui.setDash(!ui.dash)}

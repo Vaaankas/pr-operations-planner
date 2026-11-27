@@ -153,7 +153,18 @@ export type DrawElement =
   | (ElementBase & { type: 'rect'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'ellipse'; a: Point; b: Point; fill: boolean })
   | (ElementBase & { type: 'polygon'; points: Point[]; fill: boolean })
-  | (ElementBase & { type: 'text'; at: Point; text: string; fontSize: number; box?: boolean; scaleX?: number; scaleY?: number })
+  | (ElementBase & {
+      type: 'text'
+      at: Point
+      text: string
+      fontSize: number
+      box?: boolean
+      scaleX?: number
+      scaleY?: number
+      bold?: boolean
+      italic?: boolean
+      underline?: boolean
+    })
   | (ElementBase & {
       type: 'squad'
       at: Point
@@ -274,6 +285,9 @@ export interface UIState {
   opacity: number
   fillOpacity: number
   dash: boolean
+  textBold: boolean
+  textItalic: boolean
+  textUnderline: boolean
   arrowBoth: boolean
   fillShapes: boolean
   visibleRoutes: string[]

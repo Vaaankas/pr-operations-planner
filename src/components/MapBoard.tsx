@@ -77,10 +77,14 @@ const FLAG_ANCHOR_X = 0.148
 const FLAG_ANCHOR_Y = 0.727
 const labelCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
 
-function measureLabel(text: string, fontSize: number): number {
+function labelFontStyle(bold: boolean, italic: boolean): string {
+  return [bold ? 'bold' : '', italic ? 'italic' : ''].filter(Boolean).join(' ') || 'normal'
+}
+
+function measureLabel(text: string, fontSize: number, bold = true, italic = false): number {
   const context = labelCanvas?.getContext('2d')
   if (!context) return text.length * fontSize * 0.55
-  context.font = `bold ${fontSize}px Inter, "Segoe UI", sans-serif`
+  context.font = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${fontSize}px Inter, "Segoe UI", sans-serif`
   return context.measureText(text).width
 }
 
@@ -628,7 +632,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       addingText.current = false
       return
     }
-    commit({ ...base(), type: 'text', at: textAt, text: textValue.trim(), fontSize: 0.021, box: textBoxMode } as DrawElement)
+    commit({
+      ...base(),
+      type: 'text',
+      at: textAt,
+      text: textValue.trim(),
+      fontSize: 0.021,
+      box: textBoxMode,
+      bold: ui.textBold,
+      italic: ui.textItalic,
+      underline: ui.textUnderline,
+    } as DrawElement)
     setTextAt(null)
     setTextValue('')
     setTextBoxMode(false)
@@ -1094,8 +1108,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       case 'text': {
         const at = normToScreen(el.at)
         const fontSize = Math.max(10, el.fontSize * mapW)
+        const bold = el.bold ?? true
+        const italic = el.italic ?? false
+        const fontStyle = labelFontStyle(bold, italic)
         if (el.box) {
-          const boxW = Math.max(120, el.text.length * fontSize * 0.62 + 18)
+          const boxW = Math.max(120, measureLabel(el.text, fontSize, bold, italic) + 18)
           const boxH = fontSize * 2
           return (
             <Group key={el.id} {...common} x={at.x} y={at.y - boxH / 2} scaleX={el.scaleX ?? 1} scaleY={el.scaleY ?? 1}>
@@ -1114,7 +1131,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 text={el.text}
                 fontSize={fontSize}
                 fontFamily="Inter, Segoe UI, sans-serif"
-                fontStyle="bold"
+                fontStyle={fontStyle}
+                textDecoration={el.underline ? 'underline' : undefined}
                 fill={el.color}
                 offsetY={fontSize / 2}
                 perfectDrawEnabled={false}
@@ -1131,7 +1149,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             text={el.text}
             fontSize={fontSize}
             fontFamily="Inter, Segoe UI, sans-serif"
-            fontStyle="bold"
+            fontStyle={fontStyle}
+            textDecoration={el.underline ? 'underline' : undefined}
             fill={color}
             stroke="rgba(3,7,5,0.85)"
             strokeWidth={Math.max(2, el.fontSize * mapW * 0.12)}
@@ -1988,13 +2007,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           {textAt && (() => {
             const at = normToScreen(textAt)
             const fontSize = Math.max(10, 0.021 * mapW)
+            const fontStyle = labelFontStyle(ui.textBold, ui.textItalic)
             const caretWidth = Math.max(1, fontSize * 0.07)
             const caretHeight = fontSize * 1.05
             const caretOpacity = caretOn ? 1 : 0
             if (textBoxMode) {
-              const boxW = Math.max(120, textValue.length * fontSize * 0.62 + 18)
+              const boxW = Math.max(120, measureLabel(textValue, fontSize, ui.textBold, ui.textItalic) + 18)
               const boxH = fontSize * 2
-              const caretX = 9 + measureLabel(textValue, fontSize)
+              const caretX = 9 + measureLabel(textValue, fontSize, ui.textBold, ui.textItalic)
               return (
                 <Group x={at.x} y={at.y - boxH / 2}>
                   <Rect
@@ -2013,7 +2033,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                       text={textValue}
                       fontSize={fontSize}
                       fontFamily="Inter, Segoe UI, sans-serif"
-                      fontStyle="bold"
+                      fontStyle={fontStyle}
+                      textDecoration={ui.textUnderline ? 'underline' : undefined}
                       fill={ui.color}
                       offsetY={fontSize / 2}
                       perfectDrawEnabled={false}
@@ -2030,7 +2051,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 </Group>
               )
             }
-            const caretX = at.x + measureLabel(textValue, fontSize)
+            const caretX = at.x + measureLabel(textValue, fontSize, ui.textBold, ui.textItalic)
             return (
               <>
                 {textValue && (
@@ -2040,7 +2061,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                     text={textValue}
                     fontSize={fontSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
-                    fontStyle="bold"
+                    fontStyle={fontStyle}
+                    textDecoration={ui.textUnderline ? 'underline' : undefined}
                     fill={ui.color}
                     stroke="rgba(3,7,5,0.85)"
                     strokeWidth={Math.max(2, 0.021 * mapW * 0.12)}

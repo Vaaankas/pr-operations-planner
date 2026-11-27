@@ -514,6 +514,9 @@ export const useUI = create<UIState & {
   setOpacity: (opacity: number) => void
   setFillOpacity: (opacity: number) => void
   setDash: (dash: boolean) => void
+  setTextBold: (value: boolean) => void
+  setTextItalic: (value: boolean) => void
+  setTextUnderline: (value: boolean) => void
   setArrowBoth: (value: boolean) => void
   setFillShapes: (value: boolean) => void
   setVisibleRoutes: (ids: string[]) => void
@@ -541,6 +544,9 @@ export const useUI = create<UIState & {
   opacity: 1,
   fillOpacity: 0.18,
   dash: false,
+  textBold: true,
+  textItalic: false,
+  textUnderline: false,
   arrowBoth: false,
   fillShapes: false,
   visibleRoutes: [],
@@ -574,6 +580,9 @@ export const useUI = create<UIState & {
   setOpacity: (opacity) => set({ opacity: clamp(opacity, 0.1, 1) }),
   setFillOpacity: (fillOpacity) => set({ fillOpacity: clamp(fillOpacity, 0.02, 1) }),
   setDash: (dash) => set({ dash }),
+  setTextBold: (textBold) => set({ textBold }),
+  setTextItalic: (textItalic) => set({ textItalic }),
+  setTextUnderline: (textUnderline) => set({ textUnderline }),
   setArrowBoth: (arrowBoth) => set({ arrowBoth }),
   setFillShapes: (fillShapes) => set({ fillShapes }),
   setVisibleRoutes: (visibleRoutes) => set({ visibleRoutes }),
