@@ -75,6 +75,14 @@ function MarkerGlyph({ icon, size, color }: { icon: string; size: number; color:
 const PENCIL = '#f8fafc'
 const FLAG_ANCHOR_X = 0.148
 const FLAG_ANCHOR_Y = 0.727
+const labelCanvas = typeof document !== 'undefined' ? document.createElement('canvas') : null
+
+function measureLabel(text: string, fontSize: number): number {
+  const context = labelCanvas?.getContext('2d')
+  if (!context) return text.length * fontSize * 0.55
+  context.font = `bold ${fontSize}px Inter, "Segoe UI", sans-serif`
+  return context.measureText(text).width
+}
 
 function withAlpha(color: string, alpha: number): string {
   const hex = color.replace('#', '')
@@ -1686,23 +1694,49 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                     listening={false}
                   />
                 )}
-                {showName && (
-                  <Text
-                    text={`${claimPrefix}${v.label}`}
-                    fontSize={9 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
-                    fontFamily="Inter, Segoe UI, sans-serif"
-                    fontStyle="bold"
-                    fill={selected ? (ready ? '#fbbf24' : '#94a3b8') : color}
-                    stroke={MAP_TEXT_OUTLINE}
-                    strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_TEXT_SCALE * iconSize}
-                    fillAfterStrokeEnabled
-                    y={dp.y * mapH + s * 0.56}
-                    width={240 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
-                    align="center"
-                    x={dp.x * mapW - 120 * iconScale * VEHICLE_TEXT_SCALE * iconSize}
-                    listening={false}
-                  />
-                )}
+                {showName && (() => {
+                  const labelSize = 9 * iconScale * VEHICLE_TEXT_SCALE * iconSize
+                  const prefix = claimPrefix.trim()
+                  const nameWidth = Math.max(1, measureLabel(v.label, labelSize))
+                  const prefixWidth = prefix ? measureLabel(prefix, labelSize) : 0
+                  const nameX = dp.x * mapW - nameWidth / 2
+                  const prefixX = nameX - prefixWidth - 2 * iconScale * VEHICLE_TEXT_SCALE * iconSize
+                  const labelY = dp.y * mapH + s * 0.56
+                  const labelColor = selected ? (ready ? '#fbbf24' : '#94a3b8') : color
+                  return (
+                    <>
+                      {prefix && (
+                        <Text
+                          text={prefix}
+                          fontSize={labelSize}
+                          fontFamily="Inter, Segoe UI, sans-serif"
+                          fontStyle="bold"
+                          fill={labelColor}
+                          stroke={MAP_TEXT_OUTLINE}
+                          strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_TEXT_SCALE * iconSize}
+                          fillAfterStrokeEnabled
+                          y={labelY}
+                          x={prefixX}
+                          listening={false}
+                        />
+                      )}
+                      <Text
+                        text={v.label}
+                        fontSize={labelSize}
+                        fontFamily="Inter, Segoe UI, sans-serif"
+                        fontStyle="bold"
+                        fill={labelColor}
+                        stroke={MAP_TEXT_OUTLINE}
+                        strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * VEHICLE_TEXT_SCALE * iconSize}
+                        fillAfterStrokeEnabled
+                        y={labelY}
+                        x={nameX}
+                        width={nameWidth}
+                        listening={false}
+                      />
+                    </>
+                  )
+                })()}
               </Group>
             )
           })}
