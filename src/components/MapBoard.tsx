@@ -1468,14 +1468,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             rotateEnabled={selectedElement?.type !== 'text'}
             flipEnabled={false}
             borderStroke="#fbbf24"
-            borderStrokeWidth={1.5 * iconScale}
-            anchorStroke="#fbbf24"
-            anchorStrokeWidth={1.5 * iconScale}
-            anchorFill="#080d0a"
-            anchorSize={8 * iconScale}
-            anchorCornerRadius={1.5 * iconScale}
-            padding={4 * iconScale}
-            rotateAnchorOffset={24 * iconScale}
+            borderStrokeWidth={2}
+            anchorStroke="#fde68a"
+            anchorStrokeWidth={1}
+            anchorFill="#fbbf24"
+            anchorSize={12}
+            anchorCornerRadius={2}
+            padding={3}
+            rotateAnchorOffset={24}
             onTransformStart={() => planner.checkpoint()}
           />
         </Layer>
