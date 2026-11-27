@@ -107,6 +107,11 @@ input[type="range"]::-webkit-slider-thumb {
   object-fit: contain;
 }
 
+.orders-chip.orders-chip-cmd {
+  border-radius: 9999px;
+  background: #2563eb;
+}
+
 select option {
   background: #0d1410;
   color: #e2e8f0;

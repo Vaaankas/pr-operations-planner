@@ -10,7 +10,8 @@ function escapeHtml(value: string): string {
 }
 
 function chipMarkup(token: string, icon: string | undefined, label: string): string {
-  return `<span data-order-token="${escapeHtml(token)}" contenteditable="false" class="orders-chip" title="${escapeHtml(label)}"><img src="${escapeHtml(icon ?? '')}" alt=""></span>`
+  const command = token === CMD_ORDER_TOKEN ? ' orders-chip-cmd' : ''
+  return `<span data-order-token="${escapeHtml(token)}" contenteditable="false" class="orders-chip${command}" title="${escapeHtml(label)}"><img src="${escapeHtml(icon ?? '')}" alt=""></span>`
 }
 
 function orderChip(plan: Plan, assets: AssetManifest, token: string): { icon?: string; label: string } {
@@ -63,7 +64,7 @@ function chipElement(plan: Plan, assets: AssetManifest, token: string): HTMLElem
   const chip = document.createElement('span')
   chip.dataset.orderToken = token
   chip.contentEditable = 'false'
-  chip.className = 'orders-chip'
+  chip.className = token === CMD_ORDER_TOKEN ? 'orders-chip orders-chip-cmd' : 'orders-chip'
   chip.title = info.label
   if (info.icon) {
     const image = document.createElement('img')
