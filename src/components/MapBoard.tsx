@@ -810,16 +810,25 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       patch = { a: point(a.x, a.y), b: point(b.x, b.y) }
     } else if (el.type === 'rect') {
       const rect = node as Konva.Rect
-      patch = { a: point(0, 0), b: point(rect.width(), rect.height()) }
+      const center = point(0, 0)
+      const width = rect.width() * Math.abs(node.scaleX())
+      const height = rect.height() * Math.abs(node.scaleY())
+      const halfW = width / mapW / 2
+      const halfH = height / mapH / 2
+      patch = {
+        a: { x: center.x - halfW, y: center.y - halfH },
+        b: { x: center.x + halfW, y: center.y + halfH },
+        rotation: node.rotation(),
+      }
     } else if (el.type === 'ellipse') {
       const ellipse = node as Konva.Ellipse
       const center = point(0, 0)
-      const edge = point(ellipse.radiusX(), ellipse.radiusY())
-      const rx = edge.x - center.x
-      const ry = edge.y - center.y
+      const rx = (ellipse.radiusX() * Math.abs(node.scaleX())) / mapW
+      const ry = (ellipse.radiusY() * Math.abs(node.scaleY())) / mapH
       patch = {
         a: { x: center.x - rx, y: center.y - ry },
         b: { x: center.x + rx, y: center.y + ry },
+        rotation: node.rotation(),
       }
     } else if (el.type === 'text') {
       patch = {
@@ -878,8 +887,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         } else if (el.type === 'rect') {
           const a = normToScreen(el.a)
           const b = normToScreen(el.b)
-          dx = (node.x() - Math.min(a.x, b.x)) / mapW
-          dy = (node.y() - Math.min(a.y, b.y)) / mapH
+          dx = (node.x() - (a.x + b.x) / 2) / mapW
+          dy = (node.y() - (a.y + b.y) / 2) / mapH
         } else if (el.type === 'ellipse') {
           const a = normToScreen(el.a)
           const b = normToScreen(el.b)
@@ -983,14 +992,19 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       case 'rect': {
         const a = normToScreen(el.a)
         const b = normToScreen(el.b)
+        const width = Math.abs(b.x - a.x)
+        const height = Math.abs(b.y - a.y)
         return (
           <Rect
             key={el.id}
             {...common}
-            x={Math.min(a.x, b.x)}
-            y={Math.min(a.y, b.y)}
-            width={Math.abs(b.x - a.x)}
-            height={Math.abs(b.y - a.y)}
+            x={(a.x + b.x) / 2}
+            y={(a.y + b.y) / 2}
+            offsetX={width / 2}
+            offsetY={height / 2}
+            width={width}
+            height={height}
+            rotation={el.rotation ?? 0}
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
@@ -1009,6 +1023,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             y={(a.y + b.y) / 2}
             radiusX={Math.abs(b.x - a.x) / 2}
             radiusY={Math.abs(b.y - a.y) / 2}
+            rotation={el.rotation ?? 0}
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
@@ -1443,7 +1458,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           {pendingNode()}
           <Transformer
             ref={transformerRef}
-            rotateEnabled={false}
+            rotateEnabled={selectedElement?.type !== 'text'}
             flipEnabled={false}
             borderStroke="#fbbf24"
             borderStrokeWidth={1.5 * iconScale}

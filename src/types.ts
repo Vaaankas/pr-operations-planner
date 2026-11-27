@@ -143,6 +143,7 @@ export interface ElementBase {
   width: number
   dash?: boolean
   fillOpacity?: number
+  rotation?: number
 }
 
 export type DrawElement =
