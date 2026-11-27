@@ -58,6 +58,52 @@ function serializeOrders(node: Node): string {
   return out
 }
 
+function chipElement(plan: Plan, assets: AssetManifest, token: string): HTMLElement {
+  const info = orderChip(plan, assets, token)
+  const chip = document.createElement('span')
+  chip.dataset.orderToken = token
+  chip.contentEditable = 'false'
+  chip.className = 'orders-chip'
+  chip.title = info.label
+  if (info.icon) {
+    const image = document.createElement('img')
+    image.src = info.icon
+    image.alt = ''
+    chip.appendChild(image)
+  }
+  return chip
+}
+
+function previousSiblingDeep(node: Node): Node | null {
+  let current: Node | null = node
+  while (current && current.parentNode) {
+    if (current.previousSibling) return current.previousSibling
+    current = current.parentNode
+  }
+  return null
+}
+
+function nextSiblingDeep(node: Node): Node | null {
+  let current: Node | null = node
+  while (current && current.parentNode) {
+    if (current.nextSibling) return current.nextSibling
+    current = current.parentNode
+  }
+  return null
+}
+
+function deepestLast(node: Node): Node {
+  let current = node
+  while (current.lastChild) current = current.lastChild
+  return current
+}
+
+function deepestFirst(node: Node): Node {
+  let current = node
+  while (current.firstChild) current = current.firstChild
+  return current
+}
+
 interface Props {
   value: string
   stageId: string
@@ -103,21 +149,9 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
     onCommit(next)
   }
 
-  const insertToken = (token: string) => {
+  const currentRange = (): Range | null => {
     const root = editor.current
-    if (!root) return
-    const chip = document.createElement('span')
-    const info = orderChip(plan, assets, token)
-    chip.dataset.orderToken = token
-    chip.contentEditable = 'false'
-    chip.className = 'orders-chip'
-    chip.title = info.label
-    if (info.icon) {
-      const image = document.createElement('img')
-      image.src = info.icon
-      image.alt = ''
-      chip.appendChild(image)
-    }
+    if (!root) return null
     root.focus()
     const selection = window.getSelection()
     let range: Range | null = selection?.rangeCount ? selection.getRangeAt(0) : null
@@ -126,15 +160,101 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
       range.selectNodeContents(root)
       range.collapse(false)
     }
+    return range
+  }
+
+  const insertNode = (node: Node, after?: Node) => {
+    const range = currentRange()
+    if (!range) return
     range.deleteContents()
-    range.insertNode(chip)
-    const space = document.createTextNode(' ')
-    chip.after(space)
-    range.setStartAfter(space)
+    range.insertNode(node)
+    const caret = after ?? node
+    range.setStartAfter(caret)
     range.collapse(true)
+    const selection = window.getSelection()
     selection?.removeAllRanges()
     selection?.addRange(range)
     commit()
+  }
+
+  const insertToken = (token: string) => {
+    const chip = chipElement(plan, assets, token)
+    const space = document.createTextNode(' ')
+    const range = currentRange()
+    if (!range) return
+    range.deleteContents()
+    range.insertNode(chip)
+    chip.after(space)
+    range.setStartAfter(space)
+    range.collapse(true)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+    commit()
+  }
+
+  const removeAdjacentChip = (direction: 'back' | 'forward'): boolean => {
+    const root = editor.current
+    const selection = window.getSelection()
+    if (!root || !selection?.rangeCount) return false
+    const range = selection.getRangeAt(0)
+    if (!range.collapsed) {
+      range.deleteContents()
+      commit()
+      return true
+    }
+    let candidate: Node | null = null
+    if (range.startContainer === root) {
+      candidate = direction === 'back'
+        ? root.childNodes[range.startOffset - 1] ?? null
+        : root.childNodes[range.startOffset] ?? null
+    } else if (range.startContainer.nodeType === Node.TEXT_NODE) {
+      if (direction === 'back' && range.startOffset > 0) return false
+      candidate = direction === 'back'
+        ? previousSiblingDeep(range.startContainer)
+        : nextSiblingDeep(range.startContainer)
+    } else {
+      candidate = direction === 'back'
+        ? range.startContainer.childNodes[range.startOffset - 1] ?? previousSiblingDeep(range.startContainer)
+        : range.startContainer.childNodes[range.startOffset] ?? nextSiblingDeep(range.startContainer)
+    }
+    if (!candidate) return false
+    const chip = candidate instanceof HTMLElement && candidate.dataset.orderToken
+      ? candidate
+      : direction === 'back'
+        ? deepestLast(candidate)
+        : deepestFirst(candidate)
+    if (!(chip instanceof HTMLElement) || !chip.dataset.orderToken) return false
+    chip.remove()
+    commit()
+    return true
+  }
+
+  const copySelection = (event: React.ClipboardEvent<HTMLDivElement>, cut: boolean) => {
+    const root = editor.current
+    const selection = window.getSelection()
+    if (!root || !selection?.rangeCount) return
+    const range = selection.getRangeAt(0)
+    if (range.collapsed || !root.contains(range.commonAncestorContainer)) return
+    event.preventDefault()
+    event.clipboardData.setData('text/plain', serializeOrders(range.cloneContents()))
+    if (cut) {
+      range.deleteContents()
+      commit()
+    }
+  }
+
+  const pasteOrders = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const text = event.clipboardData.getData('text/plain')
+    if (!text) return
+    const fragment = document.createDocumentFragment()
+    for (const segment of parseOrders(text)) {
+      if (segment.type === 'text') fragment.appendChild(document.createTextNode(segment.text))
+      else fragment.appendChild(chipElement(plan, assets, segment.type === 'cmd' ? CMD_ORDER_TOKEN : squadOrderToken(segment.squadId)))
+    }
+    const last = fragment.lastChild
+    insertNode(fragment, last ?? undefined)
   }
 
   return (
@@ -147,16 +267,18 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
       data-placeholder="Orders, tasks, timing, coordination..."
       onInput={() => onChange(read())}
       onBlur={commit}
+      onCopy={(event) => copySelection(event, false)}
+      onCut={(event) => copySelection(event, true)}
       onKeyDown={(event) => {
-        if (event.key !== 'Enter') return
-        event.preventDefault()
-        document.execCommand('insertLineBreak')
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          document.execCommand('insertLineBreak')
+          return
+        }
+        if (event.key === 'Backspace' && removeAdjacentChip('back')) event.preventDefault()
+        if (event.key === 'Delete' && removeAdjacentChip('forward')) event.preventDefault()
       }}
-      onPaste={(event) => {
-        event.preventDefault()
-        const text = event.clipboardData.getData('text/plain')
-        document.execCommand('insertText', false, text)
-      }}
+      onPaste={pasteOrders}
       onDragOver={(event) => {
         if (Array.from(event.dataTransfer.types).includes('text/pr-squad')) event.preventDefault()
       }}
