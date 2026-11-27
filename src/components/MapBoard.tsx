@@ -136,7 +136,18 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [textAt, setTextAt] = useState<Point | null>(null)
   const [textValue, setTextValue] = useState('')
   const [textBoxMode, setTextBoxMode] = useState(false)
+  const [caretOn, setCaretOn] = useState(true)
   const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!textAt) {
+      setCaretOn(true)
+      return
+    }
+    setCaretOn(true)
+    const timer = setInterval(() => setCaretOn((on) => !on), 530)
+    return () => clearInterval(timer)
+  }, [textAt, textValue])
   const [hoverFlag, setHoverFlag] = useState<{ cp: ControlPoint; x: number; y: number } | null>(null)
   const [hoverVehicleId, setHoverVehicleId] = useState<string | null>(null)
   const [hoverCrew, setHoverCrew] = useState<{ id: string; x: number; y: number } | null>(null)
@@ -1801,12 +1812,16 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         </Layer>
 
         <Layer listening={false}>
-          {textAt && textValue && (() => {
+          {textAt && (() => {
             const at = normToScreen(textAt)
             const fontSize = Math.max(10, 0.021 * mapW)
+            const caretWidth = Math.max(1, fontSize * 0.07)
+            const caretHeight = fontSize * 1.05
+            const caretOpacity = caretOn ? 1 : 0
             if (textBoxMode) {
               const boxW = Math.max(120, textValue.length * fontSize * 0.62 + 18)
               const boxH = fontSize * 2
+              const caretX = 9 + measureLabel(textValue, fontSize)
               return (
                 <Group x={at.x} y={at.y - boxH / 2}>
                   <Rect
@@ -1817,36 +1832,59 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                     strokeWidth={ui.width}
                     cornerRadius={3}
                   />
+                  {textValue && (
+                    <Text
+                      x={9}
+                      y={boxH / 2}
+                      width={boxW - 18}
+                      text={textValue}
+                      fontSize={fontSize}
+                      fontFamily="Inter, Segoe UI, sans-serif"
+                      fontStyle="bold"
+                      fill={ui.color}
+                      offsetY={fontSize / 2}
+                      perfectDrawEnabled={false}
+                    />
+                  )}
+                  <Rect
+                    x={caretX}
+                    y={boxH / 2 - fontSize / 2}
+                    width={caretWidth}
+                    height={caretHeight}
+                    fill={ui.color}
+                    opacity={caretOpacity}
+                  />
+                </Group>
+              )
+            }
+            const caretX = at.x + measureLabel(textValue, fontSize)
+            return (
+              <>
+                {textValue && (
                   <Text
-                    x={9}
-                    y={boxH / 2}
-                    width={boxW - 18}
+                    x={at.x}
+                    y={at.y}
                     text={textValue}
                     fontSize={fontSize}
                     fontFamily="Inter, Segoe UI, sans-serif"
                     fontStyle="bold"
                     fill={ui.color}
+                    stroke="rgba(3,7,5,0.85)"
+                    strokeWidth={Math.max(2, 0.021 * mapW * 0.12)}
+                    fillAfterStrokeEnabled
                     offsetY={fontSize / 2}
                     perfectDrawEnabled={false}
                   />
-                </Group>
-              )
-            }
-            return (
-              <Text
-                x={at.x}
-                y={at.y}
-                text={textValue}
-                fontSize={fontSize}
-                fontFamily="Inter, Segoe UI, sans-serif"
-                fontStyle="bold"
-                fill={ui.color}
-                stroke="rgba(3,7,5,0.85)"
-                strokeWidth={Math.max(2, 0.021 * mapW * 0.12)}
-                fillAfterStrokeEnabled
-                offsetY={fontSize / 2}
-                perfectDrawEnabled={false}
-              />
+                )}
+                <Rect
+                  x={caretX}
+                  y={at.y - fontSize / 2}
+                  width={caretWidth}
+                  height={caretHeight}
+                  fill={ui.color}
+                  opacity={caretOpacity}
+                />
+              </>
             )
           })()}
         </Layer>
