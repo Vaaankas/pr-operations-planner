@@ -13,6 +13,7 @@ const TOKEN = /\[\[squad:([^\]]+)\]\]|\[\[cmd\]\]/gi
 
 export function parseOrders(text: string): OrderSegment[] {
   const segments: OrderSegment[] = []
+  TOKEN.lastIndex = 0
   let cursor = 0
   for (const match of text.matchAll(TOKEN)) {
     const index = match.index ?? 0
@@ -22,12 +23,15 @@ export function parseOrders(text: string): OrderSegment[] {
     cursor = index + match[0].length
   }
   if (cursor < text.length) segments.push({ type: 'text', text: text.slice(cursor) })
+  TOKEN.lastIndex = 0
   return segments
 }
 
 export function hasOrderTokens(text: string): boolean {
   TOKEN.lastIndex = 0
-  return TOKEN.test(text)
+  const found = TOKEN.test(text)
+  TOKEN.lastIndex = 0
+  return found
 }
 
 export function ordersPlainText(text: string, plan: Plan): string {
