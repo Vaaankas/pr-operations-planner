@@ -141,6 +141,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [textValue, setTextValue] = useState('')
   const [textBoxMode, setTextBoxMode] = useState(false)
   const [caretOn, setCaretOn] = useState(true)
+  const textBoxDrag = useRef<{ x: number; y: number; at: Point } | null>(null)
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
@@ -1112,8 +1113,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const italic = el.italic ?? false
         const fontStyle = labelFontStyle(bold, italic)
         if (el.box) {
-          const boxW = Math.max(120, measureLabel(el.text, fontSize, bold, italic) + 18)
-          const boxH = fontSize * 2
+          const lines = el.text.split('\n')
+          const lineHeight = fontSize * 1.25
+          const boxW = Math.max(120, Math.max(...lines.map((line) => measureLabel(line, fontSize, bold, italic))) + 18)
+          const boxH = Math.max(fontSize * 2, lineHeight * lines.length + fontSize * 0.75)
           return (
             <Group key={el.id} {...common} x={at.x} y={at.y - boxH / 2} scaleX={el.scaleX ?? 1} scaleY={el.scaleY ?? 1}>
               <Rect
@@ -1133,8 +1136,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 fontFamily="Inter, Segoe UI, sans-serif"
                 fontStyle={fontStyle}
                 textDecoration={el.underline ? 'underline' : undefined}
+                lineHeight={1.25}
                 fill={el.color}
-                offsetY={fontSize / 2}
+                offsetY={(lineHeight * lines.length) / 2}
                 perfectDrawEnabled={false}
               />
             </Group>
@@ -2004,7 +2008,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         </Layer>
 
         <Layer listening={false}>
-          {textAt && (() => {
+          {textAt && !textBoxMode && (() => {
             const at = normToScreen(textAt)
             const fontSize = Math.max(10, 0.021 * mapW)
             const fontStyle = labelFontStyle(ui.textBold, ui.textItalic)
@@ -2222,7 +2226,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         )
       })()}
 
-      {!preview && textAt && (() => {
+      {!preview && textAt && !textBoxMode && (() => {
         const at = normToScreen(textAt)
         return (
           <input
@@ -2241,6 +2245,73 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             style={{ left: at.x * view.scale + view.x, top: at.y * view.scale + view.y }}
             aria-label={textBoxMode ? 'Text box content' : 'Label text'}
           />
+        )
+      })()}
+
+      {!preview && textAt && textBoxMode && (() => {
+        const at = normToScreen(textAt)
+        const screenX = at.x * view.scale + view.x
+        const screenY = at.y * view.scale + view.y
+        return (
+          <div
+            className="absolute z-20 w-[280px] overflow-hidden rounded border border-amber-400/50 bg-[#0b110d] shadow-2xl"
+            style={{ left: clamp(screenX, 8, box.w - 292), top: clamp(screenY - 18, 8, box.h - 190) }}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <div
+              className="flex h-6 cursor-move touch-none items-center justify-between border-b border-white/10 bg-white/5 px-2 text-[9px] font-bold uppercase tracking-wider text-slate-500"
+              onPointerDown={(e) => {
+                e.preventDefault()
+                e.currentTarget.setPointerCapture(e.pointerId)
+                textBoxDrag.current = { x: e.clientX, y: e.clientY, at: textAt }
+              }}
+              onPointerMove={(e) => {
+                const drag = textBoxDrag.current
+                if (!drag) return
+                setTextAt({
+                  x: drag.at.x + (e.clientX - drag.x) / (mapW * view.scale),
+                  y: drag.at.y + (e.clientY - drag.y) / (mapH * view.scale),
+                })
+              }}
+              onPointerUp={() => { textBoxDrag.current = null }}
+            >
+              <span>Text box</span>
+              <span>Drag to move</span>
+            </div>
+            <textarea
+              autoFocus
+              rows={3}
+              value={textValue}
+              onChange={(e) => setTextValue(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                  e.preventDefault()
+                  addText()
+                }
+                if (e.key === 'Escape') cancelDrawing()
+              }}
+              spellCheck={false}
+              className="block w-full resize-none bg-transparent px-2 py-2 text-[13px] leading-snug outline-none"
+              style={{
+                color: ui.color,
+                fontFamily: 'Inter, "Segoe UI", sans-serif',
+                fontWeight: ui.textBold ? 700 : 400,
+                fontStyle: ui.textItalic ? 'italic' : 'normal',
+                textDecoration: ui.textUnderline ? 'underline' : 'none',
+                caretColor: ui.color,
+              }}
+            />
+            <div className="flex items-center justify-between border-t border-white/10 px-2 py-1">
+              <span className="text-[9px] text-slate-600">Ctrl+Enter</span>
+              <button
+                type="button"
+                onClick={addText}
+                className="rounded bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-black"
+              >
+                Done
+              </button>
+            </div>
+          </div>
         )
       })()}
 
