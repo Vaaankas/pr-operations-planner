@@ -972,12 +972,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             }}
             onMouseLeave={() => setHoverSquad(null)}
           >
+            <Circle radius={r} fill="rgba(0,0,0,0.001)" />
             {!(commander && icon) && (
               <Circle
                 radius={r * 0.82}
                 fill={commander ? '#2563eb' : '#07110a'}
                 stroke="#07110a"
                 strokeWidth={1.2 * iconScale}
+                listening={false}
               />
             )}
             {icon ? (
