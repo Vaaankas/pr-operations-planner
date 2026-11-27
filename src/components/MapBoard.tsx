@@ -869,7 +869,12 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         const meters = Math.round(Math.hypot(el.b.x - el.a.x, el.b.y - el.a.y) * layer.world)
         return (
           <Group key={el.id} {...common}>
-            <Line points={[a.x, a.y, b.x, b.y]} stroke={color} strokeWidth={Math.max(1, sw * 0.8)} />
+            <Line
+              points={[a.x, a.y, b.x, b.y]}
+              stroke={color}
+              strokeWidth={Math.max(1, sw * 0.8)}
+              dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
+            />
             <Line points={[a.x - nx, a.y - ny, a.x + nx, a.y + ny]} stroke={color} strokeWidth={sw} />
             <Line points={[b.x - nx, b.y - ny, b.x + nx, b.y + ny]} stroke={color} strokeWidth={sw} />
             <Text
@@ -1170,7 +1175,13 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     if (pending.kind === 'ruler') {
       return (
         <Group listening={false}>
-          <Line points={[a.x, a.y, b.x, b.y]} stroke={ui.color} strokeWidth={sw} opacity={0.85} />
+          <Line
+            points={[a.x, a.y, b.x, b.y]}
+            stroke={ui.color}
+            strokeWidth={sw}
+            opacity={0.85}
+            dash={ui.dash ? [sw * 3, sw * 2.4] : undefined}
+          />
           <Text
             x={(a.x + b.x) / 2 - 50 * iconScale}
             y={(a.y + b.y) / 2 - 18 * iconScale}
