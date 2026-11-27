@@ -20,6 +20,8 @@ export const VEHICLE_TEXT_SCALE = 1.2
 export function vehicleIconPx(category: string): number {
   if (category === 'mbt') return VEHICLE_ICON_PX.mbt
   if (category === 'boat' || category === 'carrier') return VEHICLE_ICON_PX.boat
+  if (category === 'car' || category === 'dirtbike') return 18
+  if (['jeep', 'tigr', 'landrover', 'forklift'].includes(category)) return 20
   return VEHICLE_ICON_PX.other
 }
 
