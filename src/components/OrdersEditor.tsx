@@ -145,6 +145,12 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
   const read = (): string => (editor.current ? serializeOrders(editor.current) : '')
   const commit = () => {
     const next = read()
+    if (!next.trim()) {
+      if (editor.current) editor.current.innerHTML = ''
+      onChange('')
+      onCommit('')
+      return
+    }
     onChange(next)
     onCommit(next)
   }
@@ -196,7 +202,6 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
   const ensureCaret = () => {
     const root = editor.current
     if (!root) return
-    if (!root.firstChild) root.appendChild(document.createTextNode(' '))
     const selection = window.getSelection()
     if (!selection?.rangeCount) {
       const range = document.createRange()
