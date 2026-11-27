@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUp, Lock } from 'lucide-react'
-import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle } from 'react-konva'
+import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle, Transformer } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, StageFrame, VehicleSpawn } from '../types'
@@ -728,6 +728,24 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     return element?.squadId ?? null
   }, [stage.elements, ui.selectedId, ui.selectedKind])
 
+  const selectedElement = useMemo(() => {
+    if (ui.selectedKind !== 'element') return null
+    return stage.elements.find((element) => element.id === ui.selectedId) ?? null
+  }, [stage.elements, ui.selectedId, ui.selectedKind])
+
+  const transformerRef = useRef<Konva.Transformer>(null)
+
+  useEffect(() => {
+    const transformer = transformerRef.current
+    if (!transformer) return
+    const stage = stageRef.current
+    const node = !preview && ui.tool === 'select' && selectedElement && !isIconElement(selectedElement)
+      ? stage?.findOne(`#${selectedElement.id}`)
+      : null
+    transformer.nodes(node ? [node] : [])
+    transformer.getLayer()?.batchDraw()
+  }, [preview, selectedElement, ui.tool, stage.elements, view.scale, view.x, view.y])
+
   const selectedVehiclePos = selectedVehicle ? vehiclePosition(selectedVehicle) : null
 
   const selectedScreen = selectedVehiclePos
@@ -775,6 +793,47 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const iconScale = (1 / view.scale) * screenScale
   const stageCursor = panning ? 'grabbing' : ui.tool === 'select' ? 'default' : 'crosshair'
 
+  const commitElementTransform = (node: Konva.Node, el: DrawElement) => {
+    const transform = node.getTransform()
+    const point = (x: number, y: number): Point => {
+      const mapped = transform.point({ x, y })
+      return toNorm({ x: mapped.x, y: mapped.y })
+    }
+    let patch: Partial<DrawElement> = {}
+    if (el.type === 'pen') {
+      patch = { points: el.points.map((p) => { const s = normToScreen(p); return point(s.x, s.y) }) }
+    } else if (el.type === 'polygon') {
+      patch = { points: el.points.map((p) => { const s = normToScreen(p); return point(s.x, s.y) }) }
+    } else if (el.type === 'line' || el.type === 'ruler') {
+      const a = normToScreen(el.a)
+      const b = normToScreen(el.b)
+      patch = { a: point(a.x, a.y), b: point(b.x, b.y) }
+    } else if (el.type === 'rect') {
+      const rect = node as Konva.Rect
+      patch = { a: point(0, 0), b: point(rect.width(), rect.height()) }
+    } else if (el.type === 'ellipse') {
+      const ellipse = node as Konva.Ellipse
+      const center = point(0, 0)
+      const edge = point(ellipse.radiusX(), ellipse.radiusY())
+      const rx = edge.x - center.x
+      const ry = edge.y - center.y
+      patch = {
+        a: { x: center.x - rx, y: center.y - ry },
+        b: { x: center.x + rx, y: center.y + ry },
+      }
+    } else if (el.type === 'text') {
+      patch = {
+        at: point(0, 0),
+        fontSize: el.fontSize * Math.max(0.1, Math.abs(node.scaleY())),
+      }
+    }
+    node.position({ x: 0, y: 0 })
+    node.scaleX(1)
+    node.scaleY(1)
+    node.rotation(0)
+    planner.updateElement(el.id, patch)
+  }
+
   const drawElementNode = (el: DrawElement) => {
     const selected = !preview && ui.selectedId === el.id
     const color = selected ? '#fbbf24' : el.color
@@ -803,6 +862,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         } else {
           useUI.getState().setSelected(el.id, 'element')
         }
+      },
+      onTransformEnd: (e: KonvaEventObject<Event>) => {
+        if (!isIconElement(el)) commitElementTransform(e.target, el)
       },
       onDragStart: () => planner.checkpoint(),
       onDragEnd: (e: KonvaEventObject<DragEvent>) => {
@@ -1379,6 +1441,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           )}
           {draftNode()}
           {pendingNode()}
+          <Transformer
+            ref={transformerRef}
+            rotateEnabled={false}
+            flipEnabled={false}
+            borderStroke="#fbbf24"
+            borderStrokeWidth={1.5 * iconScale}
+            anchorStroke="#fbbf24"
+            anchorFill="#080d0a"
+            anchorSize={8 * iconScale}
+            onTransformStart={() => planner.checkpoint()}
+          />
         </Layer>
 
         <Layer listening={ui.tool === 'select'}>
