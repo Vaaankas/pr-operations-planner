@@ -26,7 +26,6 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
   const assets = useAssets()
   const selectedRowRef = useRef<HTMLDivElement | null>(null)
   const [query, setQuery] = useState('')
-  const [startOnly, setStartOnly] = useState(false)
 
   useEffect(() => {
     selectedRowRef.current?.scrollIntoView({ block: 'nearest' })
@@ -36,11 +35,11 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
     const q = query.trim().toLowerCase()
     return layer.vehicles
       .filter((v) => !isHiddenVehicle(v.template))
-      .filter((v) => (startOnly ? v.atStart : true))
+      .filter((v) => (ui.startingOnly ? v.atStart : true))
       .filter((v) => (ui.showAssets ? true : !['asset', 'crate', 'emplacement'].includes(v.category)))
       .filter((v) => !q || `${v.label} ${v.template} ${v.category}`.toLowerCase().includes(q))
       .sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category))
-  }, [layer.vehicles, query, startOnly, ui.showAssets, plan.side])
+  }, [layer.vehicles, query, ui.startingOnly, ui.showAssets, plan.side])
 
   const teamGroups = useMemo(() => {
     const order = [plan.side, null, plan.side === 1 ? 2 : 1] as (number | null)[]
@@ -68,11 +67,11 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
             />
           </div>
           <button
-            onClick={() => setStartOnly(!startOnly)}
-            className={`rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${startOnly ? 'border-amber-400/50 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500'}`}
+            onClick={() => ui.setStartingOnly(!ui.startingOnly)}
+            className={`rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${ui.startingOnly ? 'border-amber-400/50 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500'}`}
             title="Only assets present at round start"
           >
-            Start only
+            Starting only
           </button>
         </div>
       </div>

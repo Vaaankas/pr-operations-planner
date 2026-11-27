@@ -209,6 +209,7 @@ export interface Stage {
   iconSize?: number
   visibleRoutes?: string[]
   hiddenCps?: number[]
+  startingOnly?: boolean
   notes: string
   elements: DrawElement[]
   moves: Record<string, VehicleMove>
@@ -290,6 +291,7 @@ export interface UIState {
   showDrawings: boolean
   showVehicleNames: boolean
   showVehiclePaths: boolean
+  startingOnly: boolean
   hiddenVehiclePaths: string[]
   exportOpen: boolean
   helpOpen: boolean

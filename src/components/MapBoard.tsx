@@ -714,6 +714,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
   const vehicleVisible = (v: VehicleSpawn) => {
     if (isHiddenVehicle(v.template)) return false
+    if (ui.startingOnly && !v.atStart) return false
     if (v.team !== null && v.team !== plan.side && !ui.showEnemy) return false
     if (['asset', 'crate', 'emplacement'].includes(v.category) && !ui.showAssets) return false
     return ui.showVehicles

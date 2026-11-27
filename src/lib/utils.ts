@@ -98,6 +98,7 @@ export function newStage(index: number, time = 0): Stage {
     visibility: { ...DEFAULT_STAGE_VISIBILITY },
     iconSize: 1,
     hiddenCps: [],
+    startingOnly: false,
     notes: '',
     elements: [],
     moves: {},

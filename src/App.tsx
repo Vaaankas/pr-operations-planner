@@ -163,6 +163,7 @@ function AppInner() {
       iconSize: active?.iconSize ?? 1,
       visibleRoutes: active?.visibleRoutes ?? (layer?.routes ?? []).map((route) => route.id),
       hiddenCps: active?.hiddenCps ?? [],
+      startingOnly: active?.startingOnly ?? false,
     })
   }, [plan?.activeStageId, plan?.stages, layer?.id, layer?.routes])
 

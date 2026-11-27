@@ -251,6 +251,7 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
       stage.iconSize = previous.iconSize ?? 1
       stage.visibleRoutes = previous.visibleRoutes ? [...previous.visibleRoutes] : undefined
       stage.hiddenCps = [...(previous.hiddenCps ?? [])]
+      stage.startingOnly = previous.startingOnly ?? false
     }
     get().mutate((draft) => {
       draft.stages.push(stage)
@@ -519,6 +520,7 @@ export const useUI = create<UIState & {
   toggleRoute: (id: string) => void
   toggleCp: (id: number) => void
   setAllRoutes: (ids: string[], visible: boolean) => void
+  setStartingOnly: (startingOnly: boolean) => void
   setMarker: (icon: string) => void
   setUnit: (unit: string) => void
   setAffiliation: (a: UIState['unitAffiliation']) => void
@@ -557,6 +559,7 @@ export const useUI = create<UIState & {
   showDrawings: true,
   showVehicleNames: true,
   showVehiclePaths: true,
+  startingOnly: false,
   hiddenVehiclePaths: [],
   exportOpen: false,
   helpOpen: false,
@@ -594,6 +597,13 @@ export const useUI = create<UIState & {
     const visibleRoutes = visible ? ids : []
     set({ visibleRoutes })
     persistStageView({ visibleRoutes, hiddenCps: useUI.getState().hiddenCps })
+  },
+  setStartingOnly: (startingOnly) => {
+    set({ startingOnly })
+    const planner = usePlanner.getState()
+    const plan = planner.plan
+    const active = plan?.stages.find((stage) => stage.id === plan.activeStageId)
+    if (active) planner.updateStage(active.id, { startingOnly })
   },
   setMarker: (markerIcon) => set({ markerIcon }),
   setUnit: (unitKind) => set({ unitKind }),
