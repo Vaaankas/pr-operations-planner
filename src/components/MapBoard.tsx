@@ -483,6 +483,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           return
         }
       }
+      const previous = current[current.length - 1]
+      if (previous && Math.hypot(previous.x - n.x, previous.y - n.y) < 0.003) return
       const next = [...current, n]
       polygonRef.current = next
       setPolygon(next)
