@@ -6,7 +6,7 @@ import { dataUrl, DEFAULT_STAGE_VISIBILITY } from './lib/utils'
 import { AssetProvider } from './lib/assets'
 import { Picker } from './components/Picker'
 import { Header } from './components/Header'
-import { ToolbarRail, OptionsBar, useToolHotkeys } from './components/Toolbar'
+import { ToolbarRail, ToolbarHistory, OptionsBar, useToolHotkeys } from './components/Toolbar'
 import { MapBoard } from './components/MapBoard'
 import { PreviewBoard } from './components/PreviewBoard'
 import { RosterBoard } from './components/RosterBoard'
@@ -276,7 +276,10 @@ function AppInner() {
         <PreviewBoard key={`preview:${map.id}:${layer.id}:${stage.id}`} map={map} layer={layer} plan={plan} stage={stage} />
       ) : (
         <div className="flex min-h-0 flex-1">
-          <ToolbarRail />
+          <div className="flex w-12 shrink-0 flex-col">
+            <ToolbarRail />
+            <ToolbarHistory />
+          </div>
 
           <div className="flex min-w-0 flex-1 flex-col">
             <OptionsBar />
