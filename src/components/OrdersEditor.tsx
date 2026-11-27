@@ -193,14 +193,34 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
     commit()
   }
 
+  const deleteSelectedContent = () => {
+    const root = editor.current
+    const selection = window.getSelection()
+    if (!root || !selection?.rangeCount) return
+    const range = selection.getRangeAt(0)
+    const chips = Array.from(root.querySelectorAll<HTMLElement>('.orders-chip')).filter((chip) => {
+      try {
+        return range.intersectsNode(chip)
+      } catch {
+        return false
+      }
+    })
+    chips.forEach((chip) => chip.remove())
+    try {
+      range.deleteContents()
+    } catch {
+      // The selection boundary may have been inside a removed chip.
+    }
+    commit()
+  }
+
   const removeAdjacentChip = (direction: 'back' | 'forward'): boolean => {
     const root = editor.current
     const selection = window.getSelection()
     if (!root || !selection?.rangeCount) return false
     const range = selection.getRangeAt(0)
     if (!range.collapsed) {
-      range.deleteContents()
-      commit()
+      deleteSelectedContent()
       return true
     }
     let candidate: Node | null = null
@@ -238,10 +258,7 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
     if (range.collapsed || !root.contains(range.commonAncestorContainer)) return
     event.preventDefault()
     event.clipboardData.setData('text/plain', serializeOrders(range.cloneContents()))
-    if (cut) {
-      range.deleteContents()
-      commit()
-    }
+    if (cut) deleteSelectedContent()
   }
 
   const pasteOrders = (event: React.ClipboardEvent<HTMLDivElement>) => {
