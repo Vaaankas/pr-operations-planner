@@ -89,8 +89,8 @@ export async function renderOrdersImage(plan: Plan, stage: Stage, assets: AssetM
       ctx.fillStyle = '#64748b'
       ctx.fillText(segment.type === 'cmd' ? 'CMD' : 'SQ', x, baseline)
       ctx.font = `${fontSize}px ${font}`
-      ctx.fillStyle = '#334155'
     }
+    ctx.fillStyle = '#334155'
     x += iconSize + 4
   }
 
