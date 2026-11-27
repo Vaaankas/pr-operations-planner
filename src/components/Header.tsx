@@ -47,16 +47,15 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
   return (
     <header className="relative z-30 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_422.4px] items-stretch border-b border-white/10 bg-[#080d0a]">
       <div className="relative flex min-w-0 items-center gap-2 px-3">
-        <button
-          onClick={onOpenPicker}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
-          title="Go back to map/layer selection"
-        >
-          <Map className="h-4 w-4" />
-        </button>
-        <button onClick={onHelp} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
-          <HelpCircle className="h-4 w-4" />
-        </button>
+        <div className="flex h-full shrink-0 items-center border-r border-white/10 pr-3">
+          <button
+            onClick={onOpenPicker}
+            className="flex h-8 w-8 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
+            title="Go back to map/layer selection"
+          >
+            <Map className="h-4 w-4" />
+          </button>
+        </div>
 
         <div className="pointer-events-none absolute left-1/2 top-1/2 flex w-full max-w-[390px] -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center">
           <input
@@ -106,35 +105,41 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-1.5 border-l border-white/10 px-3">
-        <div className="hidden items-center gap-1.5 px-1 font-mono text-[9px] uppercase tracking-wider text-slate-600 xl:flex">
-          <Save className="h-3 w-3 text-emerald-500/70" />
-          saved {new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      <div className="flex items-center gap-2 border-l border-white/10 px-3">
+        <button onClick={onHelp} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
+          <HelpCircle className="h-4 w-4" />
+        </button>
+
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className="hidden items-center gap-1.5 px-1 font-mono text-[9px] uppercase tracking-wider text-slate-600 xl:flex">
+            <Save className="h-3 w-3 text-emerald-500/70" />
+            saved {new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex h-8 w-8 items-center justify-center rounded border border-white/15 text-slate-300 hover:border-amber-400/50 hover:text-amber-300"
+            title="Import plan JSON"
+          >
+            <Upload className="h-3.5 w-3.5" />
+          </button>
+
+          <button onClick={onExport} className="flex h-8 items-center gap-1.5 rounded bg-amber-400 px-3 text-[11px] font-bold uppercase tracking-wider text-black hover:bg-amber-300">
+            <Download className="h-3.5 w-3.5" /> Export
+          </button>
+
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) importJson(f)
+              e.target.value = ''
+            }}
+          />
         </div>
-
-        <button
-          onClick={() => fileRef.current?.click()}
-          className="flex h-8 w-8 items-center justify-center rounded border border-white/15 text-slate-300 hover:border-amber-400/50 hover:text-amber-300"
-          title="Import plan JSON"
-        >
-          <Upload className="h-3.5 w-3.5" />
-        </button>
-
-        <button onClick={onExport} className="flex h-8 items-center gap-1.5 rounded bg-amber-400 px-3 text-[11px] font-bold uppercase tracking-wider text-black hover:bg-amber-300">
-          <Download className="h-3.5 w-3.5" /> Export
-        </button>
-
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".json,application/json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0]
-            if (f) importJson(f)
-            e.target.value = ''
-          }}
-        />
       </div>
     </header>
   )
