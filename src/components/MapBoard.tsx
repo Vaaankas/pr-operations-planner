@@ -835,6 +835,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       return toNorm({ x: mapped.x, y: mapped.y })
     }
     let patch: Partial<DrawElement> = {}
+    let finalPosition: Point = { x: 0, y: 0 }
     if (el.type === 'pen') {
       patch = { points: el.points.map((p) => { const s = normToScreen(p); return point(s.x, s.y) }) }
     } else if (el.type === 'polygon') {
@@ -856,6 +857,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         b: { x: center.x + halfW, y: center.y + halfH },
         rotation,
       }
+      finalPosition = normToScreen(center)
     } else if (el.type === 'ellipse') {
       const ellipse = node as Konva.Ellipse
       const center = point(0, 0)
@@ -867,6 +869,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         b: { x: center.x + rx, y: center.y + ry },
         rotation,
       }
+      finalPosition = normToScreen(center)
     } else if (el.type === 'text') {
       const boxH = Math.max(10, el.fontSize * mapW) * 2
       patch = {
@@ -877,11 +880,12 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         scaleX: node.scaleX(),
         scaleY: node.scaleY(),
       }
+      finalPosition = normToScreen(patch.at ?? el.at)
     }
-    node.position({ x: 0, y: 0 })
+    node.position(finalPosition)
     node.scaleX(1)
     node.scaleY(1)
-    node.rotation(0)
+    node.rotation('rotation' in patch ? patch.rotation ?? 0 : 0)
     planner.updateElement(el.id, patch)
   }
 
