@@ -210,13 +210,28 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
   useEffect(() => {
     if (open) ref.current?.focus()
   }, [open])
-  const submit = () => {
+  const addNames = (raw: string): number => {
+    const names = raw.split(/\r?\n/).map((value) => value.trim()).filter(Boolean)
+    let added = 0
+    for (const value of names) {
+      if (usePlanner.getState().addMember(target, value)) added += 1
+    }
+    return added
+  }
+
+  const submit = (closeAfter = true) => {
     if (!name.trim()) {
       setOpen(false)
       return
     }
-    if (usePlanner.getState().addMember(target, name)) {
+    if (addNames(name) > 0) {
       setName('')
+      if (closeAfter) {
+        setOpen(false)
+      } else {
+        requestAnimationFrame(() => ref.current?.focus())
+      }
+    } else {
       setOpen(false)
     }
   }
@@ -237,13 +252,25 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') submit()
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            submit(false)
+          }
           if (e.key === 'Escape') {
             setOpen(false)
             setName('')
           }
         }}
-        onBlur={submit}
+        onPaste={(e) => {
+          const text = e.clipboardData.getData('text/plain')
+          if (!/[\r\n]/.test(text)) return
+          e.preventDefault()
+          if (addNames(text) > 0) {
+            setName('')
+            requestAnimationFrame(() => ref.current?.focus())
+          }
+        }}
+        onBlur={() => submit(true)}
         placeholder="Player name"
         className="w-full rounded border border-amber-400/40 bg-black/40 px-1.5 py-1 text-[11px] text-slate-100 outline-none"
       />
