@@ -727,7 +727,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const drawElementNode = (el: DrawElement) => {
     const selected = !preview && ui.selectedId === el.id
     const color = selected ? '#fbbf24' : el.color
-    const sw = Math.max(0.25, el.width * iconScale)
+    const sw = Math.max(0.25, el.width)
     const common = {
       id: el.id,
       draggable: ui.tool === 'select',
@@ -1057,7 +1057,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
   const draftNode = () => {
     if (!draft) return null
-    const sw = Math.max(0.25, ui.width * iconScale)
+    const sw = Math.max(0.25, ui.width)
     if (draft.kind === 'pen') {
       return (
         <Line
@@ -1122,7 +1122,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     const [a0, b0] = pending.points
     const a = normToScreen(a0)
     const b = normToScreen(b0)
-    const sw = Math.max(0.25, ui.width * iconScale)
+    const sw = Math.max(0.25, ui.width)
     if (pending.kind === 'line') {
       return (
         <Arrow
