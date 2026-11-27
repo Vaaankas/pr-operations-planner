@@ -872,8 +872,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
-            fill={el.fill ? color : undefined}
-            fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
+            fill={el.fill ? withAlpha(color, el.fillOpacity ?? 1) : undefined}
           />
         )
       }
@@ -891,8 +890,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             stroke={color}
             strokeWidth={sw}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
-            fill={el.fill ? color : undefined}
-            fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
+            fill={el.fill ? withAlpha(color, el.fillOpacity ?? 1) : undefined}
           />
         )
       }
@@ -905,8 +903,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             closed
             stroke={color}
             strokeWidth={sw}
-            fill={el.fill ? color : undefined}
-            fillOpacity={el.fill ? (el.fillOpacity ?? 1) : 1}
+            fill={el.fill ? withAlpha(color, el.fillOpacity ?? 1) : undefined}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
             hitStrokeWidth={14}
           />
@@ -922,8 +919,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               <Rect
                 width={boxW}
                 height={boxH}
-                fill={el.color}
-                fillOpacity={0.16}
+                fill={withAlpha(el.color, 0.16)}
                 stroke={el.color}
                 strokeWidth={sw}
                 cornerRadius={3}
@@ -971,6 +967,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           <Group
             key={el.id}
             {...common}
+            opacity={1}
             x={at.x}
             y={at.y}
             onMouseEnter={() => setHoverSquad({ id: el.squadId, x: at.x, y: at.y })}
@@ -1165,8 +1162,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           width={Math.abs(b.x - a.x)}
           height={Math.abs(b.y - a.y)}
           stroke={ui.color}
-          fill={ui.fillShapes ? ui.color : undefined}
-          fillOpacity={ui.fillShapes ? ui.fillOpacity : 1}
+          fill={ui.fillShapes ? withAlpha(ui.color, ui.fillOpacity) : undefined}
           strokeWidth={sw}
           dash={[6, 4]}
           opacity={0.85}
@@ -1181,8 +1177,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         radiusX={Math.abs(b.x - a.x) / 2}
         radiusY={Math.abs(b.y - a.y) / 2}
         stroke={ui.color}
-        fill={ui.fillShapes ? ui.color : undefined}
-        fillOpacity={ui.fillShapes ? ui.fillOpacity : 1}
+        fill={ui.fillShapes ? withAlpha(ui.color, ui.fillOpacity) : undefined}
         strokeWidth={sw}
         dash={[6, 4]}
         opacity={0.85}
