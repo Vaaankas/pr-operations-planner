@@ -286,6 +286,27 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
         const squadId = event.dataTransfer.getData('text/pr-squad')
         if (!squadId) return
         event.preventDefault()
+        const root = editor.current
+        if (root) {
+          const point = document.caretRangeFromPoint?.(event.clientX, event.clientY)
+            ?? (document as Document & {
+              caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null
+            }).caretPositionFromPoint?.(event.clientX, event.clientY)
+          if (point) {
+            const range = document.createRange()
+            if ('startContainer' in point) {
+              range.setStart(point.startContainer, point.startOffset)
+            } else {
+              range.setStart(point.offsetNode, point.offset)
+            }
+            range.collapse(true)
+            if (root.contains(range.startContainer)) {
+              const selection = window.getSelection()
+              selection?.removeAllRanges()
+              selection?.addRange(range)
+            }
+          }
+        }
         insertToken(squadId === 'commander' ? CMD_ORDER_TOKEN : squadOrderToken(squadId))
       }}
       className="orders-editor min-h-0 w-full flex-1 overflow-y-auto rounded border border-white/10 bg-black/30 px-2 py-2 text-[12px] leading-relaxed text-slate-200 outline-none focus:border-amber-400/50"
