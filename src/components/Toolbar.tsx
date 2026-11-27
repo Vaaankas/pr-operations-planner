@@ -97,7 +97,7 @@ export function OptionsBar() {
               <button
                 key={c}
                 onClick={() => ui.setColor(c)}
-                className={`h-4 w-4 rounded-full border ${ui.color === c ? 'border-white ring-2 ring-white/40' : 'border-black/40'}`}
+                className={`h-4 w-4 rounded-full border ${ui.color === c ? 'border-white ring-2 ring-white/40' : 'border-white/40'}`}
                 style={{ background: c }}
                 title={c}
               />
