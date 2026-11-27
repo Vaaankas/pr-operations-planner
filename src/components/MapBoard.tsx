@@ -623,6 +623,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         if (ui.selectedKind === 'element') {
           planner.removeElement(ui.selectedId)
           useUI.getState().setSelected(null, null)
+          setHoverSquad(null)
+          setHoverFlag(null)
+          setPinnedSquadId(null)
         } else if (ui.selectedKind === 'vehicle') {
           const plan = usePlanner.getState().plan
           const current = plan?.stages.find((s) => s.id === plan.activeStageId)
