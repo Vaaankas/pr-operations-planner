@@ -582,6 +582,7 @@ function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer
         {squad.members.map((m, i) => (
           <MemberRow key={m.id} member={m} index={i} target={squad.id} role={i === 0 ? 'SL' : i === 1 ? '2IC' : undefined} layer={layer} />
         ))}
+        {!full && <AddPlayer target={squad.id} compact />}
         {claimedVehicles.length > 0 && (
           <div className="space-y-1 border-t border-white/5 pt-1">
             {claimedVehicles.map((vehicle) => (
@@ -590,11 +591,6 @@ function SquadCard({ squad, index, layer }: { squad: Squad; index: number; layer
           </div>
         )}
       </div>
-      {!full && (
-        <div className="shrink-0 border-t border-white/5 p-1.5">
-          <AddPlayer target={squad.id} />
-        </div>
-      )}
     </div>
   )
 }
