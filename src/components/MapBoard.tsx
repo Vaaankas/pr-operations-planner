@@ -1799,6 +1799,57 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         <Layer imageSmoothingEnabled={false}>
           {ui.showDrawings && stage.elements.filter(isIconElement).map(drawElementNode)}
         </Layer>
+
+        <Layer listening={false}>
+          {textAt && textValue && (() => {
+            const at = normToScreen(textAt)
+            const fontSize = Math.max(10, 0.021 * mapW)
+            if (textBoxMode) {
+              const boxW = Math.max(120, textValue.length * fontSize * 0.62 + 18)
+              const boxH = fontSize * 2
+              return (
+                <Group x={at.x} y={at.y - boxH / 2}>
+                  <Rect
+                    width={boxW}
+                    height={boxH}
+                    fill={withAlpha(ui.color, 0.16)}
+                    stroke={ui.color}
+                    strokeWidth={ui.width}
+                    cornerRadius={3}
+                  />
+                  <Text
+                    x={9}
+                    y={boxH / 2}
+                    width={boxW - 18}
+                    text={textValue}
+                    fontSize={fontSize}
+                    fontFamily="Inter, Segoe UI, sans-serif"
+                    fontStyle="bold"
+                    fill={ui.color}
+                    offsetY={fontSize / 2}
+                    perfectDrawEnabled={false}
+                  />
+                </Group>
+              )
+            }
+            return (
+              <Text
+                x={at.x}
+                y={at.y}
+                text={textValue}
+                fontSize={fontSize}
+                fontFamily="Inter, Segoe UI, sans-serif"
+                fontStyle="bold"
+                fill={ui.color}
+                stroke="rgba(3,7,5,0.85)"
+                strokeWidth={Math.max(2, 0.021 * mapW * 0.12)}
+                fillAfterStrokeEnabled
+                offsetY={fontSize / 2}
+                perfectDrawEnabled={false}
+              />
+            )
+          })()}
+        </Layer>
       </Stage>
 
       {!preview && (() => {
@@ -1941,31 +1992,22 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       {!preview && textAt && (() => {
         const at = normToScreen(textAt)
         return (
-        <div
-          className="absolute z-20"
-          style={{
-            left: clamp(at.x * view.scale + view.x, 8, box.w - 280),
-            top: clamp(at.y * view.scale + view.y - 16, 8, box.h - 80),
-          }}
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              addText()
+          <input
+            autoFocus
+            value={textValue}
+            onChange={(e) => setTextValue(e.target.value)}
+            onBlur={addText}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addText()
+              }
+              if (e.key === 'Escape') cancelDrawing()
             }}
-            className="flex items-center gap-1 rounded border border-amber-400/50 bg-[#0b110d] p-1 shadow-2xl"
-          >
-            <input
-              autoFocus
-              value={textValue}
-              onChange={(e) => setTextValue(e.target.value)}
-              onBlur={addText}
-              placeholder={textBoxMode ? 'Text box content' : 'Label text'}
-              className="w-52 bg-transparent px-2 py-1 text-sm text-slate-100 outline-none"
-            />
-            <button type="submit" className="rounded bg-amber-400 px-2 py-1 text-xs font-bold text-black">OK</button>
-          </form>
-        </div>
+            className="pointer-events-none absolute h-px w-px opacity-0"
+            style={{ left: at.x * view.scale + view.x, top: at.y * view.scale + view.y }}
+            aria-label={textBoxMode ? 'Text box content' : 'Label text'}
+          />
         )
       })()}
 
