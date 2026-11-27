@@ -67,7 +67,10 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
             <span className="text-slate-700">·</span>
             <span className="min-w-0 truncate">{map.name} {layer.displayName}</span>
             <span className="text-slate-700">·</span>
-            <span className="flex shrink-0 items-center gap-1 text-emerald-400">
+            <span
+              className="flex shrink-0 items-center gap-1 text-emerald-400"
+              title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
+            >
               <Users className="h-3 w-3" />
               {confirmed}<span className="text-slate-500">/50</span>
             </span>
