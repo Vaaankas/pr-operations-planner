@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import {
   MousePointer2, Pencil, Minus, MoveUpRight, Square, Circle, Pentagon,
-  Type, TextCursorInput, MapPin, Eraser, Ruler,
+  Type, TextCursorInput, MapPin, Eraser, Ruler, Undo2, Redo2,
 } from 'lucide-react'
-import { useUI } from '../store'
+import { usePlanner, useUI } from '../store'
 import type { Tool } from '../types'
 import { iconDataUrl } from '../icons'
 import { useAssets } from '../lib/assets'
@@ -36,6 +36,9 @@ const ORDERS = ['move', 'attack', 'defend', 'repair', 'build', 'observe']
 
 export function ToolbarRail() {
   const ui = useUI()
+  const planner = usePlanner()
+  const canUndo = usePlanner((state) => state.past.length > 0)
+  const canRedo = usePlanner((state) => state.future.length > 0)
   return (
     <div className="flex w-12 shrink-0 flex-col items-center gap-0.5 border-r border-white/10 bg-[#080d0a] py-2">
       {TOOLS.map(({ tool, icon: Icon, label, key }) => (
@@ -49,6 +52,24 @@ export function ToolbarRail() {
           {ui.tool === tool && <span className="absolute -right-0.5 -top-0.5 rounded bg-black px-0.5 font-mono text-[8px] text-amber-300">{key}</span>}
         </button>
       ))}
+      <div className="mt-auto flex flex-col items-center gap-0.5 border-t border-white/10 pt-1.5">
+        <button
+          onClick={() => planner.undo()}
+          disabled={!canUndo}
+          title="Undo (Ctrl+Z)"
+          className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 hover:text-slate-100 disabled:opacity-30"
+        >
+          <Undo2 className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => planner.redo()}
+          disabled={!canRedo}
+          title="Redo (Ctrl+Y)"
+          className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 hover:text-slate-100 disabled:opacity-30"
+        >
+          <Redo2 className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
 }
