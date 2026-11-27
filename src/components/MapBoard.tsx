@@ -821,8 +821,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             stroke={color}
             fill={color}
             strokeWidth={sw}
-            pointerLength={el.arrow === 'none' ? 0 : Math.max(8, sw * 5)}
-            pointerWidth={el.arrow === 'none' ? 0 : Math.max(8, sw * 4.4)}
+            pointerLength={el.arrow === 'none' ? 0 : el.width * 5}
+            pointerWidth={el.arrow === 'none' ? 0 : el.width * 4.4}
             pointerAtBeginning={el.arrow === 'both'}
             pointerAtEnding={el.arrow !== 'none'}
             dash={el.dash ? [sw * 3, sw * 2.4] : undefined}
@@ -1081,8 +1081,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           stroke={ui.color}
           fill={ui.color}
           strokeWidth={sw}
-          pointerLength={ui.tool === 'arrow' ? 12 : 0}
-          pointerWidth={ui.tool === 'arrow' ? 10 : 0}
+          pointerLength={ui.tool === 'arrow' ? ui.width * 3 : 0}
+          pointerWidth={ui.tool === 'arrow' ? ui.width * 2.5 : 0}
           pointerAtBeginning={ui.tool === 'arrow' && ui.arrowBoth}
           dash={ui.dash ? [sw * 3, sw * 2] : undefined}
           opacity={0.85}
@@ -1130,8 +1130,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           stroke={ui.color}
           fill={ui.color}
           strokeWidth={sw}
-          pointerLength={ui.tool === 'arrow' ? 12 : 0}
-          pointerWidth={ui.tool === 'arrow' ? 10 : 0}
+          pointerLength={ui.tool === 'arrow' ? ui.width * 3 : 0}
+          pointerWidth={ui.tool === 'arrow' ? ui.width * 2.5 : 0}
           pointerAtBeginning={ui.tool === 'arrow' && ui.arrowBoth}
           dash={ui.dash ? [sw * 3, sw * 2] : undefined}
           opacity={0.85}
