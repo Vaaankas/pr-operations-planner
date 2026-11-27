@@ -1955,7 +1955,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             <div className="text-[12px] font-semibold text-slate-100">{hoverFlag.cp.name}</div>
             <div className="mt-1 flex items-center gap-1.5 font-mono uppercase tracking-wider text-slate-500">
               <span>{team ? teamName(layer, team) : 'NEUTRAL'}</span>
-              {flag && <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-contain" />}
+              {flag && <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" />}
             </div>
             {hoverFlag.cp.radius != null && (
               <div className="mt-1 text-slate-300">
