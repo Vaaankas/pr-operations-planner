@@ -473,7 +473,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       return
     }
     if (tool === 'polygon') {
-      if (e.evt.detail > 1) return
       const n = toNorm(pos)
       const current = polygonRef.current
       if (current.length > 2) {
@@ -614,9 +613,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
   const finishPolygon = () => {
     const points = polygonRef.current
-    if (points.length > 2) {
-      commit({ ...base(), type: 'polygon', points, fill: ui.fillShapes } as DrawElement)
-    }
+    if (points.length <= 2) return
+    commit({ ...base(), type: 'polygon', points, fill: ui.fillShapes } as DrawElement)
     polygonRef.current = []
     setPolygon([])
   }
