@@ -246,7 +246,7 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
     )
   }
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1">
+    <div className="flex w-full min-w-0 items-center gap-1">
       <input
         ref={ref}
         value={name}
