@@ -18,7 +18,7 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'ruler', icon: Ruler, label: 'Ruler', key: 'D' },
   { tool: 'rect', icon: Square, label: 'Rectangle', key: 'R' },
   { tool: 'ellipse', icon: Circle, label: 'Ellipse', key: 'O' },
-  { tool: 'polygon', icon: Pentagon, label: 'Zone polygon', key: 'G' },
+  { tool: 'polygon', icon: Pentagon, label: 'Polygon', key: 'G' },
   { tool: 'text', icon: Type, label: 'Label', key: 'T' },
   { tool: 'textbox', icon: TextCursorInput, label: 'Text box', key: 'B' },
   { tool: 'marker', icon: MapPin, label: 'Marker', key: 'M' },

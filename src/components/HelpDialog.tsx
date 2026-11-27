@@ -34,7 +34,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
               <span>Ctrl+Z / Ctrl+Y</span><span>Undo / redo</span>
               <span>Delete</span><span>Remove selection</span>
               <span>Esc</span><span>Cancel current drawing</span>
-              <span>Enter</span><span>Close zone polygon</span>
+              <span>Enter</span><span>Close polygon</span>
             </div>
           </section>
 
