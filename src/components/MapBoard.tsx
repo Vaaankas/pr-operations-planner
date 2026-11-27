@@ -735,6 +735,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
   const transformerRef = useRef<Konva.Transformer>(null)
   const rotateConnectorRef = useRef<Konva.Line>(null)
+  const transformMode = useRef<'rotate' | 'resize'>('resize')
   const [rotateConnector, setRotateConnector] = useState<number[]>([])
 
   const updateRotateConnector = (syncState = false) => {
@@ -848,13 +849,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       const height = rect.height() * Math.abs(node.scaleY())
       const halfW = width / mapW / 2
       const halfH = height / mapH / 2
-      const originalWidth = Math.abs(el.b.x - el.a.x) * mapW
-      const originalHeight = Math.abs(el.b.y - el.a.y) * mapH
-      const resized = Math.abs(node.scaleX() - 1) > 0.001
-        || Math.abs(node.scaleY() - 1) > 0.001
-        || Math.abs(width - originalWidth) > 0.5
-        || Math.abs(height - originalHeight) > 0.5
-      const rotation = node.rotation() === 0 && el.rotation && resized ? el.rotation : node.rotation()
+      const rotation = transformMode.current === 'rotate' ? node.rotation() : (el.rotation ?? node.rotation())
       patch = {
         a: { x: center.x - halfW, y: center.y - halfH },
         b: { x: center.x + halfW, y: center.y + halfH },
@@ -865,8 +860,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       const center = point(0, 0)
       const rx = (ellipse.radiusX() * Math.abs(node.scaleX())) / mapW
       const ry = (ellipse.radiusY() * Math.abs(node.scaleY())) / mapH
-      const resized = Math.abs(node.scaleX() - 1) > 0.001 || Math.abs(node.scaleY() - 1) > 0.001
-      const rotation = node.rotation() === 0 && el.rotation && resized ? el.rotation : node.rotation()
+      const rotation = transformMode.current === 'rotate' ? node.rotation() : (el.rotation ?? node.rotation())
       patch = {
         a: { x: center.x - rx, y: center.y - ry },
         b: { x: center.x + rx, y: center.y + ry },
@@ -1529,7 +1523,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             padding={3}
             rotateAnchorOffset={24}
             onTransform={() => updateRotateConnector(false)}
-            onTransformStart={() => planner.checkpoint()}
+            onTransformStart={() => {
+              transformMode.current = transformerRef.current?.getActiveAnchor() === 'rotater' ? 'rotate' : 'resize'
+              planner.checkpoint()
+            }}
           />
         </Layer>
 
