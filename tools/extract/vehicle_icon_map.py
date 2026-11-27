@@ -20,24 +20,14 @@ ICON_SOURCE_DIR = "hud/texture/ingame/vehicles/icons/minimap/"
 
 
 def save_icon(im: Image.Image, path: Path, size: int = 64) -> None:
+    # Preserve the icon's native 32px canvas and transparent margins. Trimming
+    # and fitting each icon to 56px made light vehicles look as large as trucks.
     im = im.convert("RGBA")
-    bbox = im.getchannel("A").getbbox()
-    if bbox:
-        im = im.crop(bbox)
-    target = size - 8
-    scale = min(target / max(1, im.width), target / max(1, im.height))
-    resized = (
-        max(1, round(im.width * scale)),
-        max(1, round(im.height * scale)),
-    )
-    im = im.resize(
-        resized,
-        Image.Resampling.NEAREST if scale >= 1 else Image.Resampling.LANCZOS,
-    )
-    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    canvas.alpha_composite(im, ((size - im.width) // 2, (size - im.height) // 2))
+    if im.size != (32, 32):
+        im = im.resize((32, 32), Image.Resampling.NEAREST)
+    im = im.resize((size, size), Image.Resampling.NEAREST)
     path.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(path, "WEBP", quality=92, method=6)
+    im.save(path, "WEBP", quality=92, method=6)
 
 
 # Exact PlayerControlObject -> miniMapIcon stem from server tweaks.

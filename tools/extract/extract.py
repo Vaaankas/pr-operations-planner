@@ -870,7 +870,10 @@ def extract_assets() -> dict:
             if name not in names:
                 continue
             out = ICONS_DIR / "vehicles" / f"{category}.webp"
-            _save_asset(Image.open(io.BytesIO(z.read(name))), out, key_black=False, trim=True)
+            icon = Image.open(io.BytesIO(z.read(name))).convert("RGBA")
+            if icon.size != (32, 32):
+                icon = icon.resize((32, 32), Image.NEAREST)
+            _save_asset(icon, out, key_black=False, trim=False)
             manifest["vehicles"][category] = f"icons/vehicles/{out.name}"
 
         commander_name = "hud/texture/ingame/player/icons/minimap/mini_commander2.dds"
