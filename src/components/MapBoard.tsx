@@ -1952,6 +1952,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           >
             <div className="text-[12px] font-semibold text-slate-100">{hoverFlag.cp.name}</div>
             <div className="mt-1 font-mono uppercase tracking-wider text-slate-500">Owner · {teamName(layer, team)}</div>
+            <div className="mt-1 text-slate-300">
+              Capture radius: <span className="font-mono text-amber-300">{hoverFlag.cp.radius > 0 ? `${Math.round(hoverFlag.cp.radius)} m` : '—'}</span>
+            </div>
             {capturable ? (
               <>
                 <div className="mt-1 text-slate-300">Ticket loss on capture: <span className="font-mono text-amber-300">{layer.tickets?.loss ?? 30}</span></div>
