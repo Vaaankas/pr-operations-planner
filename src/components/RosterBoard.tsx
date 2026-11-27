@@ -246,7 +246,8 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
     )
   }
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex min-w-0 flex-1 items-start gap-1">
+      <div className="min-w-0 flex-1">
       <input
         ref={ref}
         value={name}
@@ -274,6 +275,8 @@ function AddPlayer({ target, compact }: { target: string; compact?: boolean }) {
         placeholder="Player name"
         className="w-full rounded border border-amber-400/40 bg-black/40 px-1.5 py-1 text-[11px] text-slate-100 outline-none"
       />
+        <div className="mt-0.5 text-[8px] uppercase tracking-wider text-slate-600">Paste multiple lines to add several</div>
+      </div>
     </div>
   )
 }
