@@ -873,11 +873,16 @@ def extract_assets() -> dict:
             _save_asset(Image.open(io.BytesIO(z.read(name))), out, key_black=False, trim=True)
             manifest["vehicles"][category] = f"icons/vehicles/{out.name}"
 
-        commander_name = "hud/texture/ingame/kits/icons/kit_commander.tga"
+        commander_name = "hud/texture/ingame/player/icons/minimap/mini_commander2.dds"
         if commander_name in names:
             out = ICONS_DIR / "commander.webp"
-            _save_asset(Image.open(io.BytesIO(z.read(commander_name))), out, trim=True)
-            manifest["commander"] = f"icons/{out.name}"
+            commander = Image.open(io.BytesIO(z.read(commander_name))).convert("RGBA")
+            bbox = commander.getchannel("A").getbbox()
+            if bbox:
+                commander = commander.crop(bbox).resize((64, 64), Image.NEAREST)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                commander.save(out, "WEBP", lossless=True, quality=100)
+                manifest["commander"] = f"icons/{out.name}"
 
         for number in range(1, 10):
             name = f"hud/texture/ingame/player/icons/minimap/mini_squad_{number}_small.dds"

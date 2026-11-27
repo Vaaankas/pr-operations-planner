@@ -10,14 +10,13 @@ function escapeHtml(value: string): string {
 }
 
 function chipMarkup(token: string, icon: string | undefined, label: string): string {
-  const command = token === CMD_ORDER_TOKEN ? ' orders-chip-cmd' : ''
-  return `<span data-order-token="${escapeHtml(token)}" contenteditable="false" class="orders-chip${command}" title="${escapeHtml(label)}"><img src="${escapeHtml(icon ?? '')}" alt=""></span>`
+  return `<span data-order-token="${escapeHtml(token)}" contenteditable="false" class="orders-chip" title="${escapeHtml(label)}"><img src="${escapeHtml(icon ?? '')}" alt=""></span>`
 }
 
 function orderChip(plan: Plan, assets: AssetManifest, token: string): { icon?: string; label: string } {
   if (token === CMD_ORDER_TOKEN) {
     const icon = assets.commander
-    return { icon: icon ? (tintedAssetSrc(icon, '#f8fafc') ?? dataUrl(icon)) : undefined, label: 'Commander' }
+    return { icon: icon ? dataUrl(icon) : undefined, label: 'Commander' }
   }
   const id = token.slice('[[squad:'.length, -2)
   const index = plan.roster.squads.findIndex((squad) => squad.id === id)
@@ -64,7 +63,7 @@ function chipElement(plan: Plan, assets: AssetManifest, token: string): HTMLElem
   const chip = document.createElement('span')
   chip.dataset.orderToken = token
   chip.contentEditable = 'false'
-  chip.className = token === CMD_ORDER_TOKEN ? 'orders-chip orders-chip-cmd' : 'orders-chip'
+  chip.className = 'orders-chip'
   chip.title = info.label
   if (info.icon) {
     const image = document.createElement('img')
@@ -125,7 +124,7 @@ export function OrdersEditor({ value, stageId, plan, onChange, onCommit }: Props
       const path = assets.squads[String(index + 1)]
       return path ? [preloadAsset(path, squad.color)] : []
     })
-    if (assets.commander) tasks.push(preloadAsset(assets.commander, '#f8fafc'))
+    if (assets.commander) tasks.push(preloadAsset(assets.commander))
     Promise.all(tasks).then(() => {
       if (alive) setIconVersion((current) => current + 1)
     })

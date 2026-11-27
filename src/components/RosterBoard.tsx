@@ -623,11 +623,8 @@ export function RosterBoard({ layer }: { layer: LayerData }) {
         <div className="border-b border-white/10 px-3 py-2">
           <div className="flex items-center gap-2">
             {assets.commander ? (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full border border-black/70 bg-[#2563eb]">
-                <span className="relative flex h-5 w-5 items-center justify-center">
-                  <GameIcon path={assets.commander} tint="#07110a" size={19} className="absolute" />
-                  <GameIcon path={assets.commander} tint="#f8fafc" size={16} className="relative z-10" />
-                </span>
+              <span className="flex h-6 w-6 items-center justify-center">
+                <GameIcon path={assets.commander} size={24} />
               </span>
             ) : (
               <Star className="h-4 w-4 text-amber-300" />

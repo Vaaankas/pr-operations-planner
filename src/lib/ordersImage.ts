@@ -1,11 +1,12 @@
 import type { AssetManifest, Plan, Stage } from '../types'
 import { preloadAsset, tintedAssetSrc } from './gameIcons'
+import { dataUrl } from './utils'
 import { parseOrders } from './orders'
 
-async function loadIcon(path: string | undefined, tint: string): Promise<HTMLImageElement | null> {
+async function loadIcon(path: string | undefined, tint?: string): Promise<HTMLImageElement | null> {
   if (!path) return null
   await preloadAsset(path, tint)
-  const src = tintedAssetSrc(path, tint)
+  const src = tint ? tintedAssetSrc(path, tint) : dataUrl(path)
   if (!src) return null
   const image = new Image()
   image.src = src
@@ -35,7 +36,7 @@ export async function renderOrdersImage(plan: Plan, stage: Stage, assets: AssetM
   for (const segment of parseOrders(stage.notes)) {
     if (segment.type === 'cmd') {
       const key = 'cmd'
-      if (!icons.has(key)) icons.set(key, await loadIcon(assets.commander, '#f8fafc'))
+      if (!icons.has(key)) icons.set(key, await loadIcon(assets.commander))
     } else if (segment.type === 'squad') {
       const index = plan.roster.squads.findIndex((squad) => squad.id === segment.squadId)
       const squad = plan.roster.squads[index]
@@ -76,15 +77,6 @@ export async function renderOrdersImage(plan: Plan, stage: Stage, assets: AssetM
 
     fit(iconSize + 4)
     const image = icons.get(segment.type === 'cmd' ? 'cmd' : `squad:${segment.squadId}`) ?? null
-    if (segment.type === 'cmd') {
-      ctx.beginPath()
-      ctx.arc(x + iconSize / 2, baseline - fontSize * 0.32, iconSize / 2, 0, Math.PI * 2)
-      ctx.fillStyle = '#2563eb'
-      ctx.fill()
-      ctx.lineWidth = 2
-      ctx.strokeStyle = '#0b110d'
-      ctx.stroke()
-    }
     if (image) {
       ctx.drawImage(image, x, baseline - fontSize * 0.82, iconSize, iconSize)
     } else {
