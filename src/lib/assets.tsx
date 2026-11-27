@@ -30,12 +30,24 @@ const FACTION_ALIASES: Record<string, string[]> = {
   chinsurgent: ['meinsurgent', 'taliban'],
   ins: ['meinsurgent', 'chinsurgent', 'taliban'],
   gb: ['gb'],
+  vnusa: ['us', 'usa'],
+  vnusmc: ['us', 'usa'],
+}
+
+function factionCandidates(key: string): string[] {
+  const normalized = key.toLowerCase()
+  const base = normalized.replace(/(?:_(?:ziptie|iron|para|night))+$/, '')
+  return [...new Set([
+    normalized,
+    base,
+    ...(FACTION_ALIASES[normalized] ?? []),
+    ...(FACTION_ALIASES[base] ?? []),
+  ])]
 }
 
 export function factionFlag(assets: AssetManifest, key: string | undefined): string | undefined {
   if (!key) return undefined
-  const candidates = [key, ...(FACTION_ALIASES[key] ?? [])]
-  for (const candidate of candidates) {
+  for (const candidate of factionCandidates(key)) {
     if (assets.factionFlags[candidate]) return assets.factionFlags[candidate]
   }
   return undefined
@@ -43,8 +55,7 @@ export function factionFlag(assets: AssetManifest, key: string | undefined): str
 
 export function cpFlag(assets: AssetManifest, key: string | undefined): string | undefined {
   if (!key) return assets.cpFlags.neutral
-  const candidates = [key, ...(FACTION_ALIASES[key] ?? [])]
-  for (const candidate of candidates) {
+  for (const candidate of factionCandidates(key)) {
     if (assets.cpFlags[candidate]) return assets.cpFlags[candidate]
   }
   return assets.cpFlags.neutral
