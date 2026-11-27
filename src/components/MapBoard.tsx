@@ -738,18 +738,25 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
   const updateRotateConnector = () => {
     const transformer = transformerRef.current
-    const stage = stageRef.current
-    if (!transformer || !stage) return
-    const rotater = transformer.findOne('.rotater')
-    const top = transformer.findOne('.top-center')
-    if (!rotater || !top) {
+    const node = transformer?.nodes()[0] as Konva.Rect | undefined
+    if (!node) {
       setRotateConnector([])
       return
     }
-    const inverse = stage.getAbsoluteTransform().copy().invert()
-    const a = inverse.point(top.getAbsolutePosition())
-    const b = inverse.point(rotater.getAbsolutePosition())
-    setRotateConnector([a.x, a.y, b.x, b.y])
+    const width = node.width() * Math.abs(node.scaleX())
+    const height = node.height() * Math.abs(node.scaleY())
+    const rad = (node.rotation() * Math.PI) / 180
+    const sin = Math.sin(rad)
+    const cos = Math.cos(rad)
+    const topX = node.x() + sin * (height / 2)
+    const topY = node.y() - cos * (height / 2)
+    const offset = 27 / view.scale
+    setRotateConnector([
+      topX,
+      topY,
+      topX + sin * offset,
+      topY - cos * offset,
+    ])
   }
 
   useEffect(() => {
