@@ -105,7 +105,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         <div className="hidden min-w-0 flex-col justify-center px-3 py-1.5 lg:flex">
           <span className="font-mono text-[8px] uppercase leading-none tracking-[0.18em] text-slate-500">Map</span>
           <div className="mt-1 max-w-[210px] truncate text-[12px] font-medium leading-4 text-slate-300" title={`${map.name} · ${layer.displayName}`}>
-            {map.name} <span className="text-slate-600">·</span> {layer.displayName}
+            {map.name} {layer.displayName}
           </div>
         </div>
 
