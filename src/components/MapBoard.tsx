@@ -1489,7 +1489,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                     stroke={MAP_TEXT_OUTLINE}
                     strokeWidth={MAP_TEXT_OUTLINE_PX * iconScale * iconSize}
                     fillAfterStrokeEnabled
-                    y={h * 0.27}
+                    y={0}
                     width={180 * iconScale * iconSize}
                     align="center"
                     x={-90 * iconScale * iconSize}
