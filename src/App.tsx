@@ -101,7 +101,7 @@ function AppInner() {
     }
     const applyLayer = (data: LayerData) => {
       setLayer(data)
-      useUI.getState().setVisibleRoutes(data.routes?.[0] ? [data.routes[0].id] : [])
+      useUI.getState().setVisibleRoutes((data.routes ?? []).map((route) => route.id))
       useUI.setState({ hiddenCps: [] })
     }
     if (cache.current.has(plan.layerId)) {
@@ -180,7 +180,7 @@ function AppInner() {
       }
       const next = makePlan(nextMap, data, side)
       setLayer(data)
-      useUI.getState().setVisibleRoutes(data.routes?.[0] ? [data.routes[0].id] : [])
+      useUI.getState().setVisibleRoutes((data.routes ?? []).map((route) => route.id))
       useUI.setState({ hiddenCps: [] })
       useUI.getState().setView('plan')
       usePlanner.getState().setPlan(next)
