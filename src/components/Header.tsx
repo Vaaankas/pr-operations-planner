@@ -47,6 +47,14 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
   return (
     <header className="relative z-30 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_422.4px] items-stretch border-b border-white/10 bg-[#080d0a]">
       <div className="relative flex min-w-0 items-center gap-2 px-3">
+        <button
+          onClick={onOpenPicker}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
+          title="Go back to map/layer selection"
+        >
+          <Map className="h-4 w-4" />
+        </button>
+
         <div
           className="flex shrink-0 items-center gap-2 font-mono text-[11px] uppercase tracking-wider"
           title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
@@ -121,14 +129,6 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
 
           <button onClick={onExport} className="flex h-8 items-center gap-1.5 rounded bg-amber-400 px-3 text-[11px] font-bold uppercase tracking-wider text-black hover:bg-amber-300">
             <Download className="h-3.5 w-3.5" /> Export
-          </button>
-
-          <button
-            onClick={onOpenPicker}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
-            title="Go back to map/layer selection"
-          >
-            <Map className="h-4 w-4" />
           </button>
 
           <input
