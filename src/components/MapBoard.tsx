@@ -1615,7 +1615,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               const p = worldToDisplayNorm(point.x, point.z, layer.world)
               return [p.x * mapW, p.y * mapH]
             })
-            const color = area.team === plan.side ? '#38bdf8' : area.team === 1 || area.team === 2 ? '#f87171' : '#fbbf24'
+            const color = area.team === plan.side ? '#ef4444' : area.team === 1 || area.team === 2 ? '#38bdf8' : '#fbbf24'
             return (
               <Line
                 key={`protection-${index}`}
