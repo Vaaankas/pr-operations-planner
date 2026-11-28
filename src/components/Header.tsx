@@ -58,27 +58,8 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
             title="Operation name"
           />
           <div
-            className="mt-0.5 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500"
-            title={`${side?.name ?? `Team ${plan.side}`} · ${map.name} ${layer.displayName} · ${confirmed}/50 confirmed`}
-          >
-            <span className="flex min-w-0 items-center justify-end gap-1.5">
-              {side && factionFlag(assets, side.key) ? (
-                <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-3 w-4 shrink-0 object-fill" />
-              ) : (
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400" />
-              )}
-              <span className="truncate text-slate-300">{side?.short ?? `TEAM ${plan.side}`}</span>
-            </span>
-            <span className="max-w-[230px] truncate px-1 text-center text-slate-400">
-              {map.name} {layer.displayName}
-            </span>
-            <span
-              className="pointer-events-auto flex shrink-0 cursor-help items-center justify-start gap-1 text-emerald-400"
-              title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
-            >
-              <Users className="h-3 w-3" />
-              {confirmed}<span className="text-slate-500">/50</span>
-            </span>
+          <div className="mt-0.5 max-w-full truncate px-1 text-center font-mono text-[10px] uppercase tracking-wider text-slate-500">
+            {map.name} {layer.displayName}
           </div>
         </div>
 
@@ -108,6 +89,22 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         <button onClick={onHelp} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
           <HelpCircle className="h-4 w-4" />
         </button>
+
+        <div
+          className="flex shrink-0 items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider"
+          title={`${side?.name ?? `Team ${plan.side}`} · ${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
+        >
+          {side && factionFlag(assets, side.key) ? (
+            <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-3 w-4 shrink-0 object-fill" />
+          ) : (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400" />
+          )}
+          <span className="shrink-0 text-slate-300">{side?.short ?? `TEAM ${plan.side}`}</span>
+          <span className="flex shrink-0 cursor-help items-center gap-1 text-emerald-400">
+            <Users className="h-3 w-3" />
+            {confirmed}<span className="text-slate-500">/50</span>
+          </span>
+        </div>
 
         <div className="ml-auto flex items-center gap-1.5">
           <div className="hidden items-center gap-1.5 px-1 font-mono text-[9px] uppercase tracking-wider text-slate-600 xl:flex">
