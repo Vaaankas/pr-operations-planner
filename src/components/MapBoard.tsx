@@ -481,7 +481,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         ...base(),
         type: 'icon',
         at: toNorm(pos),
-        icon: state.markerIcon,
+        icon: tool === 'marker_enemy' ? state.enemyMarkerIcon : state.markerIcon,
         rotation: 0,
         size: 0.022,
         affiliation: markerAffiliation(tool),
@@ -1251,11 +1251,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             }}
           >
             <Circle radius={el.size * mapW * 0.62} fill="rgba(0,0,0,0.001)" />
-            {el.affiliation && (
+            {el.affiliation === 'friendly' && (
               <Circle
                 radius={el.size * mapW * 0.72}
-                fill={withAlpha(el.affiliation === 'enemy' ? '#ef4444' : '#3b82f6', 0.24)}
-                stroke={withAlpha(el.affiliation === 'enemy' ? '#ef4444' : '#3b82f6', 0.85)}
+                fill={withAlpha('#3b82f6', 0.24)}
+                stroke={withAlpha('#3b82f6', 0.85)}
                 strokeWidth={1.5 * iconScale}
               />
             )}

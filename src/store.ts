@@ -525,6 +525,7 @@ export const useUI = create<UIState & {
   setAllRoutes: (ids: string[], visible: boolean) => void
   setStartingOnly: (startingOnly: boolean) => void
   setMarker: (icon: string) => void
+  setEnemyMarker: (icon: string) => void
   setUnit: (unit: string) => void
   setAffiliation: (a: UIState['unitAffiliation']) => void
   setSelected: (id: string | null, kind: UIState['selectedKind']) => void
@@ -552,6 +553,7 @@ export const useUI = create<UIState & {
   visibleRoutes: [],
   hiddenCps: [],
   markerIcon: 'order_attack',
+  enemyMarkerIcon: 'spotted_enemyforces',
   unitKind: 'inf',
   unitAffiliation: 'hostile',
   selectedId: null,
@@ -615,6 +617,7 @@ export const useUI = create<UIState & {
     if (active) planner.updateStage(active.id, { startingOnly })
   },
   setMarker: (markerIcon) => set({ markerIcon }),
+  setEnemyMarker: (enemyMarkerIcon) => set({ enemyMarkerIcon }),
   setUnit: (unitKind) => set({ unitKind }),
   setAffiliation: (unitAffiliation) => set({ unitAffiliation }),
   setSelected: (selectedId, selectedKind) => set({ selectedId, selectedKind }),

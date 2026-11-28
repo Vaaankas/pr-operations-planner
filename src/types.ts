@@ -300,6 +300,7 @@ export interface UIState {
   visibleRoutes: string[]
   hiddenCps: number[]
   markerIcon: string
+  enemyMarkerIcon: string
   unitKind: string
   unitAffiliation: 'friend' | 'hostile' | 'neutral'
   selectedId: string | null

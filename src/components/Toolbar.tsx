@@ -28,6 +28,15 @@ const COLORS = SQUAD_COLORS
 
 const ORDERS = ['move', 'attack', 'defend', 'repair', 'build', 'observe']
 
+const ENEMY_MARKERS = [
+  'spotted_enemyforces', 'spotted_aav', 'spotted_antiairmissile', 'spotted_apc',
+  'spotted_atgm', 'spotted_atgmvehicle', 'spotted_bridge', 'spotted_bunker',
+  'spotted_destroyedbridge', 'spotted_firebase', 'spotted_heavyaa', 'spotted_heavyat',
+  'spotted_hmg', 'spotted_ifv', 'spotted_jeep', 'spotted_mortar', 'spotted_objective',
+  'spotted_rally', 'spotted_razorwire', 'spotted_saboteur', 'spotted_sniper',
+  'spotted_spotter', 'spotted_supply', 'spotted_tank', 'spotted_truck',
+]
+
 export function ToolbarRail() {
   const ui = useUI()
   return (
@@ -197,7 +206,7 @@ export function OptionsBar() {
         </>
       )}
 
-      {(tool === 'marker_friendly' || tool === 'marker_enemy') && (
+      {tool === 'marker_friendly' && (
         <div className="flex flex-1 items-center gap-1 overflow-x-auto">
           {ORDERS.map((o) => {
             const icon = `order_${o}`
@@ -208,6 +217,25 @@ export function OptionsBar() {
                 onClick={() => ui.setMarker(icon)}
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
                 title={`Commander order: ${o}`}
+              >
+                {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {tool === 'marker_enemy' && (
+        <div className="flex flex-1 items-center gap-1 overflow-x-auto">
+          {ENEMY_MARKERS.map((icon) => {
+            const path = assets.markers[icon]
+            const label = icon.replace('spotted_', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
+            return (
+              <button
+                key={icon}
+                onClick={() => ui.setEnemyMarker(icon)}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.enemyMarkerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
+                title={label}
               >
                 {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
               </button>
