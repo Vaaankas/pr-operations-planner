@@ -434,6 +434,7 @@ def parse_gpo(text: str) -> dict:
             mm = re.match(r"ObjectTemplate\.supplyGroupId\s+(-?\d+)", s)
             if mm:
                 control_template[current]["sgid"] = int(mm.group(1))
+                control_template[current]["sgid_raw"] = mm.group(1)
             mm = re.match(r"ObjectTemplate\.controlPointId\s+(\d+)", s)
             if mm:
                 control_template[current]["cpId"] = int(mm.group(1))
@@ -472,15 +473,26 @@ def pretty_cp_name(raw: str, level: str, mode: str, players: int) -> str:
     return pretty_label(name) if name else raw
 
 
-def sgid_parts(sgid: int) -> tuple[int, int, int | None]:
-    """AASv4 SupplyGroupId -> (order A, pick count B, route C)."""
+def sgid_parts(sgid: int, raw: str | None = None) -> tuple[int, int, int | None]:
+    """AASv4 SupplyGroupId -> (order A, pick count B, route C).
+
+    Three-digit SGIDs are ABC. Six-digit SGIDs are the padded expansion
+    AABBCC, so leading zeroes are significant and the raw string must be
+    used rather than the integer value.
+    """
     if sgid < 0:
         return 999, 0, None
-    if sgid < 10:
-        return sgid, 0, None
-    if sgid < 100:
-        return sgid // 10, sgid % 10, None
-    return sgid // 100, (sgid // 10) % 10, sgid % 10
+    text = raw if raw is not None and raw != "" else str(sgid)
+    text = text.lstrip("+")
+    if len(text) >= 6:
+        padded = text.zfill(6)
+        route = int(padded[4:6])
+        return int(padded[0:2]), int(padded[2:4]), route if route else None
+    if len(text) == 2:
+        return int(text[0]), int(text[1]), None
+    if len(text) >= 3:
+        return int(text[:-2]), int(text[-2]), int(text[-1]) if int(text[-1]) else None
+    return int(text), 0, None
 
 
 def parse_tickets(init_text: str, players: int, mode: str) -> dict:
@@ -598,7 +610,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             continue
         tpl = parsed["controlTemplates"].get(inst["name"], {})
         sgid = int(tpl.get("sgid", -1))
-        order, pick, route = sgid_parts(sgid)
+        order, pick, route = sgid_parts(sgid, tpl.get("sgid_raw"))
         localized = flag_names.get(inst["name"]) or flag_names.get(f"{inst['name']}_noAiAreaAttack")
         cps.append({
             "id": len(cps) + 1,

@@ -23,13 +23,15 @@ export function groupRoute(layer: LayerData, route: Route): RouteGroup[] {
 }
 
 export function routeGroupMode(group: RouteGroup): 'all' | 'one' {
-  const sgids = new Set(group.cps.map((cp) => cp.sgid))
-  return sgids.size <= 1 ? 'all' : 'one'
+  const pick = Math.max(0, ...group.cps.map((cp) => cp.pick ?? 0))
+  return pick > 0 && pick < group.cps.length ? 'one' : 'all'
 }
 
 export function routeGroupLabel(group: RouteGroup): string {
   const mode = routeGroupMode(group)
-  return `${mode === 'all' ? 'ALL' : '1 OF'} ${group.cps.length}`
+  if (mode === 'all') return `ALL ${group.cps.length}`
+  const pick = Math.max(1, ...group.cps.map((cp) => cp.pick ?? 0))
+  return `${pick} OF ${group.cps.length}`
 }
 
 export function routeSegments(layer: LayerData, route: Route): [ControlPoint, ControlPoint][] {
