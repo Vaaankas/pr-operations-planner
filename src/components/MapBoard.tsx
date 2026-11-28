@@ -1770,7 +1770,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 {!isCapturable(cp) && cancelImg && (
                   <KonvaImage
                     image={cancelImg}
-                    x={-w * FLAG_ANCHOR_X + w / 2 - w / 2}
+                    x={-w * FLAG_ANCHOR_X - w / 2}
                     y={-h * FLAG_ANCHOR_Y + h / 2 - w / 2}
                     width={w}
                     height={w}
