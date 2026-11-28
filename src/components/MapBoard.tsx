@@ -214,7 +214,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     }
     const neutralFlag = cpFlag(assets, undefined)
     if (neutralFlag) jobs.push(preloadAsset(neutralFlag))
-    if (assets.markers.deployment_cancel) jobs.push(preloadAsset(assets.markers.deployment_cancel))
     for (const v of layer.vehicles) {
       const path = vehicleIconPath(assets, v)
       if (!path) continue
@@ -1709,8 +1708,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const key = team ? layer.factions[String(team)]?.key : undefined
             const flagPath = cpFlag(assets, key)
             const img = flagPath ? assetImage(flagPath) : null
-            const cancelPath = assets.markers.deployment_cancel
-            const cancelImg = cancelPath ? assetImage(cancelPath) : null
             const w = FLAG_ICON_PX * iconScale * iconSize
             const ratio = img && img.width && img.height ? img.height / img.width : 1
             const h = w * Math.min(1, Math.max(0.4, ratio))
@@ -1766,16 +1763,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   />
                 ) : (
                   <IconGlyph icon="flag" color={color} size={w} x={0} y={0} />
-                )}
-                {!isCapturable(cp) && cancelImg && (
-                  <KonvaImage
-                    image={cancelImg}
-                    x={-w * FLAG_ANCHOR_X - w / 2}
-                    y={-h * FLAG_ANCHOR_Y + h / 2 - w / 2}
-                    width={w}
-                    height={w}
-                    listening={false}
-                  />
                 )}
                 {ui.showLabels && (
                   <Text
