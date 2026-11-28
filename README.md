@@ -8,16 +8,16 @@ Static site. No accounts, no backend, no tracking. Plans live in the browser.
 
 ## What it does
 
-- **87 maps / 412 PvP layers** extracted from a local PR install: AAS (`gpm_cq`), Insurgency (`gpm_insurgency`) and Skirmish (`gpm_skirmish`). CNC is deliberately excluded.
+- **86 maps / 406 PvP layers** extracted from a local PR install: AAS (`gpm_cq`), Insurgency (`gpm_insurgency`) and Skirmish (`gpm_skirmish`). CNC is deliberately excluded. Insurgency and Skirmish layers are named by size variant: Infantry, Alternative, Standard and Large.
 - **Accurate 2D map art** — the in-game 2048² minimap with its baked A–M / 1–13 grid, not a stretched screenshot. Overlays are mirrored vertically against the texture's axis so flags, vehicles and drawings land on the correct terrain while the grid stays upright.
 - **Opening vehicle manifest** — every spawner present at round start, with its team, localised English name, object template, spawn rotation and respawn delay, placed on its real world position. Delayed assets are dimmed with their timer. Icons are PR's own filled white vehicle silhouettes with black backing removed, tinted by team or claiming squad.
 - **AASv4 routes** — flags are ordered from each layer's SupplyGroupId (`ABC`: order, alternatives, route). Toggle any number of routes and individual flags, with route-coloured translucent lanes, parallel flags sharing one capture-order number, and real capture radii.
 - **Localised flags and ticket data** — English control-point names from `prmaps.utxt`, rectangular in-game capture-point flag sprites matching the neutral flag. Capturable flags show their capture ticket loss; deployment flags are fixed and cannot be switched. Click a capturable flag to cycle owner through neutral and both factions; the same state and control appears in Routes.
-- **50-player target roster** — starts with five phonetically named squads (ALPHA–ECHO), fixed ordinal numbers and freeform names; up to ten squads. Drag grip handles to move players or reorder squads, reserve pool, soft 8-player warning (`!`). Each player cycles blank → green `✓` confirmed → amber `?` unconfirmed; blank counts as unconfirmed. Squad badges use PR's own white circular number sprites, tinted with the squad colour.
-- **Tactical drawing** — draw, line, arrow (one or both heads, solid or dashed), ruler with distance label, rectangle, ellipse, zone polygon with separate fill opacity, labels, in-game markers and commander-order glyphs, NATO unit symbols.
+- **50-player target roster** — starts with five phonetically named squads (ALPHA–ECHO), fixed ordinal numbers and freeform names; up to nine squads. Drag grip handles to move players or reorder squads, reserve pool, soft 8-player warning (`!`). Each player cycles blank → green `✓` confirmed → amber `?` unconfirmed; blank counts as unconfirmed. Squad badges use PR's own white circular number sprites, tinted with the squad colour.
+- **Tactical drawing** — draw, line, arrow (one or both heads, solid or dashed), ruler with distance label, rectangle, ellipse, polygon with separate fill opacity, labels, in-game markers and commander-order glyphs, NATO unit symbols.
 - **Vehicle trails and squad badges** — vehicles inherit their previous stage position and draw a vehicle-coloured trail from it. Select the vehicle, then click its trail to add a turning point; drag the point to move it, right-click to remove it. Claimed vehicles carry their squad number at the rear. Global and per-vehicle path visibility are available, and return puts the vehicle back at its previous stage position.
 - **Stage timeline** — each stage has a mission clock, commander intent and its own drawings plus vehicle moves. A new stage inherits the previous stage's drawings and vehicle positions. Play through the stages during a briefing.
-- **Exports** — 16:9 PPTX with title, roster table and one slide per stage; print-ready PDF; ZIP of stage PNGs at 2048 or 3072 px; roster-only PPTX/PDF. PPTX stage notes also go into speaker notes.
+- **Exports** — 16:9 PPTX with title, a square-cornered white roster briefing page and one slide per stage; print-ready PDF; ZIP of stage PNGs at 2048 or 3072 px; roster-only PPTX/PDF. PPTX stage notes also go into speaker notes.
 - **Autosave + JSON** — the active plan persists in `localStorage`; export/import `.prplan.json` for backups or sharing.
 
 ## Quick start
@@ -72,11 +72,11 @@ or just `python` if Pillow is installed.
 
 ## Deploy to GitHub Pages
 
-The workflow in `.github/workflows/deploy.yml` builds and publishes `dist/` on every push to `main`.
+The workflow in `.github/workflows/deploy.yml` builds and publishes `dist/` when manually dispatched.
 
 1. Create a GitHub repository and push this folder.
 2. Repository **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-3. Push to `main` (or run the workflow manually). The site appears at `https://<user>.github.io/<repo>/`.
+3. Push to `main`, then run the workflow manually. The site appears at `https://<user>.github.io/<repo>/`.
 
 `vite.config.ts` uses `base: './'`, so the build works from a project subpath without changes. The dataset is committed, so visitors get every map immediately.
 
@@ -85,11 +85,11 @@ Repository weight: ~58 MB of map data plus normal source and dependencies (depen
 ## Using the planner
 
 1. **Pick a map and layer** and choose which side you are planning.
-2. **Roster tab** — add players, drag the grip handles between squads, drop a player on the commander slot to promote them. The 50-player count is a target, not a hard cap; the 8-player squad warning appears as `!` beside the counter.
+2. **Roster tab** — add players, drag the grip handles between squads, drop a player on the commander slot to promote them. The 50-player count is a target, not a hard cap; the 8-player soft warning and 20-player hard cap appear beside the counter.
 3. **Assets tab** — starts with the round-start filter off and static emplacements visible. Assets are grouped friendly → neutral → enemy. Click an asset to select and rotate it, claim it for a squad, then drag it to a planned position. The vehicle-coloured trail starts at its previous stage position.
 4. **Draw** — choose a tool in the left rail. Set colour, width, opacity, dash and (for arrows) both heads. For area tools, toggle "Fill area". Middle-mouse drag pans with any tool.
 5. **Routes tab** — toggle routes independently; each visible route has its own colour. Capture-order checkboxes control whether each flag is rendered. Hover or click the flag owner button for ticket loss/bleed and to cycle faction/neutral.
-6. **Map layers** — use the visibility icons at the bottom of the left tool rail; hover each for its description. The numbered squad legend sits above the zoom controls; drag a legend badge onto the map to place a squad marker.
+6. **Stage visibility** — use the Stage tab to show or hide vehicles, enemy vehicles, static assets, flags, markers, drawings, flag labels and vehicle names independently. The amber export frame can be dragged by its edges or reset from the Stage panel.
 7. **Stages** — add stages in the bottom timeline, set the mission clock and notes in the Stage tab. Clicking a stage opens its Stage tab; a new stage inherits the previous stage's drawings and vehicle positions.
 8. **Export** — PowerPoint, PDF, stage PNGs, or a roster-only PPTX/PDF.
 
@@ -100,8 +100,8 @@ Repository weight: ~58 MB of map data plus normal source and dependencies (depen
 | `V` | Select / move (drag empty map to pan) |
 | Middle drag | Pan with any tool |
 | `P` `L` `A` `D` | Draw, line, arrow, ruler |
-| `R` `O` `G` | Rectangle, ellipse, zone polygon |
-| `T` `M` `U` | Text, marker, unit symbol |
+| `R` `O` `G` | Rectangle, ellipse, polygon |
+| `T` `M` `N` | Text, markers, enemy markers |
 | `E` | Erase |
 | Click / drag | Draw lines, arrows and areas either way |
 | Wheel | Zoom to cursor (20×) |
