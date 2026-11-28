@@ -103,18 +103,7 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                             className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/5 px-1 py-0.5 text-[9px] text-slate-500"
                             title={`${cp.name}: deployment flag, uncapturable`}
                           >
-                            {flag ? (
-                              <span className="relative inline-flex">
-                                <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" />
-                                {assets.markers.deployment_cancel && (
-                                  <img
-                                    src={dataUrl(assets.markers.deployment_cancel)}
-                                    alt=""
-                                    className="absolute -right-1.5 -top-1.5 h-3 w-3"
-                                  />
-                                )}
-                              </span>
-                            ) : null}
+                            {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" /> : null}
                             <span className="max-w-14 truncate">FIXED</span>
                           </span>
                         )}
