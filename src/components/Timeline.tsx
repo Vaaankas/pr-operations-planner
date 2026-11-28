@@ -51,8 +51,7 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
               if (!looped) {
                 setLooped(true)
                 if (!playing) {
-                  const start = index >= stages.length - 1 ? 0 : Math.max(0, index)
-                  if (stages[start]) planner.setActiveStage(stages[start].id)
+                  if (stages[0]) planner.setActiveStage(stages[0].id)
                   setPlaying(true)
                 }
               } else if (!playing) {
