@@ -75,7 +75,7 @@ FACTIONS = {
     "aus": ("Australia", "AUS"),
     "nz": ("New Zealand", "NZ"),
     "idf": ("Israel", "IDF"),
-    "hamas": ("Hamas", "HAM"),
+    "hamas": ("Hamas", "HAMAS"),
     "arf": ("African Resistance", "ARF"),
     "vmf": ("Vietnam", "VMF"),
     "nva": ("North Vietnam", "NVA"),
