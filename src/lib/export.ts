@@ -204,10 +204,10 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
       slide.addText('No stage notes.', { x: 0.45, y: 1.78, w: 4.5, h: 0.4, fontFace: 'Segoe UI', fontSize: 10, italic: true, color: '94A3B8' })
     }
 
-    const mapSize = 6.55
-    slide.addImage({ data, x: PAGE_W - mapSize - 0.35, y: 0.38, w: mapSize, h: mapSize })
+    const mapSize = 7.0
+    slide.addImage({ data, x: PAGE_W - mapSize - 0.28, y: 0.25, w: mapSize, h: mapSize })
     slide.addText(slideData.footer, {
-      x: 0.45, y: 7.12, w: 8, h: 0.2, fontFace: 'Segoe UI', fontSize: 8, color: '94A3B8',
+      x: 0.45, y: 7.12, w: 4.6, h: 0.2, fontFace: 'Segoe UI', fontSize: 8, color: '94A3B8',
     })
     if (notes) slide.addNotes(ordersPlainText(notes, src.plan))
   }
@@ -360,8 +360,8 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
         doc.text(lines, 0.45, 1.65, { lineHeightFactor: 1.35 })
       }
     }
-    const mapSize = 6.55
-    doc.addImage(data, 'JPEG', PAGE_W - mapSize - 0.35, 0.38, mapSize, mapSize)
+    const mapSize = 7.0
+    doc.addImage(data, 'JPEG', PAGE_W - mapSize - 0.28, 0.25, mapSize, mapSize)
     doc.setFontSize(7)
     doc.setTextColor(148, 163, 184)
     doc.text(slideData.footer, 0.45, 7.2)

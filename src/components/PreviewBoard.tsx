@@ -153,9 +153,9 @@ function StageSlideType({ slide, src, plan, assets }: {
       </div>
       <div className="absolute bottom-[2.5%] left-[3.4%] font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>{slide.footer}</div>
       {src ? (
-        <img src={src} alt={`${slide.title} preview`} draggable={false} className="pointer-events-none absolute right-[2.6%] top-[5%] aspect-square w-[49.5%] select-none object-contain" />
+        <img src={src} alt={`${slide.title} preview`} draggable={false} className="pointer-events-none absolute right-[1.3%] top-[2%] aspect-square w-[53%] select-none object-contain" />
       ) : (
-        <div className="absolute right-[2.6%] top-[5%] flex aspect-square w-[49.5%] items-center justify-center bg-[#eef2f1] font-mono text-[9px] uppercase tracking-[0.18em] text-slate-400">
+        <div className="absolute right-[1.3%] top-[2%] flex aspect-square w-[53%] items-center justify-center bg-[#eef2f1] font-mono text-[9px] uppercase tracking-[0.18em] text-slate-400">
           Rendering preview
         </div>
       )}
