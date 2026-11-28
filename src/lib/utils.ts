@@ -4,7 +4,12 @@ export const PLAYER_CAP = 50
 export const SQUAD_SIZE = 8
 export const SQUAD_HARD_CAP = 20
 export const isHiddenVehicle = (template: string): boolean =>
-  /artillery_team[12]|(^|_)acv(_|$)|ship|shp|carrier|uss_/i.test(template)
+  /artillery_team[12]|deployable_commandpost|(^|_)acv(_|$)|ship|shp|carrier|uss_/i.test(template)
+
+export function isVehicleInBounds(vehicle: { x: number; z: number }, world: number): boolean {
+  const half = world / 2
+  return Math.abs(vehicle.x) <= half && Math.abs(vehicle.z) <= half
+}
 
 export function vehicleDelayRemaining(v: VehicleSpawn, stageTime: number): number {
   if (v.atStart) return 0

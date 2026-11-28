@@ -1,5 +1,5 @@
 import type { AssetManifest, ControlPoint, DrawElement, LayerData, MapMeta, Plan, Stage, StageFrame, VehicleSpawn } from '../types'
-import { affiliationColor, dataUrl, formatTime, isHiddenVehicle, vehicleDelayRemaining, vehicleReady } from './utils'
+import { affiliationColor, dataUrl, formatTime, isHiddenVehicle, isVehicleInBounds, vehicleDelayRemaining, vehicleReady } from './utils'
 import { layerDisplayName } from './layerLabels'
 import { iconImage, glyphFor } from '../icons'
 import { cpFlag, vehicleIconPath } from './assets'
@@ -357,6 +357,7 @@ export async function renderStageCanvas(
   if (neutralFlag) jobs.push(preloadAsset(neutralFlag))
   for (const v of layer.vehicles) {
     if (isHiddenVehicle(v.template)) continue
+    if (!isVehicleInBounds(v, layer.world)) continue
     const path = vehicleIconPath(opts.assets, v)
     if (!path) continue
     jobs.push(preloadAsset(path))
@@ -460,6 +461,7 @@ export async function renderStageCanvas(
     }
     for (const v of layer.vehicles) {
       if (isHiddenVehicle(v.template)) continue
+      if (!isVehicleInBounds(v, layer.world)) continue
       if (v.team === null) {
         if (!opts.showAssets) continue
       } else if (v.team !== plan.side && !opts.showEnemy) continue
