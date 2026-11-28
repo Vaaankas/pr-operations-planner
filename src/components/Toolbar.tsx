@@ -46,9 +46,8 @@ const FRIENDLY_MARKER_GROUPS = [
   {
     label: 'MISC',
     icons: [
-      'spotted_objective', 'friendly_minefield', 'friendly_supply',
-      'friendly_demolish', 'friendly_uav', 'friendly_reinforcements',
-      'friendly_repaircrate',
+      'friendly_minefield', 'friendly_supply', 'friendly_demolish',
+      'friendly_uav', 'friendly_reinforcements', 'friendly_repaircrate',
     ],
   },
 ]
