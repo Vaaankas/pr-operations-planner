@@ -1,11 +1,11 @@
 import type { ControlPoint, LayerData, Plan } from '../types'
 
-export function isDeploymentFlag(cp: ControlPoint): boolean {
-  return cp.radius <= 0
+export function isCapturable(cp: ControlPoint): boolean {
+  return cp.capturable ?? cp.radius > 0
 }
 
-export function isCapturable(cp: ControlPoint): boolean {
-  return !isDeploymentFlag(cp) && cp.order < 900
+export function isDeploymentFlag(cp: ControlPoint): boolean {
+  return !isCapturable(cp)
 }
 
 export function captureTeam(plan: Plan, cp: ControlPoint): number {

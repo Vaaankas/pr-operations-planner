@@ -55,7 +55,7 @@ LAYER_NAMES = {
 }
 
 ROUTE_COLORS = ["#38bdf8", "#fb923c", "#a78bfa", "#34d399"]
-EXCLUDED_LEVELS = {"saaremaa_winter"}
+EXCLUDED_LEVELS = {"saaremaa_winter", "grostok2", "daqing_oilfields_rmp", "desert_storm_rmp"}
 SIZE_KM_OVERRIDES = {"gaza_2": 1, "fallujah_west": 1}
 
 FACTIONS = {
@@ -447,6 +447,8 @@ def parse_gpo(text: str) -> dict:
             mm = re.match(r"ObjectTemplate\.radius\s+([\d.]+)", s)
             if mm:
                 control_template[current]["radius"] = float(mm.group(1))
+            if re.match(r"ObjectTemplate\.unableToChangeTeam\s+1", s):
+                control_template[current]["unableToChangeTeam"] = True
 
     instances = []
     for m in INSTANCE_CREATE.finditer(text):
@@ -762,6 +764,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             "order": order,
             "pick": pick,
             "route": route,
+            "capturable": not bool(tpl.get("unableToChangeTeam", False)),
         })
 
     # Deployment-only bases with SGID -1 are sometimes duplicated for a team
@@ -784,18 +787,23 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         for route_index, number in enumerate(route_numbers):
             members = [
                 cp for cp in cps
-                if (cp["route"] is None or cp["route"] == number)
-                and cp["id"] not in stray_base_ids
+                if cp["id"] not in stray_base_ids
+                and (
+                    cp["route"] == number
+                    or (cp["route"] is None and (
+                        cp["radius"] == 0 or cp["sgid"] >= 1
+                    ))
+                )
             ]
             # AASv4 route digits run away from the negative-SGID starting
             # deployment. Capture objectives descend by order, and the
             # positive-SGID main base closes the route.
             start_bases = sorted(
-                [cp for cp in members if cp["route"] is None and cp["sgid"] < 0],
+                [cp for cp in members if cp["route"] is None and cp["radius"] == 0 and cp["sgid"] < 0],
                 key=lambda c: c["name"],
             )
             end_bases = sorted(
-                [cp for cp in members if cp["route"] is None and cp["sgid"] > 0 and cp["order"] == 1],
+                [cp for cp in members if cp["route"] is None and cp["radius"] == 0 and cp["sgid"] > 0 and cp["order"] == 1],
                 key=lambda c: c["name"],
             )
             objectives = [
@@ -833,7 +841,8 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         if area["inverted"] and area["team"] in (1, 2)
     ]
     if not protection_areas:
-        protection_areas = parse_static_protection(server, (maptype or {}).get("type", ""), mode, cps)
+        with zipfile.ZipFile(level_dir / "server.zip") as static_server:
+            protection_areas = parse_static_protection(static_server, (maptype or {}).get("type", ""), mode, cps)
     restricted_areas = [
         area for area in combat_areas
         if not area["inverted"] and area["team"] == 0 and "flyablearea" not in area.get("name", "").lower()
