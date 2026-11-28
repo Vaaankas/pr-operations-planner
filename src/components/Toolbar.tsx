@@ -26,25 +26,31 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
 
 const COLORS = SQUAD_COLORS
 
-const FRIENDLY_MARKERS = [
-  { icon: 'friendly_forwardoutpost', label: 'FORWARD OUTPOST' },
-  { icon: 'friendly_buildfob', label: 'BUILD FOB' },
-  { icon: 'spotted_objective', label: 'OBJECTIVE' },
-  { icon: 'friendly_minefield', label: 'MINEFIELD' },
-  { icon: 'friendly_mortarplacement', label: 'MORTAR EMPL.' },
-  { icon: 'friendly_repairdepot', label: 'REPAIR DEPOT' },
-  { icon: 'friendly_antiairmissile', label: 'AA' },
-  { icon: 'friendly_atgm', label: 'ATGM' },
-  { icon: 'friendly_hmg', label: 'HMG' },
-  { icon: 'friendly_mortar', label: 'MORTAR' },
-  { icon: 'friendly_supply', label: 'SUPPLY' },
-  { icon: 'friendly_demolish', label: 'DEMOLISH' },
-  { icon: 'friendly_recon', label: 'RECON' },
-  { icon: 'friendly_sniper', label: 'SNIPER' },
-  { icon: 'friendly_medic', label: 'MEDIC' },
-  { icon: 'friendly_uav', label: 'UAV' },
-  { icon: 'friendly_reinforcements', label: 'REINFORCEMENTS' },
-  { icon: 'friendly_repaircrate', label: 'REPAIR CRATE' },
+const FRIENDLY_MARKER_GROUPS = [
+  {
+    label: 'COMMANDS',
+    icons: ['friendly_chevron', 'friendly_mortarstrike'],
+  },
+  {
+    label: 'INFANTRY',
+    icons: ['friendly_recon', 'friendly_sniper', 'friendly_medic'],
+  },
+  {
+    label: 'EMPLACEMENTS',
+    icons: [
+      'friendly_forwardoutpost', 'friendly_buildfob', 'friendly_mortarplacement',
+      'friendly_repairdepot', 'friendly_antiairmissile', 'friendly_atgm',
+      'friendly_hmg', 'friendly_mortar',
+    ],
+  },
+  {
+    label: 'MISC',
+    icons: [
+      'spotted_objective', 'friendly_minefield', 'friendly_supply',
+      'friendly_demolish', 'friendly_uav', 'friendly_reinforcements',
+      'friendly_repaircrate',
+    ],
+  },
 ]
 
 const ENEMY_MARKER_GROUPS = [
@@ -245,20 +251,28 @@ export function OptionsBar() {
       )}
 
       {tool === 'marker_friendly' && (
-        <div className="flex flex-1 items-center gap-1 overflow-x-auto">
-          {FRIENDLY_MARKERS.map(({ icon, label }) => {
-            const path = assets.markers[icon]
-            return (
-              <button
-                key={icon}
-                onClick={() => ui.setMarker(icon)}
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
-                title={label}
-              >
-                {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
-              </button>
-            )
-          })}
+        <div className="flex flex-1 items-center gap-2 overflow-x-auto">
+          {FRIENDLY_MARKER_GROUPS.map((group, groupIndex) => (
+            <div
+              key={group.label}
+              className={`flex shrink-0 items-center gap-1 ${groupIndex > 0 ? 'border-l border-white/10 pl-2' : ''}`}
+            >
+              {group.icons.map((icon) => {
+                const path = assets.markers[icon]
+                const label = icon.replace('friendly_', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
+                return (
+                  <button
+                    key={icon}
+                    onClick={() => ui.setMarker(icon)}
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
+                    title={label}
+                  >
+                    {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
       )}
 
