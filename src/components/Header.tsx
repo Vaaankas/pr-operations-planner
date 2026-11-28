@@ -57,7 +57,6 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
             className="pointer-events-auto w-[230px] max-w-full truncate rounded-sm border border-transparent bg-transparent px-1 text-center text-[14px] font-semibold leading-5 text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
             title="Operation name"
           />
-          <div
           <div className="mt-0.5 max-w-full truncate px-1 text-center font-mono text-[10px] uppercase tracking-wider text-slate-500">
             {map.name} {layer.displayName}
           </div>
