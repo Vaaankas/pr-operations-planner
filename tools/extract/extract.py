@@ -568,6 +568,10 @@ def _convex_hull(points: list[tuple[float, float]]) -> list[tuple[float, float]]
 
 
 def protection_polygon(template: str) -> list[tuple[float, float]]:
+    box = re.search(r"base_protection_box_(\d+)x(\d+)m", template)
+    if box:
+        half_w, half_h = float(box.group(1)) / 2, float(box.group(2)) / 2
+        return [(-half_w, -half_h), (half_w, -half_h), (half_w, half_h), (-half_w, half_h)]
     if not template.startswith("base_protection") or not CONTENT_ZIP.exists():
         return []
     member = f"staticobjects/pr/misc/base_protection/{template}/meshes/{template}.collisionmesh"
