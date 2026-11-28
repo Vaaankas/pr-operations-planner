@@ -2285,7 +2285,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       {!preview && (
         <div className="absolute bottom-3 right-3 z-20 flex items-center gap-0.5 rounded border border-white/10 bg-black/70 p-1 shadow-lg">
           <button
-            className="flex h-8 w-8 items-center justify-center rounded text-[17px] font-light leading-none text-slate-300 transition hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded p-0 text-slate-300 transition hover:bg-white/10 hover:text-white"
             onClick={() => zoomBy(0.8)}
             title="Zoom out"
             aria-label="Zoom out"
