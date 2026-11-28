@@ -26,7 +26,15 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
 
 const COLORS = SQUAD_COLORS
 
-const ORDERS = ['move', 'attack', 'defend', 'repair', 'build', 'observe']
+const FRIENDLY_MARKERS = [
+  { icon: 'friendly_forwardoutpost', label: 'FORWARD OUTPOST' },
+  { icon: 'friendly_rallypoint', label: 'RALLY POINT' },
+  { icon: 'friendly_antiairmissile', label: 'AA' },
+  { icon: 'friendly_atgm', label: 'ATGM' },
+  { icon: 'friendly_hmg', label: 'HMG' },
+  { icon: 'friendly_mortar', label: 'MORTAR' },
+  { icon: 'friendly_supply', label: 'SUPPLY' },
+]
 
 const ENEMY_MARKER_GROUPS = [
   {
@@ -224,15 +232,14 @@ export function OptionsBar() {
 
       {tool === 'marker_friendly' && (
         <div className="flex flex-1 items-center gap-1 overflow-x-auto">
-          {ORDERS.map((o) => {
-            const icon = `order_${o}`
-            const path = assets.orders[o]
+          {FRIENDLY_MARKERS.map(({ icon, label }) => {
+            const path = assets.markers[icon]
             return (
               <button
                 key={icon}
                 onClick={() => ui.setMarker(icon)}
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
-                title={`Commander order: ${o}`}
+                title={label}
               >
                 {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
               </button>

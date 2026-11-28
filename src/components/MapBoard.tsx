@@ -1252,14 +1252,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             }}
           >
             <Circle radius={markerPx * 0.62} fill="rgba(0,0,0,0.001)" />
-            {el.affiliation === 'friendly' && (
-              <Circle
-                radius={markerPx * 0.72}
-                fill={withAlpha('#3b82f6', 0.24)}
-                stroke={withAlpha('#3b82f6', 0.85)}
-                strokeWidth={1.5 * iconScale}
-              />
-            )}
             <MarkerGlyph icon={el.icon} color={color} size={markerPx} />
           </Group>
         )

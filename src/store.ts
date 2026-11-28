@@ -552,7 +552,7 @@ export const useUI = create<UIState & {
   fillShapes: false,
   visibleRoutes: [],
   hiddenCps: [],
-  markerIcon: 'order_attack',
+  markerIcon: 'friendly_forwardoutpost',
   enemyMarkerIcon: 'spotted_enemyforces',
   unitKind: 'inf',
   unitAffiliation: 'hostile',
