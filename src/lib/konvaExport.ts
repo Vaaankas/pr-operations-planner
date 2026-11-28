@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { AssetManifest, LayerData, MapMeta, Plan, Stage } from '../types'
 import { AssetProvider } from './assets'
+import { DEFAULT_STAGE_VISIBILITY } from './utils'
 import { MapBoard } from '../components/MapBoard'
 
 export interface CaptureSource {
@@ -30,6 +31,7 @@ export async function captureStageDataUrl(
 
   const root = createRoot(host)
   try {
+    const visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(stage.visibility ?? {}) }
     const board = createElement(MapBoard, {
       preview: true,
       map: src.map,
@@ -38,6 +40,13 @@ export async function captureStageDataUrl(
       stage,
       screenScale: resolution / 900,
       iconSize: stage.iconSize ?? 1,
+      uiOverride: {
+        ...visibility,
+        iconSize: stage.iconSize ?? 1,
+        visibleRoutes: stage.visibleRoutes ?? (src.layer.routes ?? []).map((route) => route.id),
+        hiddenCps: stage.hiddenCps ?? [],
+        startingOnly: stage.startingOnly ?? false,
+      },
     })
     root.render(createElement(AssetProvider, { value: src.assets, children: board }))
 

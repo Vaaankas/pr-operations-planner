@@ -15,9 +15,10 @@ interface Props {
   onOpenPicker: () => void
   onExport: () => void
   onHelp: () => void
+  saveError?: boolean
 }
 
-export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Props) {
+export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, saveError = false }: Props) {
   const planner = usePlanner()
   const ui = useUI()
   const assets = useAssets()
@@ -29,7 +30,23 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
     try {
       const text = await file.text()
       const data = JSON.parse(text)
-      if (data?.version !== 1 || !data.mapId || !Array.isArray(data.stages) || data.stages.length === 0) throw new Error('Not a planner file')
+      const valid = data?.version === 1
+        && typeof data.mapId === 'string'
+        && typeof data.layerId === 'string'
+        && data.roster
+        && Array.isArray(data.roster.squads)
+        && Array.isArray(data.roster.unassigned)
+        && Array.isArray(data.stages)
+        && data.stages.length > 0
+        && data.stages.every((stage: unknown) => {
+          const candidate = stage as { id?: unknown; elements?: unknown; moves?: unknown }
+          return typeof candidate.id === 'string'
+            && Array.isArray(candidate.elements)
+            && candidate.moves
+            && typeof candidate.moves === 'object'
+        })
+      if (!valid) throw new Error('Missing or invalid plan fields')
+      if (!window.confirm(`Import "${data.operation ?? 'this plan'}" and replace the current operation?`)) return
       planner.setPlan(data as Plan)
     } catch (err) {
       window.alert(`Import failed: ${err instanceof Error ? err.message : 'invalid file'}`)
@@ -51,6 +68,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
           onClick={onOpenPicker}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
           title="Go back to map/layer selection"
+          aria-label="Select map and layer"
         >
           <Map className="h-4 w-4" />
         </button>
@@ -82,7 +100,10 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
             className="pointer-events-auto w-[230px] max-w-full truncate rounded-sm border border-transparent bg-transparent px-1 text-center text-[14px] font-semibold leading-5 text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
             title="Operation name"
           />
-          <div className="mt-0.5 max-w-full truncate px-1 text-center font-mono text-[10px] uppercase tracking-wider text-slate-500">
+          <div
+            className="mt-0.5 max-w-full truncate px-1 text-center font-mono text-[10px] uppercase tracking-wider text-slate-500"
+            title={`${map.name} — ${layer.displayName}`}
+          >
             {map.name} {layer.displayName}
           </div>
         </div>
@@ -110,26 +131,32 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
       </div>
 
       <div className="flex items-center gap-2 border-l border-white/10 px-3">
-        <button onClick={onHelp} className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
+        <button onClick={onHelp} aria-label="Controls and credits" className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/10 text-slate-300 hover:bg-white/10" title="Controls & credits">
           <HelpCircle className="h-4 w-4" />
         </button>
 
 
         <div className="ml-auto flex items-center gap-1.5">
-          <div className="hidden items-center gap-1.5 px-1 font-mono text-[9px] uppercase tracking-wider text-slate-600 xl:flex">
-            <Save className="h-3 w-3 text-emerald-500/70" />
-            saved {new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <div
+            className={`hidden items-center gap-1.5 px-1 font-mono text-[9px] uppercase tracking-wider xl:flex ${saveError ? 'text-rose-300' : 'text-slate-600'}`}
+            title={saveError ? 'Browser storage is unavailable or full; changes are only in memory.' : 'Stored in this browser'}
+          >
+            <Save className={`h-3 w-3 ${saveError ? 'text-rose-400' : 'text-emerald-500/70'}`} />
+            {saveError
+              ? 'not saved'
+              : `saved ${new Date(plan.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
           </div>
 
           <button
             onClick={() => fileRef.current?.click()}
+            aria-label="Import plan JSON"
             className="flex h-8 w-8 items-center justify-center rounded border border-white/15 text-slate-300 hover:border-amber-400/50 hover:text-amber-300"
             title="Import plan JSON"
           >
             <Upload className="h-3.5 w-3.5" />
           </button>
 
-          <button onClick={onExport} className="flex h-8 items-center gap-1.5 rounded bg-amber-400 px-3 text-[11px] font-bold uppercase tracking-wider text-black hover:bg-amber-300">
+          <button onClick={onExport} aria-label="Export brief" className="flex h-8 items-center gap-1.5 rounded bg-amber-400 px-3 text-[11px] font-bold uppercase tracking-wider text-black hover:bg-amber-300">
             <Download className="h-3.5 w-3.5" /> Export
           </button>
 

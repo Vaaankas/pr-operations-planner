@@ -8,6 +8,7 @@ interface Props {
   index: MapIndex
   currentMapId?: string
   currentLayerId?: string
+  currentSide?: Team
   onStart: (map: MapMeta, layer: LayerRef, side: Team) => void
   onClose?: () => void
   onDiscard?: () => void
@@ -16,14 +17,14 @@ interface Props {
 const MODES = ['ALL', 'AAS', 'Insurgency', 'Skirmish'] as const
 const SIZES = ['ALL', 1, 2, 4, 8] as const
 
-export function Picker({ index, currentMapId, currentLayerId, onStart, onClose, onDiscard }: Props) {
+export function Picker({ index, currentMapId, currentLayerId, currentSide, onStart, onClose, onDiscard }: Props) {
   const assets = useAssets()
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<(typeof MODES)[number]>('ALL')
   const [size, setSize] = useState<(typeof SIZES)[number]>('ALL')
   const [selectedId, setSelectedId] = useState<string | null>(currentMapId ?? index.maps[0]?.id ?? null)
   const [layerId, setLayerId] = useState<string | null>(currentLayerId ?? null)
-  const [side, setSide] = useState<Team>(1)
+  const [side, setSide] = useState<Team>(currentSide ?? 1)
 
   const selected = index.maps.find((m) => m.id === selectedId) ?? null
 

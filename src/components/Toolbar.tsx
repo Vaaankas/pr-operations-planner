@@ -96,6 +96,8 @@ export function ToolbarRail() {
           <button
             onClick={() => ui.setTool(tool)}
             title={`${label} (${key})`}
+            aria-label={label}
+            aria-pressed={ui.tool === tool}
             className={`relative flex h-8 w-8 items-center justify-center rounded transition ${ui.tool === tool ? 'bg-amber-400 text-black' : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'}`}
           >
             <Icon className="h-4 w-4" />
@@ -161,19 +163,21 @@ export function OptionsBar() {
             </label>
           </div>
           <div className="h-5 w-px bg-white/10" />
-          <label className="flex items-center gap-2 text-[10px] text-slate-400">
-            WIDTH
-            <input
-              type="range"
-              min={0.1}
-              max={20}
-              step={0.1}
-              value={ui.width}
-              onChange={(e) => ui.setWidth(Number(e.target.value))}
-              className="h-1 w-20 accent-amber-400"
-            />
-            <span className="w-7 font-mono text-slate-300">{ui.width.toFixed(1)}</span>
-          </label>
+          {tool !== 'text' && (
+            <label className="flex items-center gap-2 text-[10px] text-slate-400">
+              WIDTH
+              <input
+                type="range"
+                min={0.1}
+                max={20}
+                step={0.1}
+                value={ui.width}
+                onChange={(e) => ui.setWidth(Number(e.target.value))}
+                className="h-1 w-20 accent-amber-400"
+              />
+              <span className="w-7 font-mono text-slate-300">{ui.width.toFixed(1)}</span>
+            </label>
+          )}
           <label className="flex items-center gap-2 text-[10px] text-slate-400">
             OPACITY
             <input

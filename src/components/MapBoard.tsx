@@ -3,7 +3,7 @@ import { ArrowUp, Lock } from 'lucide-react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle, Transformer } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
-import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, StageFrame, VehicleSpawn } from '../types'
+import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, StageFrame, UIState, VehicleSpawn } from '../types'
 import { usePlanner, useUI } from '../store'
 import { affiliationColor, clamp, dataUrl, formatTime, isHiddenVehicle, SQUAD_COLORS, vehicleDelayRemaining, vehicleReady } from '../lib/utils'
 import { glyphFor, iconImage } from '../icons'
@@ -25,6 +25,7 @@ interface Props {
   preview?: boolean
   screenScale?: number
   iconSize?: number
+  uiOverride?: Partial<UIState>
 }
 
 const isIconElement = (el: DrawElement) => el.type === 'icon' || el.type === 'unit' || el.type === 'squad'
@@ -107,8 +108,9 @@ function aasPickCount(sgid: number): number | null {
   return pick > 0 ? pick : null
 }
 
-export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1, iconSize: iconSizeOverride }: Props) {
-  const ui = useUI()
+export function MapBoard({ map, layer, plan, stage, preview = false, screenScale = 1, iconSize: iconSizeOverride, uiOverride }: Props) {
+  const uiStore = useUI()
+  const ui = uiOverride ? { ...uiStore, ...uiOverride } : uiStore
   const assets = useAssets()
   const planner = usePlanner()
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -139,12 +141,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const [polygon, setPolygon] = useState<Point[]>([])
   const polygonRef = useRef<Point[]>([])
   const pendingText = useRef<Point | null>(null)
-  const pendingTextBox = useRef(false)
   const [textAt, setTextAt] = useState<Point | null>(null)
   const [textValue, setTextValue] = useState('')
-  const [textBoxMode, setTextBoxMode] = useState(false)
   const [caretOn, setCaretOn] = useState(true)
-  const textBoxDrag = useRef<{ x: number; y: number; at: Point } | null>(null)
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
@@ -176,14 +175,14 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   const stageFrame = stage.frame ?? { x: 0, y: 0, size: 1 }
   const frameView = (frame: StageFrame) => {
     const size = clamp(frame.size, 0.03, 1)
-    const scale = Math.min(box.w / (mapW * size), box.h / (mapH * size)) * (preview ? 1 : 0.94)
+    const scale = Math.min(box.w / (mapW * size), box.h / (mapH * size))
     return {
       scale,
       x: box.w / 2 - (frame.x + size / 2) * mapW * scale,
       y: box.h / 2 - (frame.y + size / 2) * mapH * scale,
     }
   }
-  const fullMapFit = Math.min(box.w / mapW, box.h / mapH) * 0.94
+  const fullMapFit = Math.min(box.w / mapW, box.h / mapH)
   const minZoom = Math.max(0.02, fullMapFit * 0.4)
 
   useEffect(() => {
@@ -434,7 +433,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     pendingText.current = null
     setTextAt(null)
     setTextValue('')
-    setTextBoxMode(false)
     addingText.current = false
     erasing.current = false
   }
@@ -471,9 +469,8 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       return
     }
     const pos = mapCoords()
-    if (tool === 'text' || tool === 'textbox') {
+    if (tool === 'text') {
       pendingText.current = toNorm(pos)
-      pendingTextBox.current = tool === 'textbox'
       return
     }
     if (isMarkerTool(tool)) {
@@ -600,12 +597,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       if (!moved && !middle) useUI.getState().setSelected(null, null)
       return
     }
-    if (pendingText.current && ['text', 'textbox'].includes(useUI.getState().tool)) {
+    if (pendingText.current && useUI.getState().tool === 'text') {
       const pos = pendingText.current
       pendingText.current = null
       setTextAt(pos)
       setTextValue('')
-      setTextBoxMode(pendingTextBox.current)
       return
     }
     if (pendingRef.current) {
@@ -650,14 +646,12 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       at: textAt,
       text: textValue.trim(),
       fontSize: 0.021,
-      box: textBoxMode,
       bold: ui.textBold,
       italic: ui.textItalic,
       underline: ui.textUnderline,
     } as DrawElement)
     setTextAt(null)
     setTextValue('')
-    setTextBoxMode(false)
     setTimeout(() => { addingText.current = false }, 50)
   }
 
@@ -669,10 +663,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       polygonRef.current = []
       setPolygon([])
     }
-    if (ui.tool !== 'text' && ui.tool !== 'textbox') {
+    if (ui.tool !== 'text') {
       pendingText.current = null
       setTextAt(null)
-      setTextBoxMode(false)
     }
   }, [ui.tool])
 
@@ -847,6 +840,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     if (ui.startingOnly && !v.atStart) return false
     if (v.team !== null && v.team !== plan.side && !ui.showEnemy) return false
     if (['asset', 'crate', 'emplacement'].includes(v.category) && !ui.showAssets) return false
+
     return ui.showVehicles
   }
 
@@ -947,7 +941,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       onTransformEnd: (e: KonvaEventObject<Event>) => {
         if (!isIconElement(el)) commitElementTransform(e.target, el)
       },
-      onDragStart: () => planner.checkpoint(),
       onDragEnd: (e: KonvaEventObject<DragEvent>) => {
         const node = e.target
         let dx = node.x() / mapW
@@ -1596,7 +1589,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               liveRotation.current = selectedElement && 'rotation' in selectedElement
                 ? selectedElement.rotation ?? 0
                 : 0
-              planner.checkpoint()
             }}
           />
         </Layer>
@@ -1787,7 +1779,10 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         </Layer>
 
         <Layer imageSmoothingEnabled={false}>
-          {layer.vehicles.filter(vehicleVisible).map((v) => {
+          {(() => {
+            const visibleVehicles = layer.vehicles.filter(vehicleVisible)
+            const denseLabels = visibleVehicles.length > 12 && (preview || view.scale < 0.9)
+            return visibleVehicles.map((v) => {
             const pos = vehiclePosition(v)
             const p = worldToDisplayNorm(pos.x, pos.z, layer.world)
             const move = stage.moves[v.id]
@@ -1816,7 +1811,9 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 })
               : []
             const dp = drag ? worldToDisplayNorm(drag.x, drag.z, layer.world) : p
-            const showName = hoverVehicleId === v.id || (ui.showVehicleNames && (view.scale >= 0.55 || selected))
+            const showName = hoverVehicleId === v.id
+              || selected
+              || (ui.showVehicleNames && (preview || view.scale >= 0.55) && (!denseLabels || Boolean(plan.claims[v.id])))
             return (
               <Group
                 key={v.id}
@@ -1837,7 +1834,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   e.evt.preventDefault()
                   e.cancelBubble = true
                   if (!move) return
-                  planner.checkpoint()
                   planner.clearVehicleMove(v.id)
                 }}
               >
@@ -2024,61 +2020,22 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 })()}
               </Group>
             )
-          })}
+            })
+          })()}
         </Layer>
 
         <Layer imageSmoothingEnabled={false}>
-          {ui.showDrawings && stage.elements.filter(isIconElement).map(drawElementNode)}
+          {ui.showMarkers && stage.elements.filter(isIconElement).map(drawElementNode)}
         </Layer>
 
         <Layer listening={false}>
-          {textAt && !textBoxMode && (() => {
+          {textAt && (() => {
             const at = normToScreen(textAt)
             const fontSize = Math.max(10, 0.021 * mapW)
             const fontStyle = labelFontStyle(ui.textBold, ui.textItalic)
             const caretWidth = Math.max(1, fontSize * 0.07)
             const caretHeight = fontSize * 1.05
             const caretOpacity = caretOn ? 1 : 0
-            if (textBoxMode) {
-              const boxW = Math.max(120, measureLabel(textValue, fontSize, ui.textBold, ui.textItalic) + 18)
-              const boxH = fontSize * 2
-              const caretX = 9 + measureLabel(textValue, fontSize, ui.textBold, ui.textItalic)
-              return (
-                <Group x={at.x} y={at.y - boxH / 2}>
-                  <Rect
-                    width={boxW}
-                    height={boxH}
-                    fill={withAlpha(ui.color, 0.16)}
-                    stroke={ui.color}
-                    strokeWidth={ui.width}
-                    cornerRadius={3}
-                  />
-                  {textValue && (
-                    <Text
-                      x={9}
-                      y={boxH / 2}
-                      width={boxW - 18}
-                      text={textValue}
-                      fontSize={fontSize}
-                      fontFamily="Inter, Segoe UI, sans-serif"
-                      fontStyle={fontStyle}
-                      textDecoration={ui.textUnderline ? 'underline' : undefined}
-                      fill={ui.color}
-                      offsetY={fontSize / 2}
-                      perfectDrawEnabled={false}
-                    />
-                  )}
-                  <Rect
-                    x={caretX}
-                    y={boxH / 2 - fontSize / 2}
-                    width={caretWidth}
-                    height={caretHeight}
-                    fill={ui.color}
-                    opacity={caretOpacity}
-                  />
-                </Group>
-              )
-            }
             const caretX = at.x + measureLabel(textValue, fontSize, ui.textBold, ui.textItalic)
             return (
               <>
@@ -2141,6 +2098,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             <div
               className={`absolute border-2 shadow-[0_0_0_1px_rgba(0,0,0,0.8)] ${frameSelected ? 'border-amber-300 shadow-[0_0_0_2px_rgba(251,191,36,0.35)]' : 'border-amber-400/35'}`}
               style={{ left: fx, top: fy, width: fw, height: fh }}
+              title="Drag the frame edges to crop the exported map"
             />
             {([
               { mode: 'n', x: fx, y: fy, w: fw, h: 8, cursor: 'move' },
@@ -2157,7 +2115,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   e.stopPropagation()
                   setFrameSelected(true)
                   if (!frameSelected) return
-                  planner.checkpoint()
                   const p = clientToFrameNorm(e.clientX, e.clientY)
                   setFrameDrag({ mode: 'move', startX: p.x, startY: p.y, frame: frameDraft })
                 }}
@@ -2175,7 +2132,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                     e.preventDefault()
                     e.stopPropagation()
                     setFrameSelected(true)
-                    planner.checkpoint()
                     const p = clientToFrameNorm(e.clientX, e.clientY)
                     setFrameDrag({ mode: h.mode, startX: p.x, startY: p.y, frame: frameDraft })
                   }}
@@ -2250,7 +2206,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         )
       })()}
 
-      {!preview && textAt && !textBoxMode && (() => {
+      {!preview && textAt && (() => {
         const at = normToScreen(textAt)
         return (
           <input
@@ -2267,77 +2223,11 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             }}
             className="pointer-events-none absolute h-px w-px opacity-0"
             style={{ left: at.x * view.scale + view.x, top: at.y * view.scale + view.y }}
-            aria-label={textBoxMode ? 'Text box content' : 'Label text'}
+            aria-label="Label text"
           />
         )
       })()}
 
-      {!preview && textAt && textBoxMode && (() => {
-        const at = normToScreen(textAt)
-        const screenX = at.x * view.scale + view.x
-        const screenY = at.y * view.scale + view.y
-        return (
-          <div
-            className="absolute z-20 w-[280px] overflow-hidden rounded border border-amber-400/50 bg-[#0b110d] shadow-2xl"
-            style={{ left: clamp(screenX, 8, box.w - 292), top: clamp(screenY - 18, 8, box.h - 190) }}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <div
-              className="flex h-6 cursor-move touch-none items-center justify-between border-b border-white/10 bg-white/5 px-2 text-[9px] font-bold uppercase tracking-wider text-slate-500"
-              onPointerDown={(e) => {
-                e.preventDefault()
-                e.currentTarget.setPointerCapture(e.pointerId)
-                textBoxDrag.current = { x: e.clientX, y: e.clientY, at: textAt }
-              }}
-              onPointerMove={(e) => {
-                const drag = textBoxDrag.current
-                if (!drag) return
-                setTextAt({
-                  x: drag.at.x + (e.clientX - drag.x) / (mapW * view.scale),
-                  y: drag.at.y + (e.clientY - drag.y) / (mapH * view.scale),
-                })
-              }}
-              onPointerUp={() => { textBoxDrag.current = null }}
-            >
-              <span>Text box</span>
-              <span>Drag to move</span>
-            </div>
-            <textarea
-              autoFocus
-              rows={3}
-              value={textValue}
-              onChange={(e) => setTextValue(e.target.value)}
-              onKeyDown={(e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                  e.preventDefault()
-                  addText()
-                }
-                if (e.key === 'Escape') cancelDrawing()
-              }}
-              spellCheck={false}
-              className="block w-full resize-none bg-transparent px-2 py-2 text-[13px] leading-snug outline-none"
-              style={{
-                color: ui.color,
-                fontFamily: 'Inter, "Segoe UI", sans-serif',
-                fontWeight: ui.textBold ? 700 : 400,
-                fontStyle: ui.textItalic ? 'italic' : 'normal',
-                textDecoration: ui.textUnderline ? 'underline' : 'none',
-                caretColor: ui.color,
-              }}
-            />
-            <div className="flex items-center justify-between border-t border-white/10 px-2 py-1">
-              <span className="text-[9px] text-slate-600">Ctrl+Enter</span>
-              <button
-                type="button"
-                onClick={addText}
-                className="rounded bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-black"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        )
-      })()}
 
       {!preview && (plan.roster.squads.length > 0 || plan.roster.commander) && (
         <div className="absolute bottom-16 right-3 z-20 flex flex-col gap-0.5 rounded border border-white/10 bg-black/65 px-2.5 py-2">

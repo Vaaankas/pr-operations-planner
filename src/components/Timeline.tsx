@@ -77,7 +77,7 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
         <button
           onClick={() => planner.addStage()}
           className="relative z-10 flex h-[48px] w-[80px] shrink-0 flex-col items-center justify-center gap-0.5 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
-          title="Add stage"
+          title="Add stage — copies current drawings and vehicle positions"
         >
           <Plus className="h-4 w-4" />
           <span className="font-mono text-[8px] uppercase tracking-wider">Stage</span>

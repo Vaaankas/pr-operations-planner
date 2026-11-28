@@ -13,10 +13,7 @@ export interface ExportOptions {
   stages: 'all' | 'active'
   includeRoster: boolean
   rosterOnly: boolean
-  iconSize?: number
-  download: boolean
-  visibleRoutes: string[]
-  hiddenCps: number[]
+  signal?: AbortSignal
 }
 
 interface Source {
@@ -89,6 +86,7 @@ async function renderAll(
   const stages = stageList(src, opts)
   const images: { stage: Stage; data: string }[] = []
   for (let i = 0; i < stages.length; i++) {
+    if (opts.signal?.aborted) throw new DOMException('Export cancelled', 'AbortError')
     onProgress?.(i, stages.length, `Rendering ${stages[i].name}`)
     const data = await captureStageDataUrl(src, stages[i], opts.resolution, format)
     images.push({ stage: stages[i], data })

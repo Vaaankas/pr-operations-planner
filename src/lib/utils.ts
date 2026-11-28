@@ -83,7 +83,9 @@ export function newSquad(index: number, type = 'INF', name?: string): Squad {
 export const DEFAULT_STAGE_VISIBILITY: StageVisibility = {
   showVehicles: true,
   showEnemy: true,
+  showAssets: true,
   showFlags: true,
+  showMarkers: true,
   showLabels: true,
   showDrawings: true,
   showVehicleNames: true,

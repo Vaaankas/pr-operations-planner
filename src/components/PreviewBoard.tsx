@@ -148,7 +148,7 @@ function StageSlideType({ slide, src, plan, assets }: {
         <div className="mt-[4%] font-mono font-bold text-[#b45309]" style={{ fontSize: 'clamp(10px, 1.05vw, 15px)' }}>{slide.timeLabel}</div>
         <div className="mt-[3%] text-[#64748b]" style={{ fontSize: 'clamp(8px, 0.8vw, 12px)' }}>{slide.meta}</div>
       </div>
-      <div className="absolute left-[3.4%] top-[24%] w-[35%] whitespace-pre-wrap text-[#334155]" style={{ fontSize: 'clamp(10px, 0.98vw, 15px)', lineHeight: 1.55 }}>
+      <div className="absolute left-[3.4%] top-[24%] max-h-[64%] w-[35%] overflow-hidden whitespace-pre-wrap break-words pr-2 text-[#334155]" style={{ fontSize: 'clamp(10px, 0.98vw, 15px)', lineHeight: 1.55 }}>
         {slide.notes ? <OrdersText text={slide.notes} plan={plan} assets={assets} /> : <span className="italic text-slate-400">No stage notes.</span>}
       </div>
       <div className="absolute bottom-[2.5%] left-[3.4%] font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>{slide.footer}</div>
@@ -172,7 +172,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   const stagePage = stageIndex + 1
   const [page, setPage] = useState(stagePage)
   const cacheKey = stagePreviewKey(plan, map, layer, stage, ui)
-  const [images, setImages] = useState<Record<string, string>>({})
+  const [preview, setPreview] = useState<{ key: string; data: string } | null>(null)
   const pending = useRef(new Set<string>())
   const wheelAt = useRef(0)
 
@@ -183,7 +183,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   useEffect(() => {
     const cached = getStagePreview(cacheKey)
     if (cached) {
-      setImages((current) => (current[cacheKey] === cached ? current : { ...current, [cacheKey]: cached }))
+      setPreview({ key: cacheKey, data: cached })
       return
     }
     if (pending.current.has(cacheKey)) return
@@ -191,7 +191,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
     captureStageDataUrl({ map, layer, plan, assets }, stage, 2048, 'png')
       .then((src) => {
         setStagePreview(cacheKey, src)
-        setImages((current) => ({ ...current, [cacheKey]: src }))
+        setPreview({ key: cacheKey, data: src })
       })
       .catch((err) => console.error(err))
       .finally(() => {
@@ -199,7 +199,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
       })
   }, [assets, cacheKey, layer, map, plan, stage])
 
-  const src = images[cacheKey] ?? getStagePreview(cacheKey)
+  const src = preview?.key === cacheKey ? preview.data : getStagePreview(cacheKey)
   const slide = stageSlideData(plan, map, layer, stage)
   const pageCount = stages.length + 1
 

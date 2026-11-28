@@ -46,12 +46,14 @@ export function loadStoredPlan(): Plan | null {
   }
 }
 
-export function storePlan(plan: Plan | null): void {
+export function storePlan(plan: Plan | null): boolean {
   try {
     if (!plan) localStorage.removeItem(STORAGE_KEY)
     else localStorage.setItem(STORAGE_KEY, JSON.stringify(plan))
-  } catch {
-    // storage full or unavailable; the in-memory plan is still intact
+    return true
+  } catch (err) {
+    console.error('Plan could not be saved to local storage', err)
+    return false
   }
 }
 
@@ -296,8 +298,11 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
     const { plan } = get()
     if (!plan || plan.stages.length <= 1) return
     get().mutate((draft) => {
+      const ordered = [...draft.stages].sort((a, b) => a.time - b.time)
+      const removedAt = ordered.findIndex((s) => s.id === id)
+      const fallback = ordered[removedAt + 1] ?? ordered[removedAt - 1] ?? draft.stages[0]
       draft.stages = draft.stages.filter((s) => s.id !== id)
-      if (draft.activeStageId === id) draft.activeStageId = draft.stages[0].id
+      if (draft.activeStageId === id) draft.activeStageId = fallback.id
     })
   },
 
@@ -563,6 +568,7 @@ export const useUI = create<UIState & {
   showEnemy: true,
   showFlags: true,
   showAssets: true,
+  showMarkers: true,
   showLabels: true,
   showDrawings: true,
   showVehicleNames: true,

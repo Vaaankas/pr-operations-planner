@@ -1,6 +1,15 @@
+import { useEffect } from 'react'
 import { X, MousePointer2, Pencil, Clock, Download, ShieldCheck } from 'lucide-react'
 
 export function HelpDialog({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-white/15 bg-[#0b110d] shadow-2xl">
@@ -15,7 +24,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             <ol className="list-decimal space-y-1 pl-5 text-slate-400">
               <li>Pick a map and layer. Every PvP layer keeps its own vehicle manifest, control points and SGID attack routes.</li>
               <li>Toggle routes and individual flags in the Routes tab. Multiple routes can be visible at once.</li>
-              <li>Fill the roster: 50-player target, commander, up to ten squads. Drag the grip handles to move players or reorder squads.</li>
+              <li>Fill the roster: 50-player reference, commander, up to nine squads. Drag the grip handles to move players or reorder squads.</li>
               <li>Place or move vehicles, claim them for squads, then draw the scheme of manoeuvre. Drag a vehicle route to add turning points.</li>
               <li>Add stages with mission-clock times and notes. A new stage inherits the previous stage's drawings and vehicle positions.</li>
               <li>Export a PowerPoint, PDF, PNG maps, or a roster-only brief. Everything autosaves in this browser.</li>
@@ -30,11 +39,14 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
               <span>Middle mouse drag</span><span>Pan with any tool</span>
               <span>Click / drag</span><span>Draw lines, arrows and areas</span>
               <span>V / P / L / A / D</span><span>Select, draw, line, arrow, ruler</span>
-              <span>R / O / G / T / M / U</span><span>Rect, ellipse, zone, text, marker, unit</span>
+              <span>R / O / G / T</span><span>Rect, ellipse, polygon, label</span>
+              <span>M / N / E</span><span>Markers, enemy markers, erase</span>
+              <span>Right click</span><span>Cancel the active drawing or vehicle move</span>
               <span>Ctrl+Z / Ctrl+Y</span><span>Undo / redo</span>
               <span>Delete</span><span>Remove selection</span>
               <span>Esc</span><span>Cancel current drawing</span>
               <span>Enter</span><span>Close polygon</span>
+              <span>Left / Right</span><span>Previous / next stage</span>
             </div>
           </section>
 
@@ -43,6 +55,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             <p className="text-slate-400">
               Asset glyphs are the in-game vehicle silhouettes, tinted by team or claiming squad. Flags use the in-game capture-point flag sprites and real capture radii.
               Attack lanes follow the layer's AASv4 SupplyGroupId order; toggle any combination of routes and flags.
+              The amber frame on the map sets the export crop; drag its edges or handles, or reset it with the crop button in the Stage panel.
               Delayed spawns are dimmed with their timer. Vehicle trails start at the previous stage's position and use the vehicle's colour.
               Player status cycles blank → green ✓ (confirmed) → amber ? (uncertain).
             </p>
@@ -69,7 +82,8 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             <p className="text-[11px] text-slate-500">
               Map imagery, control points, and vehicle spawn data are extracted from Project Reality: BF2.
               Project Reality is the work of its developers and community; this planner ships only downscaled map renders and derived spawn data.
-              Icons and interface are original to this tool. Built as a static site — no accounts, no server, plans stay in the browser.
+              Interface and planner artwork are original to this tool; marker, vehicle and flag icons are derived from in-game sprites.
+              Built as a static site; no accounts, no server, plans stay in the browser.
             </p>
           </section>
         </div>

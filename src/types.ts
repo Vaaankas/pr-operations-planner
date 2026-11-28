@@ -212,7 +212,9 @@ export interface StageFrame {
 export interface StageVisibility {
   showVehicles: boolean
   showEnemy: boolean
+  showAssets: boolean
   showFlags: boolean
+  showMarkers: boolean
   showLabels: boolean
   showDrawings: boolean
   showVehicleNames: boolean
@@ -280,7 +282,7 @@ export interface Plan {
 
 export type Tool =
   | 'select' | 'pen' | 'line' | 'arrow' | 'ruler' | 'rect' | 'ellipse'
-  | 'polygon' | 'text' | 'textbox' | 'marker' | 'marker_friendly' | 'marker_enemy' | 'erase'
+  | 'polygon' | 'text' | 'marker' | 'marker_friendly' | 'marker_enemy' | 'erase'
 
 export interface UIState {
   view: 'plan' | 'roster'
@@ -310,6 +312,7 @@ export interface UIState {
   showEnemy: boolean
   showFlags: boolean
   showAssets: boolean
+  showMarkers: boolean
   showLabels: boolean
   showDrawings: boolean
   showVehicleNames: boolean

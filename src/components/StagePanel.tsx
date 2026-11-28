@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Flag, Pencil, Route as RouteIcon, Swords, Tag, Trash2, Truck, Type } from 'lucide-react'
+import { Boxes, Clock, Crop, Flag, MapPin, Pencil, Route as RouteIcon, Swords, Tag, Trash2, Truck, Type } from 'lucide-react'
 import type { LayerData, Plan, Stage, StageVisibility } from '../types'
 import { usePlanner } from '../store'
 import { DEFAULT_STAGE_VISIBILITY, formatTime, parseTime } from '../lib/utils'
@@ -11,10 +11,12 @@ const VISIBILITY_OPTIONS: Array<{
   icon: typeof Truck
 }> = [
   { key: 'showVehicles', label: 'Vehicles', icon: Truck },
-  { key: 'showEnemy', label: 'Enemy assets', icon: Swords },
+  { key: 'showEnemy', label: 'Enemy vehicles', icon: Swords },
+  { key: 'showAssets', label: 'Static assets', icon: Boxes },
   { key: 'showFlags', label: 'Flags', icon: Flag },
+  { key: 'showMarkers', label: 'Markers', icon: MapPin },
   { key: 'showDrawings', label: 'Drawings', icon: Pencil },
-  { key: 'showLabels', label: 'Map labels', icon: Tag },
+  { key: 'showLabels', label: 'Flag labels', icon: Tag },
   { key: 'showVehicleNames', label: 'Vehicle names', icon: Type },
   { key: 'showVehiclePaths', label: 'Vehicle paths', icon: RouteIcon },
 ]
@@ -65,7 +67,18 @@ export function StagePanel({ layer, plan, stage }: Props) {
               className="min-w-0 flex-1 rounded border border-white/10 bg-black/30 px-2 py-1.5 text-[13px] font-semibold text-slate-100 outline-none focus:border-amber-400/50"
             />
             <button
-              onClick={() => planner.removeStage(stage.id)}
+              onClick={() => planner.updateStage(stage.id, { frame: { x: 0, y: 0, size: 1 } })}
+              title="Reset export frame to the full map"
+              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded border border-white/10 text-slate-400 hover:border-amber-400/40 hover:text-amber-300"
+            >
+              <Crop className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm(`Delete stage "${stage.name}"? Its drawings and vehicle moves will be removed.`)) {
+                  planner.removeStage(stage.id)
+                }
+              }}
               disabled={plan.stages.length <= 1}
               title="Delete stage"
               className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded border border-rose-500/20 text-rose-400/80 hover:bg-rose-500/10 disabled:opacity-30"
@@ -114,6 +127,7 @@ export function StagePanel({ layer, plan, stage }: Props) {
               <button
                 key={key}
                 onClick={() => planner.toggleStageVisibility(key)}
+                aria-pressed={active}
                 className="flex min-h-0 items-center gap-1.5 rounded border border-white/10 bg-black/20 px-1.5 py-1 text-left text-slate-400 hover:border-white/20 hover:text-slate-300"
               >
                 <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-amber-300' : 'text-slate-600'}`} />

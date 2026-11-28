@@ -2,6 +2,7 @@ import type { LayerData, MapMeta, Plan, Stage } from '../types'
 import type { UIState } from '../types'
 
 const cache = new Map<string, string>()
+const MAX_PREVIEWS = 8
 
 export function stagePreviewKey(plan: Plan, map: MapMeta, layer: LayerData, stage: Stage, ui: UIState): string {
   return JSON.stringify({
@@ -15,6 +16,8 @@ export function stagePreviewKey(plan: Plan, map: MapMeta, layer: LayerData, stag
       showFlags: ui.showFlags,
       showVehicles: ui.showVehicles,
       showEnemy: ui.showEnemy,
+      showAssets: ui.showAssets,
+      showMarkers: ui.showMarkers,
       showLabels: ui.showLabels,
       showDrawings: ui.showDrawings,
       showVehicleNames: ui.showVehicleNames,
@@ -29,9 +32,20 @@ export function stagePreviewKey(plan: Plan, map: MapMeta, layer: LayerData, stag
 }
 
 export function getStagePreview(key: string): string | undefined {
-  return cache.get(key)
+  const data = cache.get(key)
+  if (data) {
+    cache.delete(key)
+    cache.set(key, data)
+  }
+  return data
 }
 
 export function setStagePreview(key: string, data: string): void {
+  cache.delete(key)
   cache.set(key, data)
+  while (cache.size > MAX_PREVIEWS) {
+    const oldest = cache.keys().next().value
+    if (oldest === undefined) break
+    cache.delete(oldest)
+  }
 }

@@ -41,6 +41,7 @@ function AppInner() {
   const [layerLoading, setLayerLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const plan = usePlanner((s) => s.plan)
   const ui = useUI()
   const cache = useRef(new Map<string, LayerData>())
@@ -127,7 +128,7 @@ function AppInner() {
 
   useEffect(() => {
     if (!plan) return
-    const timer = setTimeout(() => storePlan(plan), 350)
+    const timer = setTimeout(() => setSaveError(!storePlan(plan)), 350)
     const flush = () => {
       const current = usePlanner.getState().plan
       if (current) storePlan(current)
@@ -155,7 +156,9 @@ function AppInner() {
     useUI.setState({
       showVehicles: visibility.showVehicles,
       showEnemy: visibility.showEnemy,
+      showAssets: visibility.showAssets,
       showFlags: visibility.showFlags,
+      showMarkers: visibility.showMarkers,
       showLabels: visibility.showLabels,
       showDrawings: visibility.showDrawings,
       showVehicleNames: visibility.showVehicleNames,
@@ -271,6 +274,7 @@ function AppInner() {
         onOpenPicker={() => setPickerOpen(true)}
         onExport={() => ui.setExportOpen(true)}
         onHelp={() => setHelpOpen(true)}
+        saveError={saveError}
       />
 
       {ui.view === 'roster' ? (
@@ -330,6 +334,7 @@ function AppInner() {
           index={index}
           currentMapId={plan.mapId}
           currentLayerId={plan.layerId}
+          currentSide={plan.side}
           onStart={startPlan}
           onClose={() => setPickerOpen(false)}
           onDiscard={reset}

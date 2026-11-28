@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Download, FileImage, FileJson, FileText, Loader2, Presentation, X } from 'lucide-react'
 import type { LayerData, MapMeta, Plan } from '../types'
 import { useUI } from '../store'
@@ -23,6 +23,17 @@ export function ExportDialog({ plan, map, layer }: Props) {
   const [busy, setBusy] = useState(false)
   const [progress, setProgress] = useState({ done: 0, total: 0, label: '' })
   const [error, setError] = useState<string | null>(null)
+  const controller = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      if (busy) controller.current?.abort()
+      else ui.setExportOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [busy, ui])
 
   const exportJson = () => {
     const blob = new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' })
@@ -34,6 +45,7 @@ export function ExportDialog({ plan, map, layer }: Props) {
     setBusy(true)
     setError(null)
     setProgress({ done: 0, total: plan.stages.length, label: 'Preparing' })
+    controller.current = new AbortController()
     try {
       const opts: ExportOptions = {
         format,
@@ -41,10 +53,7 @@ export function ExportDialog({ plan, map, layer }: Props) {
         stages,
         includeRoster: rosterOnly ? true : includeRoster,
         rosterOnly,
-        iconSize: ui.iconSize,
-        download: true,
-        visibleRoutes: ui.visibleRoutes,
-        hiddenCps: ui.hiddenCps,
+        signal: controller.current.signal,
       }
       const src = { plan, map, layer, assets }
       const onProgress = (done: number, total: number, label: string) => setProgress({ done, total, label })
@@ -61,9 +70,14 @@ export function ExportDialog({ plan, map, layer }: Props) {
       }
       ui.setExportOpen(false)
     } catch (err) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : 'Export failed')
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Export cancelled')
+      } else {
+        console.error(err)
+        setError(err instanceof Error ? err.message : 'Export failed')
+      }
     } finally {
+      controller.current = null
       setBusy(false)
     }
   }
@@ -181,8 +195,14 @@ export function ExportDialog({ plan, map, layer }: Props) {
           >
             <FileJson className="h-3.5 w-3.5" /> Plan JSON
           </button>
-          <button onClick={() => ui.setExportOpen(false)} disabled={busy} className="rounded border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/5 disabled:opacity-30">
-            Cancel
+          <button
+            onClick={() => {
+              if (busy) controller.current?.abort()
+              else ui.setExportOpen(false)
+            }}
+            className="rounded border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/5"
+          >
+            {busy ? 'Stop' : 'Cancel'}
           </button>
           <button
             onClick={run}
