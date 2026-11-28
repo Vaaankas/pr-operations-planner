@@ -48,17 +48,17 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
     <header className="relative z-30 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_422.4px] items-stretch border-b border-white/10 bg-[#080d0a]">
       <div className="relative flex min-w-0 items-center gap-2 px-3">
         <div
-          className="flex shrink-0 items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider"
-          title={`${side?.name ?? `Team ${plan.side}`} · ${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
+          className="flex shrink-0 items-center gap-2 font-mono text-[11px] uppercase tracking-wider"
+          title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
         >
           {side && factionFlag(assets, side.key) ? (
-            <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-3 w-4 shrink-0 object-fill" />
+            <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-4 w-[22px] shrink-0 object-fill" />
           ) : (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400" />
           )}
-          <span className="shrink-0 text-slate-300">{side?.short ?? `TEAM ${plan.side}`}</span>
+          <span className="shrink-0 font-semibold text-slate-200">{side?.short ?? `TEAM ${plan.side}`}</span>
           <span className="flex shrink-0 cursor-help items-center gap-1 text-emerald-400">
-            <Users className="h-3 w-3" />
+            <Users className="h-3.5 w-3.5" />
             {confirmed}<span className="text-slate-500">/50</span>
           </span>
         </div>
