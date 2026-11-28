@@ -28,13 +28,29 @@ const COLORS = SQUAD_COLORS
 
 const ORDERS = ['move', 'attack', 'defend', 'repair', 'build', 'observe']
 
-const ENEMY_MARKERS = [
-  'spotted_enemyforces', 'spotted_aav', 'spotted_antiairmissile', 'spotted_apc',
-  'spotted_atgm', 'spotted_atgmvehicle', 'spotted_bridge', 'spotted_bunker',
-  'spotted_destroyedbridge', 'spotted_firebase', 'spotted_heavyaa', 'spotted_heavyat',
-  'spotted_hmg', 'spotted_ifv', 'spotted_jeep', 'spotted_mortar', 'spotted_objective',
-  'spotted_rally', 'spotted_razorwire', 'spotted_saboteur', 'spotted_sniper',
-  'spotted_spotter', 'spotted_supply', 'spotted_tank', 'spotted_truck',
+const ENEMY_MARKER_GROUPS = [
+  {
+    label: 'INF / FORCES',
+    icons: ['spotted_enemyforces', 'spotted_sniper', 'spotted_spotter', 'spotted_saboteur'],
+  },
+  {
+    label: 'OBJECTIVES',
+    icons: ['spotted_objective', 'spotted_firebase', 'spotted_bunker', 'spotted_rally'],
+  },
+  {
+    label: 'VEHICLES',
+    icons: [
+      'spotted_aav', 'spotted_apc', 'spotted_atgmvehicle', 'spotted_heavyaa',
+      'spotted_heavyat', 'spotted_ifv', 'spotted_jeep', 'spotted_tank', 'spotted_truck',
+    ],
+  },
+  {
+    label: 'MISC',
+    icons: [
+      'spotted_antiairmissile', 'spotted_atgm', 'spotted_bridge', 'spotted_destroyedbridge',
+      'spotted_hmg', 'spotted_mortar', 'spotted_razorwire', 'spotted_supply',
+    ],
+  },
 ]
 
 export function ToolbarRail() {
@@ -226,21 +242,31 @@ export function OptionsBar() {
       )}
 
       {tool === 'marker_enemy' && (
-        <div className="flex flex-1 items-center gap-1 overflow-x-auto">
-          {ENEMY_MARKERS.map((icon) => {
-            const path = assets.markers[icon]
-            const label = icon.replace('spotted_', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
-            return (
-              <button
-                key={icon}
-                onClick={() => ui.setEnemyMarker(icon)}
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.enemyMarkerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
-                title={label}
-              >
-                {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
-              </button>
-            )
-          })}
+        <div className="flex flex-1 items-center gap-2 overflow-x-auto">
+          {ENEMY_MARKER_GROUPS.map((group, groupIndex) => (
+            <div
+              key={group.label}
+              className={`flex shrink-0 items-center gap-1 ${groupIndex > 0 ? 'border-l border-white/10 pl-2' : ''}`}
+            >
+              <span className="shrink-0 font-mono text-[8px] font-bold uppercase tracking-wider text-slate-500">
+                {group.label}
+              </span>
+              {group.icons.map((icon) => {
+                const path = assets.markers[icon]
+                const label = icon.replace('spotted_', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
+                return (
+                  <button
+                    key={icon}
+                    onClick={() => ui.setEnemyMarker(icon)}
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.enemyMarkerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
+                    title={label}
+                  >
+                    {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
       )}
 
