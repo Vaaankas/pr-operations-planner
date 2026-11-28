@@ -55,8 +55,6 @@ const ENEMY_MARKER_GROUPS = [
 
 export function ToolbarRail() {
   const ui = useUI()
-  const assets = useAssets()
-  const enemyForcesIcon = assets.markers.spotted_enemyforces
   return (
     <div className="flex min-h-0 w-12 shrink-0 flex-1 flex-col items-center gap-0.5 border-r border-white/10 bg-[#080d0a] py-2">
       {TOOLS.map(({ tool, icon: Icon, label, key, group }, index) => (
@@ -69,9 +67,7 @@ export function ToolbarRail() {
             title={`${label} (${key})`}
             className={`relative flex h-8 w-8 items-center justify-center rounded transition ${ui.tool === tool ? 'bg-amber-400 text-black' : 'text-slate-400 hover:bg-white/10 hover:text-slate-100'}`}
           >
-            {tool === 'marker_enemy' && enemyForcesIcon
-              ? <GameIcon path={enemyForcesIcon} size={16} />
-              : <Icon className="h-4 w-4" />}
+            <Icon className="h-4 w-4" />
             {ui.tool === tool && <span className="absolute -right-0.5 -top-0.5 rounded bg-black px-0.5 font-mono text-[8px] text-amber-300">{key}</span>}
           </button>
         </Fragment>
