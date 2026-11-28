@@ -139,7 +139,7 @@ export function OptionsBar() {
   const tool = ui.tool
   const isDraw = ['pen', 'line', 'arrow', 'ruler', 'rect', 'ellipse', 'polygon', 'text'].includes(tool)
   return (
-    <div className="flex h-10 shrink-0 items-center gap-3 border-b border-white/10 bg-[#0a100c] px-3">
+    <div className="flex h-10 shrink-0 items-center gap-3 border-b border-white/10 bg-[#141d17] px-3">
       <span className="w-24 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/90">
         {TOOLS.find((t) => t.tool === tool)?.label ?? 'Tool'}
       </span>
@@ -267,12 +267,12 @@ export function OptionsBar() {
                   <button
                     key={icon}
                     onClick={() => ui.setMarker(icon)}
-                    className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'text-white' : 'opacity-55 hover:opacity-100'}`}
+                    className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded text-white"
                     title={label}
                   >
                     {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
                     {ui.markerIcon === icon && (
-                      <span className="absolute inset-x-1.5 -bottom-0.5 h-0.5 rounded-full bg-amber-400" />
+                      <span className="absolute bottom-0 h-1 w-1 rounded-full bg-amber-400" />
                     )}
                   </button>
                 )
@@ -296,12 +296,12 @@ export function OptionsBar() {
                   <button
                     key={icon}
                     onClick={() => ui.setEnemyMarker(icon)}
-                    className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.enemyMarkerIcon === icon ? 'text-white' : 'opacity-55 hover:opacity-100'}`}
+                    className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded text-white"
                     title={label}
                   >
                     {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
                     {ui.enemyMarkerIcon === icon && (
-                      <span className="absolute inset-x-1.5 -bottom-0.5 h-0.5 rounded-full bg-amber-400" />
+                      <span className="absolute bottom-0 h-1 w-1 rounded-full bg-amber-400" />
                     )}
                   </button>
                 )
