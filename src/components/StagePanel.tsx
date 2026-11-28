@@ -53,6 +53,7 @@ export function StagePanel({ layer, plan, stage }: Props) {
   useEffect(() => setTime(formatTime(stage.time)), [stage.time])
   useEffect(() => setNotes(stage.notes), [stage.notes])
   const visibility = { ...DEFAULT_STAGE_VISIBILITY, ...(stage.visibility ?? {}) }
+  const timeEnabled = stage.timeEnabled !== false
 
 
   return (
@@ -91,18 +92,30 @@ export function StagePanel({ layer, plan, stage }: Props) {
         <div>
           <label className="mb-1 flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">
             <Clock className="h-3 w-3" /> Mission clock
+            <button
+              type="button"
+              onClick={() => planner.updateStage(stage.id, { timeEnabled: !timeEnabled })}
+              aria-pressed={timeEnabled}
+              title={timeEnabled ? 'Disable mission clock' : 'Enable mission clock'}
+              className={`ml-auto rounded border px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-wider ${
+                timeEnabled ? 'border-amber-400/40 bg-amber-400/10 text-amber-300' : 'border-white/10 text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {timeEnabled ? 'On' : 'Off'}
+            </button>
           </label>
           <input
-            value={time}
+            value={timeEnabled ? time : '--:--'}
             onChange={(e) => setTime(e.target.value)}
-            onBlur={() => planner.updateStage(stage.id, { time: parseTime(time) })}
+            onBlur={() => timeEnabled && planner.updateStage(stage.id, { time: parseTime(time) })}
             onKeyDown={(e) => {
               if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
             }}
+            disabled={!timeEnabled}
             placeholder="00:00"
-            className="w-28 rounded border border-white/10 bg-black/30 px-2 py-1.5 font-mono text-[13px] text-slate-100 outline-none focus:border-amber-400/50"
+            className="w-28 rounded border border-white/10 bg-black/30 px-2 py-1.5 font-mono text-[13px] text-slate-100 outline-none focus:border-amber-400/50 disabled:cursor-not-allowed disabled:text-slate-600"
           />
-          <span className="ml-2 text-[10px] text-slate-600">mm:ss from round start</span>
+          <span className="ml-2 text-[10px] text-slate-600">{timeEnabled ? 'mm:ss from round start' : 'Optional — omitted from exports'}</span>
         </div>
       </div>
 

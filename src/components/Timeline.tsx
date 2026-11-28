@@ -1,13 +1,15 @@
-import { useMemo } from 'react'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, GripVertical, Plus } from 'lucide-react'
 import type { Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
-import { formatTime } from '../lib/utils'
+import { stageTimeLabel } from '../lib/utils'
 
 export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
   const planner = usePlanner()
-  const stages = useMemo(() => [...plan.stages].sort((a, b) => a.time - b.time), [plan.stages])
+  const stages = useMemo(() => plan.stages, [plan.stages])
   const index = stages.findIndex((s) => s.id === stage.id)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
 
   const go = (dir: number) => {
     const next = stages[Math.min(stages.length - 1, Math.max(0, index + dir))]
@@ -33,16 +35,41 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
           return (
             <button
               key={s.id}
+              draggable
               onClick={() => {
                 planner.setActiveStage(s.id)
                 useUI.getState().setRightTab('stage')
               }}
-              className={`relative z-10 h-10 w-auto min-w-[120px] max-w-[280px] shrink-0 rounded border px-2.5 py-0 text-left transition ${
-                active ? 'border-amber-400/70 bg-[#221b07]' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
-              }`}
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/pr-stage', s.id)
+                e.dataTransfer.effectAllowed = 'move'
+                setDraggingId(s.id)
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'move'
+                setOverId(s.id)
+              }}
+              onDragLeave={() => setOverId((current) => current === s.id ? null : current)}
+              onDrop={(e) => {
+                e.preventDefault()
+                const fromId = e.dataTransfer.getData('text/pr-stage') || draggingId
+                if (fromId && fromId !== s.id) planner.reorderStages(fromId, s.id)
+                setDraggingId(null)
+                setOverId(null)
+              }}
+              onDragEnd={() => {
+                setDraggingId(null)
+                setOverId(null)
+              }}
+              title="Click to edit · drag to reorder"
+              className={`relative z-10 h-10 w-auto min-w-[120px] max-w-[280px] shrink-0 cursor-grab rounded border px-2 py-0 text-left transition active:cursor-grabbing ${
+                active ? 'border-amber-400/70 bg-[#221b07]' : overId === s.id ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
+              } ${draggingId === s.id ? 'opacity-50' : ''}`}
             >
-              <span className="flex h-full min-w-0 items-center gap-2">
-                <span className={`shrink-0 font-mono text-[11px] leading-none tabular-nums ${active ? 'text-amber-200' : 'text-slate-400'}`}>{formatTime(s.time)}</span>
+              <span className="flex h-full min-w-0 items-center gap-1.5">
+                <GripVertical className={`h-3 w-3 shrink-0 ${active ? 'text-amber-400/70' : 'text-slate-600'}`} />
+                <span className={`shrink-0 font-mono text-[11px] leading-none tabular-nums ${active ? 'text-amber-200' : 'text-slate-400'}`}>{stageTimeLabel(s)}</span>
                 <span className="min-w-0 truncate whitespace-nowrap text-[12px] font-semibold leading-none text-slate-200">{s.name}</span>
               </span>
               {active && <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-amber-400" />}

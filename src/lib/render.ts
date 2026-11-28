@@ -531,7 +531,7 @@ export async function renderStageCanvas(
   ctx.fillStyle = '#e2e8f0'
   ctx.font = `600 ${size * ds * 0.0125}px "Inter", "Segoe UI", sans-serif`
   ctx.textBaseline = 'middle'
-  ctx.fillText(`${stage.name.toUpperCase()}  ·  T+${formatTime(stage.time)}  ·  ${plan.operation}`, size * 0.014, size - bar / 2)
+  ctx.fillText(`${stage.name.toUpperCase()}${stage.timeEnabled !== false ? `  ·  T+${formatTime(stage.time)}` : ''}  ·  ${plan.operation}`, size * 0.014, size - bar / 2)
   ctx.textAlign = 'right'
   ctx.fillStyle = '#94a3b8'
   ctx.font = `500 ${size * ds * 0.0105}px "Inter", "Segoe UI", sans-serif`

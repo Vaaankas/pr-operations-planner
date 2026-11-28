@@ -48,6 +48,10 @@ export function formatTime(sec: number): string {
   return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`
 }
 
+export function stageTimeLabel(stage: Pick<Stage, 'time' | 'timeEnabled'>): string {
+  return stage.timeEnabled === false ? '--:--' : formatTime(stage.time)
+}
+
 export function parseTime(value: string): number {
   const parts = value.split(':').map((p) => Number.parseInt(p, 10))
   if (parts.some((p) => Number.isNaN(p))) return 0
@@ -102,6 +106,7 @@ export function newStage(index: number, time = 0): Stage {
     id: uid('st'),
     name: index === 0 ? 'Deployment' : `Stage ${index + 1}`,
     time,
+    timeEnabled: true,
     visibility: { ...DEFAULT_STAGE_VISIBILITY },
     iconSize: 1,
     hiddenCps: [],

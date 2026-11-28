@@ -12,11 +12,12 @@ export interface StageSlideData {
 
 export function stageSlideData(plan: Plan, map: MapMeta, layer: LayerData, stage: Stage): StageSlideData {
   const side = layer.factions[String(plan.side)]
+  const timed = stage.timeEnabled !== false
   return {
     title: stage.name,
-    timeLabel: `T+${formatTime(stage.time)}`,
+    timeLabel: timed ? `T+${formatTime(stage.time)}` : '--:--',
     meta: `${map.name} · ${layerDisplayName(layer)} · ${side?.name ?? `Team ${plan.side}`}`,
     notes: stage.notes.trim(),
-    footer: `${plan.operation} · ${stage.name} · ${formatTime(stage.time)}`,
+    footer: [plan.operation, stage.name, timed ? formatTime(stage.time) : null].filter(Boolean).join(' · '),
   }
 }

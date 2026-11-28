@@ -52,7 +52,7 @@ function AppInner() {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
       const target = e.target as HTMLElement | null
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return
-      const stages = [...plan.stages].sort((a, b) => a.time - b.time)
+      const stages = plan.stages
       if (stages.length < 2) return
       const index = stages.findIndex((item) => item.id === plan.activeStageId)
       if (index < 0) return

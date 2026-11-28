@@ -78,6 +78,7 @@ interface PlannerStore {
   toggleStageVisibility: (key: keyof StageVisibility) => void
   setStageIconSize: (value: number) => void
   removeStage: (id: string) => void
+  reorderStages: (fromId: string, toId: string) => void
   setActiveStage: (id: string) => void
   addMember: (target: string, name: string, kit?: string) => boolean
   renameMember: (memberId: string, name: string) => void
@@ -243,9 +244,10 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
     const { plan } = get()
     if (!plan) return
     const maxTime = plan.stages.reduce((n, s) => Math.max(n, s.time), 0)
-    const previous = [...plan.stages].sort((a, b) => a.time - b.time)[plan.stages.length - 1]
+    const previous = plan.stages[plan.stages.length - 1]
     const stage = newStage(plan.stages.length, maxTime + 300)
     if (previous) {
+      stage.timeEnabled = previous.timeEnabled !== false
       stage.elements = clone(previous.elements).map((el) => ({ ...el, id: uid('el') }))
       stage.moves = clone(previous.moves)
       stage.turns = {}
@@ -298,13 +300,21 @@ export const usePlanner = create<PlannerStore>((set, get) => ({
     const { plan } = get()
     if (!plan || plan.stages.length <= 1) return
     get().mutate((draft) => {
-      const ordered = [...draft.stages].sort((a, b) => a.time - b.time)
-      const removedAt = ordered.findIndex((s) => s.id === id)
-      const fallback = ordered[removedAt + 1] ?? ordered[removedAt - 1] ?? draft.stages[0]
+      const removedAt = draft.stages.findIndex((s) => s.id === id)
+      const fallback = draft.stages[removedAt + 1] ?? draft.stages[removedAt - 1] ?? draft.stages[0]
       draft.stages = draft.stages.filter((s) => s.id !== id)
       if (draft.activeStageId === id) draft.activeStageId = fallback.id
     })
   },
+
+  reorderStages: (fromId, toId) =>
+    get().mutate((draft) => {
+      const from = draft.stages.findIndex((s) => s.id === fromId)
+      const to = draft.stages.findIndex((s) => s.id === toId)
+      if (from < 0 || to < 0 || from === to) return
+      const [stage] = draft.stages.splice(from, 1)
+      draft.stages.splice(to, 0, stage)
+    }),
 
   setActiveStage: (id) => {
     const { plan } = get()

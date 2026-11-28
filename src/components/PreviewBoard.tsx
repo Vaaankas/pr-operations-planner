@@ -4,7 +4,7 @@ import type { LayerData, MapMeta, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { useAssets } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
-import { formatTime } from '../lib/utils'
+import { stageTimeLabel } from '../lib/utils'
 import { layerDisplayName } from '../lib/layerLabels'
 import { stageSlideData } from '../lib/slide'
 import { buildRosterView, type RosterViewMember, type RosterViewSquad } from '../lib/rosterView'
@@ -217,7 +217,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   const planner = usePlanner()
   const ui = useUI()
   const assets = useAssets()
-  const stages = [...plan.stages].sort((a, b) => a.time - b.time)
+  const stages = plan.stages
   const stageIndex = stages.findIndex((item) => item.id === stage.id)
   const stagePage = stageIndex + 1
   const [page, setPage] = useState(stagePage)
@@ -274,7 +274,7 @@ export function PreviewBoard({ map, layer, plan, stage }: Props) {
   const pageName = page === 0 ? 'Roster' : stages[page - 1]?.name ?? stage.name
   const pageSub = page === 0
     ? `0 / ${stages.length}`
-    : `${page} / ${stages.length} · ${formatTime(stages[page - 1]?.time ?? stage.time)}`
+    : `${page} / ${stages.length} · ${stageTimeLabel(stages[page - 1] ?? stage)}`
 
   return (
     <div

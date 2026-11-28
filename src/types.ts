@@ -225,6 +225,7 @@ export interface Stage {
   id: string
   name: string
   time: number
+  timeEnabled?: boolean
   frame?: StageFrame
   visibility?: StageVisibility
   iconSize?: number

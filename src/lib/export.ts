@@ -29,7 +29,7 @@ const PAGE_W = 13.333
 const PAGE_H = 7.5
 
 function orderedStages(plan: Plan): Stage[] {
-  return [...plan.stages].sort((a, b) => a.time - b.time)
+  return plan.stages
 }
 
 function stageList(src: Source, opts: ExportOptions): Stage[] {
@@ -251,7 +251,7 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
       ],
       { x: 0.7, y: 4.2, w: 8, h: 0.8, fontFace: 'Segoe UI' },
     )
-    const stageLine = orderedStages(src.plan).map((s) => `${formatTime(s.time)} ${s.name}`).join('   ·   ')
+    const stageLine = orderedStages(src.plan).map((s) => `${s.timeEnabled !== false ? `${formatTime(s.time)} ` : ''}${s.name}`).join('   ·   ')
     title.addText('STAGES', { x: 0.7, y: 5.1, w: 2, h: 0.25, fontFace: 'Segoe UI', fontSize: 9, bold: true, color: 'FBBF24', charSpacing: 2 })
     title.addText(stageLine, { x: 0.7, y: 5.4, w: 11.8, h: 0.7, fontFace: 'Segoe UI', fontSize: 11, color: '94A3B8' })
     title.addText(new Date(src.plan.createdAt).toLocaleDateString(), { x: 0.7, y: 6.6, w: 4, h: 0.3, fontFace: 'Segoe UI', fontSize: 10, color: '64748B' })
@@ -268,7 +268,7 @@ export async function buildPptx(src: Source, opts: ExportOptions, onProgress?: (
     slide.background = { color: 'FFFFFF' }
     slide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: PAGE_W, h: 0.07, fill: { color: amber } })
     slide.addText(slideData.title, { x: 0.45, y: 0.32, w: 4.6, h: 0.55, fontFace: 'Segoe UI', fontSize: 24, bold: true, color: ink })
-    slide.addText(slideData.timeLabel, { x: 0.45, y: 0.9, w: 3, h: 0.3, fontFace: 'Consolas', fontSize: 12, bold: true, color: 'B45309' })
+    if (stage.timeEnabled !== false) slide.addText(slideData.timeLabel, { x: 0.45, y: 0.9, w: 3, h: 0.3, fontFace: 'Consolas', fontSize: 12, bold: true, color: 'B45309' })
     slide.addText(slideData.meta, { x: 0.45, y: 1.2, w: 4.7, h: 0.45, fontFace: 'Segoe UI', fontSize: 9, color: '64748B' })
 
     const notes = slideData.notes
@@ -520,7 +520,7 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(148, 163, 184)
     doc.setFontSize(10)
-    doc.text(orderedStages(src.plan).map((s) => `${formatTime(s.time)}  ${s.name}`).join('    ·    '), 0.7, 5.35, { maxWidth: 11.8 })
+    doc.text(orderedStages(src.plan).map((s) => `${s.timeEnabled !== false ? `${formatTime(s.time)}  ` : ''}${s.name}`).join('    ·    '), 0.7, 5.35, { maxWidth: 11.8 })
     doc.text(new Date(src.plan.createdAt).toLocaleDateString(), 0.7, 7.05)
   }
 
@@ -544,7 +544,7 @@ export async function buildPdf(src: Source, opts: ExportOptions, onProgress?: (d
     doc.setFont('courier', 'bold')
     doc.setFontSize(10)
     doc.setTextColor(180, 83, 9)
-    doc.text(slideData.timeLabel, 0.45, 1.0)
+    if (stage.timeEnabled !== false) doc.text(slideData.timeLabel, 0.45, 1.0)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     doc.setTextColor(100, 116, 139)

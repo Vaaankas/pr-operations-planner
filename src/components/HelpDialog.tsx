@@ -26,7 +26,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
               <li>Toggle routes and individual flags in the Routes tab. Multiple routes can be visible at once.</li>
               <li>Fill the roster: 50-player reference, commander, up to nine squads. Drag the grip handles to move players or reorder squads.</li>
               <li>Place or move vehicles, claim them for squads, then draw the scheme of manoeuvre. Drag a vehicle route to add turning points.</li>
-              <li>Add stages with mission-clock times and notes. A new stage inherits the previous stage's drawings and vehicle positions.</li>
+              <li>Add stages, drag them into briefing order, and optionally give them a mission-clock time. A new stage inherits the previous stage's drawings and vehicle positions.</li>
               <li>Export a PowerPoint, PDF, PNG maps, or a roster-only brief. Everything autosaves in this browser.</li>
             </ol>
           </section>
@@ -64,7 +64,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           <section>
             <h3 className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400/90"><Clock className="h-3 w-3" /> Stages</h3>
             <p className="text-slate-400">
-              Stages sort by their mission clock. Use play in the timeline to step through the plan during a briefing.
+              Drag stage cards in the timeline to set briefing order. Mission clocks are optional; untimed stages show --:-- and omit the clock from exports.
               Notes become the left column of the exported stage slide and the speaker notes of the PPTX.
             </p>
           </section>
