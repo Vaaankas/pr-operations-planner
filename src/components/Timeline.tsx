@@ -61,14 +61,13 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
                 planner.setActiveStage(s.id)
                 useUI.getState().setRightTab('stage')
               }}
-              className={`relative z-10 h-12 shrink-0 rounded border px-2.5 py-0 text-left transition ${
+              className={`relative z-10 h-12 w-auto min-w-[120px] max-w-[280px] shrink-0 rounded border px-2.5 py-0 text-left transition ${
                 active ? 'border-amber-400/70 bg-[#221b07]' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
               }`}
-              style={{ width: Math.min(280, Math.max(132, 86 + s.name.length * 7.5)) }}
             >
-              <span className="grid h-full min-w-0 grid-cols-[43px_minmax(0,1fr)] items-center gap-1.5">
-                <span className={`font-mono text-[11px] leading-none tabular-nums ${active ? 'text-amber-200' : 'text-slate-400'}`}>{formatTime(s.time)}</span>
-                <span className="truncate text-[12px] font-semibold leading-none text-slate-200">{s.name}</span>
+              <span className="flex h-full min-w-0 items-center gap-2">
+                <span className={`shrink-0 font-mono text-[11px] leading-none tabular-nums ${active ? 'text-amber-200' : 'text-slate-400'}`}>{formatTime(s.time)}</span>
+                <span className="min-w-0 truncate whitespace-nowrap text-[12px] font-semibold leading-none text-slate-200">{s.name}</span>
               </span>
               {active && <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-amber-400" />}
             </button>
