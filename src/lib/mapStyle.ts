@@ -10,6 +10,7 @@ export const VEHICLE_ICON_PX = {
 export const FLAG_ICON_PX = 30
 export const CACHE_ICON_PX = 19
 export const SQUAD_ICON_PX = 24
+export const MARKER_ICON_PX = 28
 
 export const MAP_TEXT_FILL = '#f8fafc'
 export const MAP_TEXT_OUTLINE = 'rgba(2,6,4,0.92)'

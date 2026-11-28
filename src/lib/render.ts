@@ -5,7 +5,7 @@ import { cpFlag, vehicleIconPath } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
 import { mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from './coords'
 import { routeSegments } from './routes'
-import { CACHE_ICON_PX, exportPx, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, vehicleIconPx } from './mapStyle'
+import { CACHE_ICON_PX, exportPx, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, MARKER_ICON_PX, SQUAD_ICON_PX, vehicleIconPx } from './mapStyle'
 
 export function normPoint(p: { x: number; y: number }, size: number): [number, number] {
   const r = mirrorNorm(p)
@@ -235,7 +235,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, size
     }
     case 'icon': {
       const [x, y] = normPoint(el.at, size)
-      const s = Math.max(10, el.size * ui)
+      const s = exportPx(size, MARKER_ICON_PX, detailScale) * iconScale
       const path = el.icon.startsWith('order_') ? assets?.orders[el.icon.slice(6)] : assets?.markers[el.icon]
       const img = path ? assetImage(path) : iconImage(glyphFor('marker', el.icon), el.color)
       ctx.translate(x, y)

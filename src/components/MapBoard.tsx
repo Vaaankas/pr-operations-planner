@@ -14,7 +14,7 @@ import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehi
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { groupRoute } from '../lib/routes'
-import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, SQUAD_ICON_PX, VEHICLE_ICON_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
+import { CACHE_ICON_PX, FLAG_ICON_PX, MAP_TEXT_FILL, MAP_TEXT_OUTLINE, MAP_TEXT_OUTLINE_PX, MARKER_ICON_PX, SQUAD_ICON_PX, VEHICLE_ICON_SCALE, VEHICLE_TEXT_SCALE, vehicleIconPx } from '../lib/mapStyle'
 import { assignedKits } from '../lib/kits'
 
 interface Props {
@@ -1234,6 +1234,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       }
       case 'icon': {
         const at = normToScreen(el.at)
+        const markerPx = MARKER_ICON_PX * iconScale * iconSize
         return (
           <Group
             key={el.id}
@@ -1250,16 +1251,16 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               planner.updateElement(el.id, { rotation })
             }}
           >
-            <Circle radius={el.size * mapW * 0.62} fill="rgba(0,0,0,0.001)" />
+            <Circle radius={markerPx * 0.62} fill="rgba(0,0,0,0.001)" />
             {el.affiliation === 'friendly' && (
               <Circle
-                radius={el.size * mapW * 0.72}
+                radius={markerPx * 0.72}
                 fill={withAlpha('#3b82f6', 0.24)}
                 stroke={withAlpha('#3b82f6', 0.85)}
                 strokeWidth={1.5 * iconScale}
               />
             )}
-            <MarkerGlyph icon={el.icon} color={color} size={el.size * mapW} />
+            <MarkerGlyph icon={el.icon} color={color} size={markerPx} />
           </Group>
         )
       }
