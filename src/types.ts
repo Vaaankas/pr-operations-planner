@@ -81,6 +81,7 @@ export interface ControlPoint {
   order: number
   pick: number
   route: number | null
+  capturable?: boolean
 }
 
 export interface Route {
