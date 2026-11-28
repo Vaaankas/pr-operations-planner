@@ -87,7 +87,16 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             </p>
           </section>
         </div>
-        <div className="flex justify-end border-t border-white/10 px-5 py-3">
+        <div className="flex items-center justify-between border-t border-white/10 px-5 py-3">
+          <a
+            href="https://github.com/Vaaankas/pr-operations-planner"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-amber-300"
+          >
+            <Github className="h-3.5 w-3.5" />
+            Source on GitHub
+          </a>
           <button onClick={onClose} className="rounded bg-amber-400 px-4 py-2 text-xs font-bold text-black hover:bg-amber-300">Close</button>
         </div>
       </div>
