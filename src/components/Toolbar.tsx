@@ -267,13 +267,10 @@ export function OptionsBar() {
                   <button
                     key={icon}
                     onClick={() => ui.setMarker(icon)}
-                    className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded text-white"
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[3px] text-white ${ui.markerIcon === icon ? 'bg-white/[0.09] ring-1 ring-inset ring-white/15' : ''}`}
                     title={label}
                   >
                     {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
-                    {ui.markerIcon === icon && (
-                      <span className="absolute bottom-0 h-1 w-1 rounded-full bg-amber-400" />
-                    )}
                   </button>
                 )
               })}
@@ -296,13 +293,10 @@ export function OptionsBar() {
                   <button
                     key={icon}
                     onClick={() => ui.setEnemyMarker(icon)}
-                    className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded text-white"
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[3px] text-white ${ui.enemyMarkerIcon === icon ? 'bg-white/[0.09] ring-1 ring-inset ring-white/15' : ''}`}
                     title={label}
                   >
                     {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
-                    {ui.enemyMarkerIcon === icon && (
-                      <span className="absolute bottom-0 h-1 w-1 rounded-full bg-amber-400" />
-                    )}
                   </button>
                 )
               })}
