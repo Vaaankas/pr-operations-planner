@@ -2283,12 +2283,31 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
       )}
 
       {!preview && (
-        <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded border border-white/10 bg-black/70 p-1">
-          <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(0.8)} title="Zoom out">−</button>
-          <button className="h-7 min-w-12 rounded px-1 text-[10px] font-mono text-slate-400 hover:bg-white/10" onClick={resetView} title="Fit map">
+        <div className="absolute bottom-3 right-3 z-20 flex items-center gap-0.5 rounded border border-white/10 bg-black/70 p-1 shadow-lg">
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded text-[17px] font-light leading-none text-slate-300 transition hover:bg-white/10 hover:text-white"
+            onClick={() => zoomBy(0.8)}
+            title="Zoom out"
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+          <button
+            className="flex h-8 min-w-14 items-center justify-center rounded px-2 font-mono text-[11px] font-semibold leading-none tabular-nums text-slate-300 transition hover:bg-white/10 hover:text-white"
+            onClick={resetView}
+            title="Fit map"
+            aria-label="Fit map to view"
+          >
             {Math.round(view.scale * 100)}%
           </button>
-          <button className="h-7 w-7 rounded text-slate-300 hover:bg-white/10" onClick={() => zoomBy(1.25)} title="Zoom in">+</button>
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded text-[17px] font-light leading-none text-slate-300 transition hover:bg-white/10 hover:text-white"
+            onClick={() => zoomBy(1.25)}
+            title="Zoom in"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
         </div>
       )}
 
