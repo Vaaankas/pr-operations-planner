@@ -87,8 +87,8 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
             <div className="mb-1 flex items-center gap-1.5 border-b border-white/10 px-1 pb-1">
               {flag ? <img src={dataUrl(flag)} alt="" className="h-4 w-[22px] object-fill" /> : <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />}
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color }}>{label}</span>
-              {faction && <span className="text-[10px] text-slate-500">{faction.name}</span>}
-              <span className="ml-auto font-mono text-[10px] text-slate-600">{list.length}</span>
+              {faction && <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">{faction.short}</span>}
+              {team !== null && <span className="font-mono text-[10px] text-slate-600">{team}</span>}
             </div>
             <div className="space-y-0.5">
               {list.map((v) => {
