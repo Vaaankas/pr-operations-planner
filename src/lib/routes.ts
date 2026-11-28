@@ -15,7 +15,6 @@ export function groupRoute(layer: LayerData, route: Route): RouteGroup[] {
     byOrder.get(cp.order)!.push(cp)
   }
   return [...byOrder.entries()]
-    .sort((a, b) => a[0] - b[0])
     .map(([order, cps], index) => ({
       number: index + 1,
       order,

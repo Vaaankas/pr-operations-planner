@@ -638,7 +638,23 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
                 if (cp["route"] is None or cp["route"] == number)
                 and cp["id"] not in stray_base_ids
             ]
-            members.sort(key=lambda c: (c["order"], c["pick"], c["name"]))
+            # AASv4 route digits run away from the starting main base:
+            # capture objectives descend by order, and the uncapturable
+            # negative-SGID end base must always come last.
+            start_bases = sorted(
+                [cp for cp in members if cp["route"] is None and cp["sgid"] > 0 and cp["order"] == 1],
+                key=lambda c: c["name"],
+            )
+            end_bases = sorted(
+                [cp for cp in members if cp["route"] is None and cp["sgid"] < 0],
+                key=lambda c: c["name"],
+            )
+            objectives = [
+                cp for cp in members
+                if cp not in start_bases and cp not in end_bases
+            ]
+            objectives.sort(key=lambda c: (-c["order"], c["pick"], c["name"]))
+            members = start_bases + objectives + end_bases
             routes.append({
                 "id": str(number),
                 "label": f"Route {route_index}",
