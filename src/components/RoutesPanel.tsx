@@ -3,7 +3,7 @@ import { usePlanner, useUI } from '../store'
 import type { LayerData, Plan } from '../types'
 import { factionFlag, useAssets } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
-import { groupRoute } from '../lib/routes'
+import { groupRoute, routeGroupLabel } from '../lib/routes'
 import { dataUrl } from '../lib/utils'
 
 export const ROUTE_COLORS = ['#38bdf8', '#fb923c', '#a78bfa', '#34d399', '#f472b6', '#facc15']
@@ -66,51 +66,64 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
               <div className="mb-1.5 flex items-center gap-2 pl-2 font-mono text-[9px] uppercase tracking-[0.16em] text-slate-500">
                 {r.label}
               </div>
-              <div className="space-y-1">
-                {groupRoute(layer, r).flatMap((group) =>
-                  group.cps.map((cp) => {
-                    const id = cp.id
-                    const shown = !ui.hiddenCps.includes(id)
-                    const team = captureTeam(plan, cp)
-                    const faction = team ? layer.factions[String(team)] : null
-                    const flag = factionFlag(assets, faction?.key)
-                    const capturable = isCapturable(cp)
-                    return (
-                      <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 pl-5 text-[11px] text-slate-400">
-                        <button
-                          type="button"
-                          onClick={() => ui.toggleCp(id)}
-                          className="flex h-4 w-4 shrink-0 items-center justify-center"
-                          style={{ color: shown ? routeColor(index) : undefined }}
-                          title={shown ? 'Hide this flag' : 'Show this flag'}
-                        >
-                          {shown ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-slate-600" />}
-                        </button>
-                        <span className="w-4 shrink-0 text-right font-mono text-[10px] text-slate-600">{group.number}</span>
-                        <span className={`max-w-[128px] truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
-                        {cp.radius > 0 && <span className="shrink-0 font-mono text-[9px] text-slate-500">{Math.round(cp.radius)}m</span>}
-                        {capturable ? (
-                          <button
-                            onClick={() => planner.cycleFlagTeam(cp.id, team)}
-                            className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/10 px-1 py-0.5 text-[9px] text-slate-400 hover:border-amber-400/40 hover:text-amber-300"
-                            title={`${cp.name}: ${teamName(layer, team)}. Capture loss ${layer.tickets?.loss ?? 30} tickets. Click to cycle neutral/faction.`}
-                          >
-                            {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
-                            <span className="max-w-24 truncate">{faction?.name ?? 'NEUTRAL'}</span>
-                          </button>
-                        ) : (
-                          <span
-                            className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/5 px-1 py-0.5 text-[9px] text-slate-500"
-                            title={`${cp.name}: deployment flag, uncapturable`}
-                          >
-                            {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" /> : null}
-                            <span className="max-w-14 truncate">FIXED</span>
-                          </span>
-                        )}
+              <div className="space-y-1.5">
+                {groupRoute(layer, r).map((group) => {
+                  const multi = group.cps.length > 1
+                  return (
+                    <div key={`${r.id}-${group.number}`} className={multi ? 'border border-white/10 bg-black/15' : ''}>
+                      {multi && (
+                        <div className="flex items-center gap-2 border-b border-white/10 px-1.5 py-1 font-mono text-[8px] uppercase tracking-wider text-slate-500">
+                          <span>Order {group.number}</span>
+                          <span className="ml-auto border border-white/15 px-1 py-0.5 font-bold text-slate-300">{routeGroupLabel(group)}</span>
+                        </div>
+                      )}
+                      <div className={multi ? 'space-y-0.5 p-1' : 'space-y-1'}>
+                        {group.cps.map((cp) => {
+                          const id = cp.id
+                          const shown = !ui.hiddenCps.includes(id)
+                          const team = captureTeam(plan, cp)
+                          const faction = team ? layer.factions[String(team)] : null
+                          const flag = factionFlag(assets, faction?.key)
+                          const capturable = isCapturable(cp)
+                          return (
+                            <div key={`${r.id}-${id}-${group.number}`} className={`flex items-center gap-1.5 text-[11px] text-slate-400 ${multi ? 'pl-0.5' : 'pl-5'}`}>
+                              <button
+                                type="button"
+                                onClick={() => ui.toggleCp(id)}
+                                className="flex h-4 w-4 shrink-0 items-center justify-center"
+                                style={{ color: shown ? routeColor(index) : undefined }}
+                                title={shown ? 'Hide this flag' : 'Show this flag'}
+                              >
+                                {shown ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5 text-slate-600" />}
+                              </button>
+                              <span className="w-4 shrink-0 text-right font-mono text-[10px] text-slate-600">{group.number}</span>
+                              <span className={`max-w-[128px] truncate ${shown ? '' : 'line-through opacity-40'}`}>{cp.name}</span>
+                              {cp.radius > 0 && <span className="shrink-0 font-mono text-[9px] text-slate-500">{Math.round(cp.radius)}m</span>}
+                              {capturable ? (
+                                <button
+                                  onClick={() => planner.cycleFlagTeam(cp.id, team)}
+                                  className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/10 px-1 py-0.5 text-[9px] text-slate-400 hover:border-amber-400/40 hover:text-amber-300"
+                                  title={`${cp.name}: ${teamName(layer, team)}. Capture loss ${layer.tickets?.loss ?? 30} tickets. Click to cycle neutral/faction.`}
+                                >
+                                  {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
+                                  <span className="max-w-24 truncate">{faction?.name ?? 'NEUTRAL'}</span>
+                                </button>
+                              ) : (
+                                <span
+                                  className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/5 px-1 py-0.5 text-[9px] text-slate-500"
+                                  title={`${cp.name}: deployment flag, uncapturable`}
+                                >
+                                  {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" /> : null}
+                                  <span className="max-w-14 truncate">FIXED</span>
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
-                    )
-                  }),
-                )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )
