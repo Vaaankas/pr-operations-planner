@@ -632,7 +632,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         route_numbers = []
     if route_numbers:
         routes = []
-        for number in route_numbers:
+        for route_index, number in enumerate(route_numbers):
             members = [
                 cp for cp in cps
                 if (cp["route"] is None or cp["route"] == number)
@@ -641,7 +641,7 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             members.sort(key=lambda c: (c["order"], c["pick"], c["name"]))
             routes.append({
                 "id": str(number),
-                "label": f"Route {number}",
+                "label": f"Route {route_index}",
                 "cps": [cp["id"] for cp in members],
             })
     else:
