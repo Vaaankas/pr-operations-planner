@@ -17,6 +17,8 @@ import { Timeline } from './components/Timeline'
 import { ExportDialog } from './components/ExportDialog'
 import { HelpDialog } from './components/HelpDialog'
 
+type AppScreen = 'picker' | 'editor' | 'preview' | 'roster'
+
 const EMPTY_ASSETS: AssetManifest = { factionFlags: {}, cpFlags: {}, scoreFlags: {}, vehicles: {}, squads: {}, commander: '', markers: {}, orders: {} }
 
 export function App() {
@@ -45,6 +47,15 @@ function AppInner() {
   const plan = usePlanner((s) => s.plan)
   const ui = useUI()
   const cache = useRef(new Map<string, LayerData>())
+  const screenRef = useRef<AppScreen>('picker')
+  const skipHistoryPush = useRef(false)
+  const currentScreen: AppScreen = pickerOpen
+    ? 'picker'
+    : ui.view === 'roster'
+      ? 'roster'
+      : ui.mode === 'preview'
+        ? 'preview'
+        : 'editor'
 
   useEffect(() => {
     if (!plan || ui.view !== 'plan' || ui.mode === 'preview' || ui.exportOpen) return
@@ -74,6 +85,46 @@ function AppInner() {
     booted.current = true
     const stored = loadStoredPlan()
     if (stored) usePlanner.getState().setPlan(stored)
+  }, [])
+
+  useEffect(() => {
+    history.replaceState({ ...history.state, prScreen: 'picker' }, '')
+    screenRef.current = 'picker'
+  }, [])
+
+  useEffect(() => {
+    if (skipHistoryPush.current) {
+      skipHistoryPush.current = false
+      screenRef.current = currentScreen
+      return
+    }
+    if (screenRef.current === currentScreen) return
+    history.pushState({ ...history.state, prScreen: currentScreen }, '')
+    screenRef.current = currentScreen
+  }, [currentScreen])
+
+  useEffect(() => {
+    const onPopState = (event: PopStateEvent) => {
+      const target = (event.state as { prScreen?: AppScreen } | null)?.prScreen
+      if (!target) return
+      skipHistoryPush.current = true
+      screenRef.current = target
+      setHelpOpen(false)
+      useUI.getState().setExportOpen(false)
+      if (target === 'picker') {
+        setPickerOpen(true)
+        return
+      }
+      setPickerOpen(false)
+      if (target === 'roster') {
+        useUI.getState().setView('roster')
+      } else {
+        useUI.getState().setView('plan')
+        useUI.getState().setMode(target === 'preview' ? 'preview' : 'edit')
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
   useEffect(() => {
