@@ -139,7 +139,7 @@ export function OptionsBar() {
   const tool = ui.tool
   const isDraw = ['pen', 'line', 'arrow', 'ruler', 'rect', 'ellipse', 'polygon', 'text'].includes(tool)
   return (
-    <div className="flex h-10 shrink-0 items-center gap-3 border-b border-white/10 bg-[#141d17] px-3">
+    <div className="flex h-10 shrink-0 items-center gap-3 border-b border-white/10 bg-[#0a100c] px-3">
       <span className="w-24 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/90">
         {TOOLS.find((t) => t.tool === tool)?.label ?? 'Tool'}
       </span>
