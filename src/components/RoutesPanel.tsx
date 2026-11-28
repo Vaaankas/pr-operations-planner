@@ -96,7 +96,7 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                             title={`${cp.name}: ${teamName(layer, team)}. Capture loss ${layer.tickets?.loss ?? 30} tickets. Click to cycle neutral/faction.`}
                           >
                             {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
-                            <span className="max-w-14 truncate">{faction?.short ?? 'NEU'}</span>
+                            <span className="max-w-14 truncate">{faction?.short ?? 'NEUTRAL'}</span>
                           </button>
                         ) : (
                           <span
