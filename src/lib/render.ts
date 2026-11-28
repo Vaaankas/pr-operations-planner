@@ -22,7 +22,7 @@ export function normToWorld(p: { x: number; y: number }, world: number): { x: nu
 }
 
 export function vehicleColor(v: VehicleSpawn, plan: Plan, squads: { id: string; color: string }[]): string {
-  if (v.team !== null && v.team !== plan.side) return '#f87171'
+  if (v.team !== null && v.team !== plan.side) return '#ff0000'
   const claim = plan.claims[v.id]
   if (claim === 'commander') return '#facc15'
   if (claim) {

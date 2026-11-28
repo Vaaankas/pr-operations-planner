@@ -81,7 +81,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
           const faction = team ? layer.factions[String(team)] : null
           const flag = factionFlag(assets, faction?.key)
           const label = team === plan.side ? 'Friendly' : team ? 'Enemy' : 'Neutral'
-          const color = team === plan.side ? '#38bdf8' : team ? '#f87171' : '#fbbf24'
+          const color = team === plan.side ? '#38bdf8' : team ? '#ff0000' : '#fbbf24'
           return (
           <div key={`${team ?? 'neutral'}-${groupIndex}`} className="mb-3">
             <div className="mb-1 flex items-center gap-1.5 border-b border-white/10 px-1 pb-1">
