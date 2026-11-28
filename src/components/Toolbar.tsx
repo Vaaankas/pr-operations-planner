@@ -267,10 +267,13 @@ export function OptionsBar() {
                   <button
                     key={icon}
                     onClick={() => ui.setMarker(icon)}
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
+                    className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.markerIcon === icon ? 'text-white' : 'opacity-55 hover:opacity-100'}`}
                     title={label}
                   >
                     {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
+                    {ui.markerIcon === icon && (
+                      <span className="absolute inset-x-1.5 -bottom-0.5 h-0.5 rounded-full bg-amber-400" />
+                    )}
                   </button>
                 )
               })}
@@ -293,10 +296,13 @@ export function OptionsBar() {
                   <button
                     key={icon}
                     onClick={() => ui.setEnemyMarker(icon)}
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.enemyMarkerIcon === icon ? 'bg-amber-400/20 ring-1 ring-amber-400' : 'hover:bg-white/10'}`}
+                    className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded ${ui.enemyMarkerIcon === icon ? 'text-white' : 'opacity-55 hover:opacity-100'}`}
                     title={label}
                   >
                     {path ? <GameIcon path={path} size={22} /> : <span className="text-[9px] text-amber-300">!</span>}
+                    {ui.enemyMarkerIcon === icon && (
+                      <span className="absolute inset-x-1.5 -bottom-0.5 h-0.5 rounded-full bg-amber-400" />
+                    )}
                   </button>
                 )
               })}
