@@ -1,7 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react'
 import { usePlanner, useUI } from '../store'
 import type { LayerData, Plan } from '../types'
-import { cpFlag, useAssets } from '../lib/assets'
+import { factionFlag, useAssets } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
 import { groupRoute } from '../lib/routes'
 import { dataUrl } from '../lib/utils'
@@ -73,7 +73,7 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                     const shown = !ui.hiddenCps.includes(id)
                     const team = captureTeam(plan, cp)
                     const faction = team ? layer.factions[String(team)] : null
-                    const flag = cpFlag(assets, faction?.key)
+                    const flag = factionFlag(assets, faction?.key)
                     const capturable = isCapturable(cp)
                     return (
                       <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 pl-5 text-[11px] text-slate-400">
@@ -95,7 +95,7 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                             className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/10 px-1 py-0.5 text-[9px] text-slate-400 hover:border-amber-400/40 hover:text-amber-300"
                             title={`${cp.name}: ${teamName(layer, team)}. Capture loss ${layer.tickets?.loss ?? 30} tickets. Click to cycle neutral/faction.`}
                           >
-                            {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-contain" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
+                            {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" /> : <span className="h-1.5 w-1.5 rounded-full bg-slate-600" />}
                             <span className="max-w-14 truncate">{faction?.short ?? 'NEU'}</span>
                           </button>
                         ) : (
@@ -103,7 +103,18 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                             className="ml-auto flex shrink-0 items-center gap-1 rounded border border-white/5 px-1 py-0.5 text-[9px] text-slate-500"
                             title={`${cp.name}: deployment flag, uncapturable`}
                           >
-                            {flag ? <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-contain opacity-60" /> : null}
+                            {flag ? (
+                              <span className="relative inline-flex">
+                                <img src={dataUrl(flag)} alt="" className="h-3 w-4 object-fill" />
+                                {assets.markers.deployment_cancel && (
+                                  <img
+                                    src={dataUrl(assets.markers.deployment_cancel)}
+                                    alt=""
+                                    className="absolute -right-1.5 -top-1.5 h-3 w-3"
+                                  />
+                                )}
+                              </span>
+                            ) : null}
                             <span className="max-w-14 truncate">FIXED</span>
                           </span>
                         )}
