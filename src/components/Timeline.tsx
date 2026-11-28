@@ -1,33 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Pause, Play, Plus, Repeat2 } from 'lucide-react'
+import { useMemo } from 'react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import type { Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
 import { formatTime } from '../lib/utils'
 
 export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
   const planner = usePlanner()
-  const [playing, setPlaying] = useState(false)
-  const [looped, setLooped] = useState(false)
   const stages = useMemo(() => [...plan.stages].sort((a, b) => a.time - b.time), [plan.stages])
   const index = stages.findIndex((s) => s.id === stage.id)
-
-  useEffect(() => {
-    if (!playing) return
-    const timer = setInterval(() => {
-      const current = usePlanner.getState().plan
-      if (!current) return
-      const sorted = [...current.stages].sort((a, b) => a.time - b.time)
-      const at = sorted.findIndex((s) => s.id === current.activeStageId)
-      if (at < sorted.length - 1) {
-        usePlanner.getState().setActiveStage(sorted[at + 1].id)
-      } else if (looped && sorted.length > 0) {
-        usePlanner.getState().setActiveStage(sorted[0].id)
-      } else {
-        setPlaying(false)
-      }
-    }, looped ? 2200 : 3200)
-    return () => clearInterval(timer)
-  }, [playing, looped])
 
   const go = (dir: number) => {
     const next = stages[Math.min(stages.length - 1, Math.max(0, index + dir))]
@@ -36,39 +16,8 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
 
   return (
     <div className="flex h-[60px] shrink-0 border-t border-white/10 bg-[#080d0a]">
-      <div className="flex w-[132px] shrink-0 flex-col justify-center border-r border-white/10 px-2">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setPlaying(!playing)}
-            className={`flex h-[26px] w-[26px] items-center justify-center rounded ${playing ? 'bg-amber-400 text-black' : 'bg-white/10 text-slate-200 hover:bg-white/15'}`}
-            title={playing ? 'Pause stage sequence' : 'Play stage sequence'}
-            aria-label={playing ? 'Pause stage sequence' : 'Play stage sequence'}
-          >
-            {playing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-          </button>
-          <button
-            onClick={() => {
-              if (!looped) {
-                setLooped(true)
-                if (!playing) {
-                  if (stages[0]) planner.setActiveStage(stages[0].id)
-                  setPlaying(true)
-                }
-              } else if (!playing) {
-                setLooped(true)
-                if (stages[0]) planner.setActiveStage(stages[0].id)
-                setPlaying(true)
-              } else {
-                setLooped(false)
-              }
-            }}
-            className={`flex h-[26px] w-[26px] items-center justify-center rounded ${looped ? 'bg-amber-400/20 text-amber-300' : 'text-slate-500 hover:bg-white/10 hover:text-slate-200'}`}
-            title={looped ? 'Looped replay enabled' : 'Play fast looped replay'}
-            aria-label="Toggle looped stage replay"
-            aria-pressed={looped}
-          >
-            <Repeat2 className="h-3 w-3" />
-          </button>
+      <div className="flex w-[76px] shrink-0 flex-col justify-center border-r border-white/10 px-2">
+        <div className="flex items-center justify-center gap-1">
           <button onClick={() => go(-1)} disabled={index <= 0} className="flex h-[26px] w-[26px] items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Previous stage" aria-label="Previous stage">
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>
