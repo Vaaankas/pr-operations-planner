@@ -1680,6 +1680,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             const h = w * Math.min(1, Math.max(0.4, ratio))
             const index = routes.findIndex((route) => route.cps.includes(cp.id))
             const color = routeColor(Math.max(0, index))
+            const hovered = ui.hoveredCpId === cp.id
             return (
               <Group
                 key={cp.id}
@@ -1691,13 +1692,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   planner.cycleFlagTeam(cp.id, team)
                 }}
                 onMouseEnter={() => {
+                  ui.setHoveredCp(cp.id)
                   setHoverFlag({
                     cp,
                     x: p.x * mapW * view.scale + view.x,
                     y: p.y * mapH * view.scale + view.y,
                   })
                 }}
-                onMouseLeave={() => setHoverFlag(null)}
+                onMouseLeave={() => {
+                  ui.setHoveredCp(null)
+                  setHoverFlag(null)
+                }}
               >
                 <Circle radius={w * 0.55} fill="rgba(0,0,0,0.001)" />
                 <Rect
@@ -1707,6 +1712,15 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   height={h}
                   fill="rgba(0,0,0,0.001)"
                 />
+                {hovered && (
+                  <Circle
+                    radius={w * 0.7}
+                    fill={withAlpha('#fbbf24', 0.08)}
+                    stroke="#fbbf24"
+                    strokeWidth={1.5 * iconScale}
+                    listening={false}
+                  />
+                )}
                 {radius > 0 && (
                   <Circle
                     radius={radius}

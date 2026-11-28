@@ -302,6 +302,7 @@ export interface UIState {
   fillShapes: boolean
   visibleRoutes: string[]
   hiddenCps: number[]
+  hoveredCpId: number | null
   markerIcon: string
   enemyMarkerIcon: string
   unitKind: string

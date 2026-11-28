@@ -85,7 +85,14 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                           const flag = factionFlag(assets, faction?.key)
                           const capturable = isCapturable(cp)
                           return (
-                            <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 px-2 text-[11px] text-slate-400">
+                            <div
+                              key={`${r.id}-${id}-${group.number}`}
+                              onMouseEnter={() => ui.setHoveredCp(id)}
+                              onMouseLeave={() => ui.setHoveredCp(null)}
+                              className={`flex items-center gap-1.5 px-2 text-[11px] transition-colors ${
+                                ui.hoveredCpId === id ? 'bg-amber-400/10 text-slate-200' : 'text-slate-400'
+                              }`}
+                            >
                               <button
                                 type="button"
                                 onClick={() => ui.toggleCp(id)}
