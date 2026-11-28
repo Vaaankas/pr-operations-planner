@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Download, HelpCircle, Map, Save, Shuffle, Upload, Users,
+  Download, HelpCircle, Map, Save, Upload, Users,
 } from 'lucide-react'
 import type { LayerData, MapMeta, Plan } from '../types'
 import { usePlanner, useUI } from '../store'
 import { playerCount } from '../lib/utils'
 import { factionFlag, useAssets } from '../lib/assets'
 import { layerDisplayName } from '../lib/layerLabels'
-import { generateOperationName } from '../lib/operationNames'
 import { dataUrl } from '../lib/utils'
 
 interface Props {
@@ -94,28 +93,14 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, saveE
         </div>
 
         <div className="pointer-events-none absolute left-1/2 top-1/2 flex w-full max-w-[390px] -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center">
-          <div className="pointer-events-auto flex items-center gap-0.5">
-            <input
-              value={operation}
-              onChange={(e) => setOperation(e.target.value)}
-              onBlur={() => operation.trim() && operation !== plan.operation && planner.setMeta({ operation: operation.trim() })}
-              onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-              className="w-[230px] max-w-full truncate rounded-sm border border-transparent bg-transparent px-1 text-center text-[14px] font-semibold leading-5 text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
-              title="Operation name"
-            />
-            <button
-              onClick={() => {
-                const next = generateOperationName(operation)
-                setOperation(next)
-                planner.setMeta({ operation: next })
-              }}
-              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-slate-600 hover:bg-white/10 hover:text-amber-300"
-              title="Generate operation name"
-              aria-label="Generate operation name"
-            >
-              <Shuffle className="h-3 w-3" />
-            </button>
-          </div>
+          <input
+            value={operation}
+            onChange={(e) => setOperation(e.target.value)}
+            onBlur={() => operation.trim() && operation !== plan.operation && planner.setMeta({ operation: operation.trim() })}
+            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+            className="pointer-events-auto w-[230px] max-w-full truncate rounded-sm border border-transparent bg-transparent px-1 text-center text-[14px] font-semibold leading-5 text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
+            title="Operation name"
+          />
           <div
             className="mt-0.5 max-w-full truncate px-1 text-center font-mono text-[10px] uppercase tracking-wider text-slate-500"
             title={`${map.name} — ${layerDisplayName(layer)}`}
