@@ -615,13 +615,29 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
             "route": route,
         })
 
+    # Deployment-only bases with SGID -1 are sometimes duplicated for a team
+    # that already has a positive-SGID main base. Those duplicates are spawn
+    # points, not capture objectives, and must not enter the AASv4 route.
+    positive_base_teams = {
+        cp["team"] for cp in cps
+        if cp["route"] is None and cp["radius"] == 0 and cp["sgid"] > 0
+    }
+    stray_base_ids = {
+        cp["id"] for cp in cps
+        if cp["route"] is None and cp["radius"] == 0 and cp["sgid"] < 0
+        and cp["team"] in positive_base_teams
+    }
     route_numbers = sorted({cp["route"] for cp in cps if cp["route"] is not None})
     if not route_numbers:
         route_numbers = []
     if route_numbers:
         routes = []
         for number in route_numbers:
-            members = [cp for cp in cps if cp["route"] is None or cp["route"] == number]
+            members = [
+                cp for cp in cps
+                if (cp["route"] is None or cp["route"] == number)
+                and cp["id"] not in stray_base_ids
+            ]
             members.sort(key=lambda c: (c["order"], c["pick"], c["name"]))
             routes.append({
                 "id": str(number),
@@ -629,7 +645,10 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
                 "cps": [cp["id"] for cp in members],
             })
     else:
-        members = sorted(cps, key=lambda c: (c["order"], c["pick"], c["name"]))
+        members = sorted(
+            [cp for cp in cps if cp["id"] not in stray_base_ids],
+            key=lambda c: (c["order"], c["pick"], c["name"]),
+        )
         routes = [{"id": "default", "label": "Capture order", "cps": [cp["id"] for cp in members]}] if members else []
 
     # Some custom levels ship no heightdata.con. Infer their world size from
