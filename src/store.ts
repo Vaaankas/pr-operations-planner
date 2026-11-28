@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { DrawElement, LayerData, MapMeta, Member, Plan, Roster, Squad, Stage, StageVisibility, Team, UIState, VehicleMove, VehicleTurn } from './types'
 import { clamp, DEFAULT_STAGE_VISIBILITY, defaultRoster, newSquad, newStage, PHONETIC, PLAYER_CAP, SQUAD_HARD_CAP, SQUAD_SIZE, SQUAD_TYPES, uid } from './lib/utils'
+import { generateOperationName } from './lib/operationNames'
 
 const HISTORY_LIMIT = 80
 const STORAGE_KEY = 'prplanner.plan.v1'
@@ -14,7 +15,7 @@ export function makePlan(meta: MapMeta, layer: LayerData, side: Team, operation?
   return {
     version: 1,
     id: uid('plan'),
-    operation: operation || `Operation ${meta.name}`,
+    operation: operation || generateOperationName(),
     mapId: meta.id,
     layerId: layer.id,
     side,
