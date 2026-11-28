@@ -1,5 +1,6 @@
 import type { LayerData, MapMeta, Plan, Stage } from '../types'
 import { formatTime } from './utils'
+import { layerDisplayName } from './layerLabels'
 
 export interface StageSlideData {
   title: string
@@ -14,7 +15,7 @@ export function stageSlideData(plan: Plan, map: MapMeta, layer: LayerData, stage
   return {
     title: stage.name,
     timeLabel: `T+${formatTime(stage.time)}`,
-    meta: `${map.name} · ${layer.displayName} · ${side?.name ?? `Team ${plan.side}`}`,
+    meta: `${map.name} · ${layerDisplayName(layer)} · ${side?.name ?? `Team ${plan.side}`}`,
     notes: stage.notes.trim(),
     footer: `${plan.operation} · ${stage.name} · ${formatTime(stage.time)}`,
   }

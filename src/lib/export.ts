@@ -1,5 +1,6 @@
 import type { AssetManifest, LayerData, MapMeta, Plan, Stage } from '../types'
 import { formatTime, safeName } from './utils'
+import { layerDisplayName } from './layerLabels'
 import { captureStageDataUrl } from './konvaExport'
 import { stageSlideData } from './slide'
 import { hasOrderTokens, ordersPlainText } from './orders'
@@ -74,7 +75,7 @@ function rosterRows(plan: Plan, squads: Plan['roster']['squads'], offset = 0): a
 
 function subtitle(src: Source): string {
   const side = src.layer.factions[String(src.plan.side)]
-  return `${src.map.name} · ${src.layer.displayName} · ${side?.name ?? `Team ${src.plan.side}`}`
+  return `${src.map.name} · ${layerDisplayName(src.layer)} · ${side?.name ?? `Team ${src.plan.side}`}`
 }
 
 async function renderAll(

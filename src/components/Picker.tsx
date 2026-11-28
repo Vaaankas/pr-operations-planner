@@ -3,6 +3,7 @@ import { Search, ChevronRight, Crosshair } from 'lucide-react'
 import type { LayerRef, MapIndex, MapMeta, Team } from '../types'
 import { dataUrl } from '../lib/utils'
 import { factionFlag, useAssets } from '../lib/assets'
+import { layerDisplayName } from '../lib/layerLabels'
 
 interface Props {
   index: MapIndex
@@ -199,7 +200,7 @@ export function Picker({ index, currentMapId, currentLayerId, currentSide, onSta
                             className={`flex w-full items-center gap-2 rounded border px-3 py-2.5 text-left transition ${active ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/5 bg-black/20 hover:border-white/15'}`}
                           >
                             <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[13px] font-medium text-slate-100">{l.displayName}</span>
+                              <span className="block truncate text-[13px] font-medium text-slate-100">{layerDisplayName(l)}</span>
                               <span className="mt-1 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider">
                                 <span className="flex items-center gap-1 text-rose-400">
                                   {flag1 && <img src={dataUrl(flag1)} alt="" className="h-3 w-4 object-fill" />}

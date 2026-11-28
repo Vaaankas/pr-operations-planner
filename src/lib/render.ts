@@ -1,5 +1,6 @@
 import type { AssetManifest, ControlPoint, DrawElement, LayerData, MapMeta, Plan, Stage, StageFrame, VehicleSpawn } from '../types'
 import { affiliationColor, dataUrl, formatTime, isHiddenVehicle, vehicleDelayRemaining, vehicleReady } from './utils'
+import { layerDisplayName } from './layerLabels'
 import { iconImage, glyphFor } from '../icons'
 import { cpFlag, vehicleIconPath } from './assets'
 import { assetImage, preloadAsset, tintedAssetImage } from './gameIcons'
@@ -533,7 +534,7 @@ export async function renderStageCanvas(
   ctx.fillStyle = '#94a3b8'
   ctx.font = `500 ${size * ds * 0.0105}px "Inter", "Segoe UI", sans-serif`
   const side = layer.factions[String(plan.side)]
-  ctx.fillText(`${map.name}  ·  ${layer.name}  ·  ${side ? side.name : `Team ${plan.side}`}`, size - size * 0.014, size - bar / 2)
+  ctx.fillText(`${map.name}  ·  ${layerDisplayName(layer)}  ·  ${side ? side.name : `Team ${plan.side}`}`, size - size * 0.014, size - bar / 2)
   ctx.restore()
   ctx.restore()
 

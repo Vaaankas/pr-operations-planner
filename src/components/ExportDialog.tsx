@@ -5,6 +5,7 @@ import { useUI } from '../store'
 import { buildPdf, buildPngZip, buildPptx, type ExportFormat, type ExportOptions } from '../lib/export'
 import { downloadBlob, safeName } from '../lib/utils'
 import { useAssets } from '../lib/assets'
+import { layerDisplayName } from '../lib/layerLabels'
 
 interface Props {
   plan: Plan
@@ -168,7 +169,7 @@ export function ExportDialog({ plan, map, layer }: Props) {
 
           <div className="rounded border border-white/10 bg-black/25 px-3 py-2 text-[11px] text-slate-500">
             <div className="flex justify-between"><span>Operation</span><span className="text-slate-300">{plan.operation}</span></div>
-            <div className="mt-1 flex justify-between"><span>Map / layer</span><span className="text-slate-300">{map.name} · {layer.name}</span></div>
+            <div className="mt-1 flex justify-between"><span>Map / layer</span><span className="text-slate-300">{map.name} · {layerDisplayName(layer)}</span></div>
             <div className="mt-1 flex justify-between"><span>Squads / players</span><span className="text-slate-300">{plan.roster.squads.length} · {plan.roster.squads.reduce((n, s) => n + s.members.length, 0) + (plan.roster.commander ? 1 : 0)}</span></div>
           </div>
 

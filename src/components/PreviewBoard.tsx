@@ -5,6 +5,7 @@ import { usePlanner, useUI } from '../store'
 import { useAssets } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
 import { formatTime } from '../lib/utils'
+import { layerDisplayName } from '../lib/layerLabels'
 import { stageSlideData } from '../lib/slide'
 import { parseOrders } from '../lib/orders'
 import { getStagePreview, setStagePreview, stagePreviewKey } from '../lib/previewCache'
@@ -42,7 +43,7 @@ function RosterSlide({ plan, map, layer }: { plan: Plan; map: MapMeta; layer: La
       <div className="absolute left-[3.4%] top-[3%]">
         <div className="font-semibold leading-none text-[#0f172a]" style={{ fontSize: 'clamp(16px, 1.9vw, 26px)' }}>Roster</div>
         <div className="mt-[3%] text-[#64748b]" style={{ fontSize: 'clamp(7px, 0.68vw, 10px)' }}>
-          {map.name} · {layer.displayName} · {side?.name ?? `Team ${plan.side}`} · CMD {plan.roster.commander?.name ?? '—'}
+          {map.name} · {layerDisplayName(layer)} · {side?.name ?? `Team ${plan.side}`} · CMD {plan.roster.commander?.name ?? '—'}
         </div>
       </div>
 

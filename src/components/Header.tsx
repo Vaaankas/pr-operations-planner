@@ -6,6 +6,7 @@ import type { LayerData, MapMeta, Plan } from '../types'
 import { usePlanner, useUI } from '../store'
 import { playerCount } from '../lib/utils'
 import { factionFlag, useAssets } from '../lib/assets'
+import { layerDisplayName } from '../lib/layerLabels'
 import { dataUrl } from '../lib/utils'
 
 interface Props {
@@ -102,9 +103,9 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, saveE
           />
           <div
             className="mt-0.5 max-w-full truncate px-1 text-center font-mono text-[10px] uppercase tracking-wider text-slate-500"
-            title={`${map.name} — ${layer.displayName}`}
+            title={`${map.name} — ${layerDisplayName(layer)}`}
           >
-            {map.name} {layer.displayName}
+            {map.name} {layerDisplayName(layer)}
           </div>
         </div>
 
