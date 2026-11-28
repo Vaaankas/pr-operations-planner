@@ -1631,15 +1631,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   ctx.closePath()
                   ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'
                   ctx.fill('evenodd')
-                  ctx.beginPath()
-                  ctx.moveTo(points[0], points[1])
-                  for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1])
-                  ctx.closePath()
-                  ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)'
-                  ctx.lineWidth = 1.25 * iconScale
-                  ctx.setLineDash([5 * iconScale, 5 * iconScale])
-                  ctx.lineJoin = 'round'
-                  ctx.stroke()
                   ctx.restore()
                 }}
               />
