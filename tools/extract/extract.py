@@ -649,24 +649,24 @@ def parse_static_protection(server: zipfile.ZipFile, raw_type: str, mode: str, c
 
 def parse_combat_areas(text: str) -> list[dict]:
     areas = []
-    for block in re.split(r"(?=CombatArea\.create )", text):
-        m = re.match(r"CombatArea\.create\s+(\S+)", block)
-        if not m:
+    for block in re.split(r"(?=(?:CombatArea|CombatAreaPython)\.create )", text):
+        match = re.match(r"(?:CombatArea|CombatAreaPython)\.create\s+(\S+)", block)
+        if not match:
             continue
         points = [
             {"x": round(float(x), 2), "z": round(float(z), 2)}
-            for x, z in re.findall(r"CombatArea\.addAreaPoint\s+([-\d.]+)/([-\d.]+)", block)
+            for x, z in re.findall(r"(?:CombatArea|CombatAreaPython)\.addAreaPoint\s+([-\d.]+)/([-\d.]+)", block)
         ]
         if len(points) < 3:
             continue
-        team_m = re.search(r"CombatArea\.team\s+(\d+)", block)
+        team = re.search(r"(?:CombatArea|CombatAreaPython)\.team\s+(\d+)", block)
         areas.append({
+            "name": match.group(1),
             "points": points,
-            "team": int(team_m.group(1)) if team_m else 0,
-            "inverted": bool(re.search(r"CombatArea\.Inverted\s+1", block)),
+            "team": int(team.group(1)) if team else 0,
+            "inverted": bool(re.search(r"(?:CombatArea|CombatAreaPython)\.Inverted\s+1", block)),
         })
     return areas
-
 
 def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None, flag_names: dict[str, str], vehicle_names: dict[str, str]) -> dict | None:
     layer_id = f"{level}__{mode.replace('gpm_', '')}__{players}"
@@ -834,7 +834,10 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
     ]
     if not protection_areas:
         protection_areas = parse_static_protection(server, (maptype or {}).get("type", ""), mode, cps)
-    restricted_areas = [area for area in combat_areas if not area["inverted"]]
+    restricted_areas = [
+        area for area in combat_areas
+        if not area["inverted"] and area["team"] == 0 and "flyablearea" not in area.get("name", "").lower()
+    ]
     counts = Counter(v["category"] for v in vehicles)
     raw_type = (maptype or {}).get("type", "")
     display = layer_display_name(mode, raw_type, players)
