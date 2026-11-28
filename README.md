@@ -1,10 +1,11 @@
 # PR Operations Planner
 
+**Live:** https://vaaankas.github.io/pr-operations-planner/
+
 A browser-based mission planning board for **Project Reality: BF2**. Pick any PvP map and layer, lay out the 50-player roster, place every opening vehicle on its real spawn point, draw the scheme of manoeuvre, build a stage timeline, and export a brief as PowerPoint, PDF or map images.
 
 Static site. No accounts, no backend, no tracking. Plans live in the browser.
 
-![Planning board](docs/board.png)
 
 ## What it does
 
@@ -33,9 +34,7 @@ pnpm preview
 
 The repository already contains the extracted dataset in `public/data/` (≈60 MB). You do **not** need Project Reality installed to run the site.
 
-![Map picker](docs/picker.png)
 
-![Roster](docs/roster.png)
 
 ## Rebuilding the map data
 
