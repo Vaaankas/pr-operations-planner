@@ -85,7 +85,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, saveE
           ) : (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400" />
           )}
-          <span className="shrink-0 font-semibold text-slate-200">{side?.short ?? `TEAM ${plan.side}`}</span>
+          <span className="max-w-[180px] truncate font-semibold text-slate-200">{side?.name ?? `TEAM ${plan.side}`}</span>
           <span className="flex shrink-0 cursor-help items-center gap-1 text-emerald-400">
             <Users className="h-3.5 w-3.5" />
             {confirmed}<span className="text-slate-500">/50</span>

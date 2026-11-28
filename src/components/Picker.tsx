@@ -202,14 +202,14 @@ export function Picker({ index, currentMapId, currentLayerId, currentSide, onSta
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-[13px] font-medium text-slate-100">{layerDisplayName(l)}</span>
                               <span className="mt-1 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-wider">
-                                <span className="flex items-center gap-1 text-rose-400">
-                                  {flag1 && <img src={dataUrl(flag1)} alt="" className="h-3 w-4 object-fill" />}
-                                  {f1?.short ?? '—'}
+                                <span className="flex min-w-0 max-w-[92px] items-center gap-1 text-rose-400">
+                                  {flag1 && <img src={dataUrl(flag1)} alt="" className="h-3 w-4 shrink-0 object-fill" />}
+                                  <span className="truncate">{f1?.name ?? '—'}</span>
                                 </span>
                                 <span className="text-slate-600">vs</span>
-                                <span className="flex items-center gap-1 text-sky-400">
-                                  {flag2 && <img src={dataUrl(flag2)} alt="" className="h-3 w-4 object-fill" />}
-                                  {f2?.short ?? '—'}
+                                <span className="flex min-w-0 max-w-[92px] items-center gap-1 text-sky-400">
+                                  {flag2 && <img src={dataUrl(flag2)} alt="" className="h-3 w-4 shrink-0 object-fill" />}
+                                  <span className="truncate">{f2?.name ?? '—'}</span>
                                 </span>
                               </span>
                             </span>
