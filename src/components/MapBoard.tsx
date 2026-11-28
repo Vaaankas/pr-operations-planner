@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUp, Lock, Minus, Plus } from 'lucide-react'
-import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle, Transformer } from 'react-konva'
+import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle, Shape, Transformer } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
 import type { ControlPoint, DrawElement, LayerData, MapMeta, Plan, Point, Stage as PlanStage, StageFrame, UIState, VehicleSpawn } from '../types'
@@ -1616,16 +1616,32 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               return [p.x * mapW, p.y * mapH]
             })
             return (
-              <Line
+              <Shape
                 key={`restricted-${index}`}
-                points={points}
-                closed
-                fill={area.inverted ? undefined : withAlpha('#f87171', 0.06)}
-                stroke={withAlpha('#f87171', 0.8)}
-                strokeWidth={1.25 * iconScale}
-                dash={[5 * iconScale, 5 * iconScale]}
-                opacity={0.9}
                 listening={false}
+                sceneFunc={(context) => {
+                  const ctx = (context as unknown as { _context: CanvasRenderingContext2D })._context
+                  ctx.save()
+                  ctx.beginPath()
+                  ctx.rect(0, 0, mapW, mapH)
+                  for (let i = points.length - 2; i >= 0; i -= 2) {
+                    if (i === points.length - 2) ctx.moveTo(points[i], points[i + 1])
+                    else ctx.lineTo(points[i], points[i + 1])
+                  }
+                  ctx.closePath()
+                  ctx.fillStyle = withAlpha('#f87171', 0.07)
+                  ctx.fill('evenodd')
+                  ctx.beginPath()
+                  ctx.moveTo(points[0], points[1])
+                  for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1])
+                  ctx.closePath()
+                  ctx.strokeStyle = withAlpha('#f87171', 0.8)
+                  ctx.lineWidth = 1.25 * iconScale
+                  ctx.setLineDash([5 * iconScale, 5 * iconScale])
+                  ctx.lineJoin = 'round'
+                  ctx.stroke()
+                  ctx.restore()
+                }}
               />
             )
           })}
