@@ -568,10 +568,6 @@ def _convex_hull(points: list[tuple[float, float]]) -> list[tuple[float, float]]
 
 
 def protection_polygon(template: str) -> list[tuple[float, float]]:
-    box = re.search(r"base_protection_box_(\d+)x(\d+)m", template)
-    if box:
-        half_w, half_h = float(box.group(1)) / 2, float(box.group(2)) / 2
-        return [(-half_w, -half_h), (half_w, -half_h), (half_w, half_h), (-half_w, half_h)]
     if not template.startswith("base_protection") or not CONTENT_ZIP.exists():
         return []
     member = f"staticobjects/pr/misc/base_protection/{template}/meshes/{template}.collisionmesh"
@@ -579,16 +575,31 @@ def protection_polygon(template: str) -> list[tuple[float, float]]:
         if member not in content.namelist():
             return []
         data = content.read(member)
-    if len(data) < 80:
+    if len(data) < 28:
         return []
-    count = struct.unpack_from("<I", data, 4)[0]
+    _u1, version, geom_count = struct.unpack_from("<III", data, 0)
+    offset = 12
     points = []
-    for index in range(count):
-        offset = 80 + index * 12
-        if offset + 12 > len(data):
-            break
-        x, _y, z = struct.unpack_from("<fff", data, offset)
-        points.append((round(x, 2), round(z, 2)))
+    for _geom in range(geom_count):
+        sub_count = struct.unpack_from("<I", data, offset)[0]
+        offset += 4
+        for _sub in range(sub_count):
+            lod_count = struct.unpack_from("<I", data, offset)[0]
+            offset += 4
+            for _lod in range(lod_count):
+                if version >= 9:
+                    offset += 4  # collider type
+                face_count = struct.unpack_from("<I", data, offset)[0]
+                offset += 4 + face_count * 8
+                vertex_count = struct.unpack_from("<I", data, offset)[0]
+                offset += 4
+                for _vertex in range(vertex_count):
+                    x, _y, z = struct.unpack_from("<fff", data, offset)
+                    points.append((round(x, 2), round(z, 2)))
+                    offset += 12
+                # Remaining vertex IDs/bounds/tree data are unnecessary for
+                # the top-down convex footprint.
+                return _convex_hull(points)
     return _convex_hull(points)
 
 
