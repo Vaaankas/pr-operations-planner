@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import math
 import os
 import re
 import struct
@@ -611,6 +612,13 @@ def parse_static_protection(server: zipfile.ZipFile, raw_type: str, mode: str, c
             if not pos:
                 continue
             x, z = round(float(pos.group(1)), 2), round(float(pos.group(3)), 2)
+            rotation = re.search(r"Object\.rotation\s+([-\d.]+)", block)
+            angle = math.radians(float(rotation.group(1))) if rotation else 0.0
+            cos_a, sin_a = math.cos(angle), math.sin(angle)
+            world_polygon = [
+                (x + px * cos_a - pz * sin_a, z + px * sin_a + pz * cos_a)
+                for px, pz in polygon
+            ]
             key = (x, z, template)
             if key in seen:
                 continue
@@ -618,7 +626,7 @@ def parse_static_protection(server: zipfile.ZipFile, raw_type: str, mode: str, c
             bases = [cp for cp in cps if cp["team"] in (1, 2) and cp["radius"] == 0] or cps
             nearest = min(bases, key=lambda cp: (cp["x"] - x) ** 2 + (cp["z"] - z) ** 2, default=None)
             areas.append({
-                "points": [{"x": round(x + px, 2), "z": round(z + pz, 2)} for px, pz in polygon],
+                "points": [{"x": round(wx, 2), "z": round(wz, 2)} for wx, wz in world_polygon],
                 "team": int(nearest["team"]) if nearest else 0,
             })
     return areas
