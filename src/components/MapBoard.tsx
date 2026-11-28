@@ -1252,6 +1252,18 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             }}
           >
             <Circle radius={markerPx * 0.62} fill="rgba(0,0,0,0.001)" />
+            {selected && (
+              <Rect
+                x={-markerPx / 2 - 3 * iconScale}
+                y={-markerPx / 2 - 3 * iconScale}
+                width={markerPx + 6 * iconScale}
+                height={markerPx + 6 * iconScale}
+                stroke="#fbbf24"
+                strokeWidth={2 * iconScale}
+                cornerRadius={2 * iconScale}
+                listening={false}
+              />
+            )}
             <MarkerGlyph icon={el.icon} color={color} size={markerPx} />
           </Group>
         )
