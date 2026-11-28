@@ -248,9 +248,6 @@ export function OptionsBar() {
               key={group.label}
               className={`flex shrink-0 items-center gap-1 ${groupIndex > 0 ? 'border-l border-white/10 pl-2' : ''}`}
             >
-              <span className="shrink-0 font-mono text-[8px] font-bold uppercase tracking-wider text-slate-500">
-                {group.label}
-              </span>
               {group.icons.map((icon) => {
                 const path = assets.markers[icon]
                 const label = icon.replace('spotted_', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
