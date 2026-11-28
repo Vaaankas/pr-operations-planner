@@ -35,15 +35,9 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
           return (
             <button
               key={s.id}
-              draggable
               onClick={() => {
                 planner.setActiveStage(s.id)
                 useUI.getState().setRightTab('stage')
-              }}
-              onDragStart={(e) => {
-                e.dataTransfer.setData('text/pr-stage', s.id)
-                e.dataTransfer.effectAllowed = 'move'
-                setDraggingId(s.id)
               }}
               onDragOver={(e) => {
                 e.preventDefault()
@@ -58,17 +52,28 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
                 setDraggingId(null)
                 setOverId(null)
               }}
-              onDragEnd={() => {
-                setDraggingId(null)
-                setOverId(null)
-              }}
-              title="Click to edit · drag to reorder"
-              className={`relative z-10 h-10 w-auto min-w-[120px] max-w-[280px] shrink-0 cursor-grab rounded border px-2 py-0 text-left transition active:cursor-grabbing ${
+              title="Click to edit"
+              className={`relative z-10 h-10 w-auto min-w-[120px] max-w-[280px] shrink-0 cursor-default rounded border px-2 py-0 text-left transition ${
                 active ? 'border-amber-400/70 bg-[#221b07]' : overId === s.id ? 'border-amber-400/60 bg-amber-400/10' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
               } ${draggingId === s.id ? 'opacity-50' : ''}`}
             >
               <span className="flex h-full min-w-0 items-center gap-1.5">
-                <GripVertical className={`h-3 w-3 shrink-0 ${active ? 'text-amber-400/70' : 'text-slate-600'}`} />
+                <span
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/pr-stage', s.id)
+                    e.dataTransfer.effectAllowed = 'move'
+                    setDraggingId(s.id)
+                  }}
+                  onDragEnd={() => {
+                    setDraggingId(null)
+                    setOverId(null)
+                  }}
+                  className="shrink-0 cursor-grab active:cursor-grabbing"
+                  title="Drag to reorder"
+                >
+                  <GripVertical className={`h-3 w-3 ${active ? 'text-amber-400/70' : 'text-slate-600'}`} />
+                </span>
                 <span className={`shrink-0 font-mono text-[11px] leading-none tabular-nums ${active ? 'text-amber-200' : 'text-slate-400'}`}>{stageTimeLabel(s)}</span>
                 <span className="min-w-0 truncate whitespace-nowrap text-[12px] font-semibold leading-none text-slate-200">{s.name}</span>
               </span>
