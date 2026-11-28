@@ -61,22 +61,22 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
                 planner.setActiveStage(s.id)
                 useUI.getState().setRightTab('stage')
               }}
-              className={`relative z-10 flex h-[48px] w-[140px] shrink-0 items-center rounded border px-2 text-left transition ${
+              className={`relative z-10 h-12 w-[158px] shrink-0 rounded border px-2.5 py-0 text-left transition ${
                 active ? 'border-amber-400/70 bg-[#221b07]' : 'border-white/10 bg-[#0c130f] hover:border-white/25'
               }`}
             >
-              <div className="flex min-w-0 items-center gap-1.5">
-                <span className={`shrink-0 font-mono text-[10px] font-bold ${active ? 'text-amber-300' : 'text-slate-500'}`}>{String(i + 1).padStart(2, '0')}</span>
-                <span className={`shrink-0 font-mono text-[11px] ${active ? 'text-amber-200' : 'text-slate-400'}`}>{formatTime(s.time)}</span>
-                <span className="min-w-0 truncate text-[12px] font-semibold text-slate-200">{s.name}</span>
-              </div>
+              <span className="grid h-full min-w-0 grid-cols-[18px_43px_minmax(0,1fr)] items-center gap-1.5">
+                <span className={`font-mono text-[10px] font-bold leading-none ${active ? 'text-amber-300' : 'text-slate-500'}`}>{String(i + 1).padStart(2, '0')}</span>
+                <span className={`font-mono text-[11px] leading-none tabular-nums ${active ? 'text-amber-200' : 'text-slate-400'}`}>{formatTime(s.time)}</span>
+                <span className="truncate text-[12px] font-semibold leading-none text-slate-200">{s.name}</span>
+              </span>
               {active && <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-amber-400" />}
             </button>
           )
         })}
         <button
           onClick={() => planner.addStage()}
-          className="relative z-10 flex h-[48px] w-[80px] shrink-0 flex-col items-center justify-center gap-0.5 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
+          className="relative z-10 flex h-12 w-[80px] shrink-0 flex-col items-center justify-center gap-0.5 rounded border border-dashed border-white/15 text-slate-500 hover:border-amber-400/50 hover:text-amber-300"
           title="Add stage — copies current drawings and vehicle positions"
         >
           <Plus className="h-4 w-4" />
