@@ -20,7 +20,7 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'polygon', icon: Pentagon, label: 'Polygon', key: 'G' },
   { tool: 'text', icon: Type, label: 'Label', key: 'T' },
   { tool: 'erase', icon: Eraser, label: 'Erase', key: 'E' },
-  { tool: 'marker_friendly', icon: MapPin, label: 'Friendly marker', key: 'M', group: 'marker' },
+  { tool: 'marker_friendly', icon: MapPin, label: 'Marker', key: 'M', group: 'marker' },
   { tool: 'marker_enemy', icon: Swords, label: 'Enemy marker', key: 'N', group: 'marker' },
 ]
 
