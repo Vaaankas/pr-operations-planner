@@ -55,6 +55,8 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
           <Map className="h-4 w-4" />
         </button>
 
+        <span className="h-14 w-0.5 shrink-0 self-stretch bg-red-600" />
+
         <div
           className="flex shrink-0 items-center gap-2 font-mono text-[11px] uppercase tracking-wider"
           title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
