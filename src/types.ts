@@ -303,6 +303,7 @@ export interface UIState {
   visibleRoutes: string[]
   hiddenCps: number[]
   hoveredCpId: number | null
+  hoveredCpSource: 'map' | 'routes' | null
   markerIcon: string
   enemyMarkerIcon: string
   unitKind: string

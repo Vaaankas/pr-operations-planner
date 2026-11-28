@@ -1692,7 +1692,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   planner.cycleFlagTeam(cp.id, team)
                 }}
                 onMouseEnter={() => {
-                  ui.setHoveredCp(cp.id)
+                  ui.setHoveredCp(cp.id, 'map')
                   setHoverFlag({
                     cp,
                     x: p.x * mapW * view.scale + view.x,
@@ -1712,21 +1712,21 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   height={h}
                   fill="rgba(0,0,0,0.001)"
                 />
-                {hovered && (
-                  <Circle
-                    radius={w * 0.7}
-                    fill={withAlpha('#fbbf24', 0.08)}
-                    stroke="#fbbf24"
-                    strokeWidth={1.5 * iconScale}
-                    listening={false}
-                  />
-                )}
                 {radius > 0 && (
                   <Circle
                     radius={radius}
                     fill={withAlpha(color, 0.16)}
                     stroke={withAlpha(color, 0.85)}
                     strokeWidth={1.5 * iconScale}
+                    listening={false}
+                  />
+                )}
+                {hovered && ui.hoveredCpSource === 'routes' && radius > 0 && (
+                  <Circle
+                    radius={radius}
+                    fill={withAlpha('#fbbf24', 0.2)}
+                    stroke="#fbbf24"
+                    strokeWidth={2.5 * iconScale}
                     listening={false}
                   />
                 )}

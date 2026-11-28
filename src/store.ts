@@ -545,7 +545,7 @@ export const useUI = create<UIState & {
   setAffiliation: (a: UIState['unitAffiliation']) => void
   setSelected: (id: string | null, kind: UIState['selectedKind']) => void
   setRightTab: (tab: UIState['rightTab']) => void
-  setHoveredCp: (id: number | null) => void
+  setHoveredCp: (id: number | null, source?: 'map' | 'routes' | null) => void
   toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels' | 'showDrawings' | 'showVehicleNames' | 'showVehiclePaths') => void
   toggleVehiclePath: (vehicleId: string) => void
   setExportOpen: (open: boolean) => void
@@ -569,6 +569,7 @@ export const useUI = create<UIState & {
   visibleRoutes: [],
   hiddenCps: [],
   hoveredCpId: null,
+  hoveredCpSource: null,
   markerIcon: 'friendly_forwardoutpost',
   enemyMarkerIcon: 'spotted_enemyforces',
   unitKind: 'inf',
@@ -641,7 +642,7 @@ export const useUI = create<UIState & {
   setSelected: (selectedId, selectedKind) => set({ selectedId, selectedKind }),
   setRightTab: (rightTab) => set({ rightTab }),
   toggle: (key) => set((s) => ({ [key]: !s[key] }) as Partial<UIState>),
-  setHoveredCp: (hoveredCpId) => set({ hoveredCpId }),
+  setHoveredCp: (hoveredCpId, hoveredCpSource = null) => set({ hoveredCpId, hoveredCpSource }),
   toggleVehiclePath: (vehicleId) => set((s) => ({
     hiddenVehiclePaths: s.hiddenVehiclePaths.includes(vehicleId)
       ? s.hiddenVehiclePaths.filter((id) => id !== vehicleId)
