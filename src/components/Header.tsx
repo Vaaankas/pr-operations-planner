@@ -57,18 +57,23 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
             className="pointer-events-auto w-[230px] max-w-full truncate rounded-sm border border-transparent bg-transparent px-1 text-center text-[14px] font-semibold leading-5 text-slate-100 outline-none hover:border-white/10 focus:border-amber-400/40"
             title="Operation name"
           />
-          <div className="mt-0.5 flex max-w-full items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500" title={`${side?.name ?? `Team ${plan.side}`} · ${map.name} ${layer.displayName} · ${confirmed}/50 confirmed`}>
-            {side && factionFlag(assets, side.key) ? (
-              <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-3 w-4 shrink-0 object-fill" />
-            ) : (
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400" />
-            )}
-            <span className="shrink-0 text-slate-300">{side?.short ?? `TEAM ${plan.side}`}</span>
-            <span className="text-slate-700">·</span>
-            <span className="min-w-0 truncate">{map.name} {layer.displayName}</span>
-            <span className="text-slate-700">·</span>
+          <div
+            className="mt-0.5 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-500"
+            title={`${side?.name ?? `Team ${plan.side}`} · ${map.name} ${layer.displayName} · ${confirmed}/50 confirmed`}
+          >
+            <span className="flex min-w-0 items-center justify-end gap-1.5">
+              {side && factionFlag(assets, side.key) ? (
+                <img src={dataUrl(factionFlag(assets, side.key)!)} alt="" className="h-3 w-4 shrink-0 object-fill" />
+              ) : (
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400" />
+              )}
+              <span className="truncate text-slate-300">{side?.short ?? `TEAM ${plan.side}`}</span>
+            </span>
+            <span className="max-w-[230px] truncate px-1 text-center text-slate-400">
+              {map.name} {layer.displayName}
+            </span>
             <span
-              className="pointer-events-auto flex shrink-0 cursor-help items-center gap-1 text-emerald-400"
+              className="pointer-events-auto flex shrink-0 cursor-help items-center justify-start gap-1 text-emerald-400"
               title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
             >
               <Users className="h-3 w-3" />
