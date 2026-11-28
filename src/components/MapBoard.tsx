@@ -1628,33 +1628,29 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
               />
             )
           })}
-          {ui.showRestricted && (layer.restrictedAreas ?? []).map((area, index) => {
-            if (area.points.length < 3) return null
-            const points = area.points.flatMap((point) => {
-              const p = worldToDisplayNorm(point.x, point.z, layer.world)
-              return [p.x * mapW, p.y * mapH]
-            })
-            return (
-              <Shape
-                key={`restricted-${index}`}
-                listening={false}
-                sceneFunc={(context) => {
-                  const ctx = (context as unknown as { _context: CanvasRenderingContext2D })._context
-                  ctx.save()
-                  ctx.beginPath()
-                  ctx.rect(0, 0, mapW, mapH)
-                  for (let i = points.length - 2; i >= 0; i -= 2) {
-                    if (i === points.length - 2) ctx.moveTo(points[i], points[i + 1])
-                    else ctx.lineTo(points[i], points[i + 1])
-                  }
+          {ui.showRestricted && (layer.restrictedAreas ?? []).length > 0 && (
+            <Shape
+              listening={false}
+              sceneFunc={(context) => {
+                const ctx = (context as unknown as { _context: CanvasRenderingContext2D })._context
+                ctx.save()
+                ctx.beginPath()
+                ctx.rect(0, 0, mapW, mapH)
+                for (const area of layer.restrictedAreas ?? []) {
+                  if (area.points.length < 3) continue
+                  area.points.forEach((point, index) => {
+                    const p = worldToDisplayNorm(point.x, point.z, layer.world)
+                    if (index === 0) ctx.moveTo(p.x * mapW, p.y * mapH)
+                    else ctx.lineTo(p.x * mapW, p.y * mapH)
+                  })
                   ctx.closePath()
-                  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'
-                  ctx.fill('evenodd')
-                  ctx.restore()
-                }}
-              />
-            )
-          })}
+                }
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'
+                ctx.fill('evenodd')
+                ctx.restore()
+              }}
+            />
+          )}
           {ui.showFlags && layer.mode !== 'gpm_insurgency' && visibleRoutes.flatMap((route) => {
             const routeIndex = routes.findIndex((item) => item.id === route.id)
             const color = routeColor(routeIndex)
