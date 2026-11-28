@@ -210,6 +210,8 @@ function AppInner() {
       showAssets: visibility.showAssets,
       showFlags: visibility.showFlags,
       showMarkers: visibility.showMarkers,
+      showProtection: visibility.showProtection,
+      showRestricted: visibility.showRestricted,
       showLabels: visibility.showLabels,
       showDrawings: visibility.showDrawings,
       showVehicleNames: visibility.showVehicleNames,

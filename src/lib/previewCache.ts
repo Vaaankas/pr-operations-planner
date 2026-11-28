@@ -18,6 +18,8 @@ export function stagePreviewKey(plan: Plan, map: MapMeta, layer: LayerData, stag
       showEnemy: ui.showEnemy,
       showAssets: ui.showAssets,
       showMarkers: ui.showMarkers,
+      showProtection: ui.showProtection,
+      showRestricted: ui.showRestricted,
       showLabels: ui.showLabels,
       showDrawings: ui.showDrawings,
       showVehicleNames: ui.showVehicleNames,

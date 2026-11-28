@@ -531,6 +531,77 @@ def layer_init_candidates(mode: str, players: int) -> list[str]:
     return ["init.con"]
 
 
+
+STATIC_SUFFIX = {
+    "aasinfantry": "aasinf",
+    "aasalternative": "aasalt",
+    "aasfullassets": "aasstd",
+    "aasstandard": "aasstd",
+    "aaslarge": "aaslrg",
+    "insurgency": "insurgency",
+    "skirmish": "skirmish",
+}
+
+
+def parse_combat_areas(text: str) -> list[dict]:
+    areas = []
+    for block in re.split(r"(?=CombatArea\.create )", text):
+        m = re.match(r"CombatArea\.create\s+(\S+)", block)
+        if not m:
+            continue
+        points = [
+            {"x": round(float(x), 2), "z": round(float(z), 2)}
+            for x, z in re.findall(r"CombatArea\.addAreaPoint\s+([-\d.]+)/([-\d.]+)", block)
+        ]
+        if len(points) < 3:
+            continue
+        team_m = re.search(r"CombatArea\.team\s+(\d+)", block)
+        areas.append({
+            "points": points,
+            "team": int(team_m.group(1)) if team_m else 0,
+            "inverted": bool(re.search(r"CombatArea\.Inverted\s+1", block)),
+        })
+    return areas
+
+
+def parse_protection_areas(server: zipfile.ZipFile, raw_type: str, mode: str, cps: list[dict]) -> list[dict]:
+    suffix = STATIC_SUFFIX.get((raw_type or "").lower(), mode.replace("gpm_", ""))
+    wanted = {"staticobjects.con", f"staticobjects_{suffix}.con"}
+    areas = []
+    seen = set()
+    for name in server.namelist():
+        base = Path(name).name
+        if not name.endswith(".con"):
+            continue
+        if base not in wanted and not base.startswith("baseprotection") and not base.startswith("staticobjects_baseprotection"):
+            continue
+        text = read_zip_text(server, name) or ""
+        for block in re.split(r"(?=Object\.create )", text):
+            m = re.match(r"Object\.create\s+(base_protection_\S+)", block)
+            if not m:
+                continue
+            radius_m = re.search(r"base_protection_(\d+)m", m.group(1))
+            if not radius_m:
+                continue
+            pos = re.search(r"Object\.absolutePosition\s+([-\d.]+)/([-\d.]+)/([-\d.]+)", block)
+            if not pos:
+                continue
+            x, z = round(float(pos.group(1)), 2), round(float(pos.group(3)), 2)
+            key = (x, z, int(radius_m.group(1)))
+            if key in seen:
+                continue
+            seen.add(key)
+            bases = [cp for cp in cps if cp["team"] in (1, 2) and cp["radius"] == 0] or cps
+            nearest = min(bases, key=lambda cp: (cp["x"] - x) ** 2 + (cp["z"] - z) ** 2, default=None)
+            areas.append({
+                "x": x,
+                "z": z,
+                "radius": int(radius_m.group(1)),
+                "team": int(nearest["team"]) if nearest else 0,
+            })
+    return areas
+
+
 def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: dict | None, flag_names: dict[str, str], vehicle_names: dict[str, str]) -> dict | None:
     layer_id = f"{level}__{mode.replace('gpm_', '')}__{players}"
     server_path = level_dir / "server.zip"
@@ -689,6 +760,8 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         elif max_abs > 600:
             world = 2048
 
+    protection_areas = parse_protection_areas(server, (maptype or {}).get("type", ""), mode, cps)
+    restricted_areas = parse_combat_areas(text)
     counts = Counter(v["category"] for v in vehicles)
     raw_type = (maptype or {}).get("type", "")
     display = layer_display_name(mode, raw_type, players)
@@ -708,6 +781,8 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         "tickets": tickets,
         "controlPoints": cps,
         "routes": routes,
+        "protectionAreas": protection_areas,
+        "restrictedAreas": restricted_areas,
         "caches": caches,
         "vehicles": vehicles,
         "vehicleAtStart": sum(1 for v in vehicles if v["atStart"]),

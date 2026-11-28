@@ -1589,6 +1589,44 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
         </Layer>
 
         <Layer listening={ui.tool === 'select'}>
+          {ui.showProtection && (layer.protectionAreas ?? []).map((area, index) => {
+            const p = worldToDisplayNorm(area.x, area.z, layer.world)
+            const radius = (area.radius / layer.world) * mapW
+            const color = area.team === 1 ? '#ef4444' : area.team === 2 ? '#38bdf8' : '#fbbf24'
+            return (
+              <Circle
+                key={`protection-${index}`}
+                x={p.x * mapW}
+                y={p.y * mapH}
+                radius={radius}
+                fill={withAlpha(color, 0.07)}
+                stroke={withAlpha(color, 0.85)}
+                strokeWidth={1.5 * iconScale}
+                dash={[7 * iconScale, 5 * iconScale]}
+                listening={false}
+              />
+            )
+          })}
+          {ui.showRestricted && (layer.restrictedAreas ?? []).map((area, index) => {
+            if (area.points.length < 3) return null
+            const points = area.points.flatMap((point) => {
+              const p = worldToDisplayNorm(point.x, point.z, layer.world)
+              return [p.x * mapW, p.y * mapH]
+            })
+            return (
+              <Line
+                key={`restricted-${index}`}
+                points={points}
+                closed
+                fill={area.inverted ? undefined : withAlpha('#f87171', 0.06)}
+                stroke={withAlpha('#f87171', 0.8)}
+                strokeWidth={1.25 * iconScale}
+                dash={[5 * iconScale, 5 * iconScale]}
+                opacity={0.9}
+                listening={false}
+              />
+            )
+          })}
           {ui.showFlags && layer.mode !== 'gpm_insurgency' && visibleRoutes.flatMap((route) => {
             const routeIndex = routes.findIndex((item) => item.id === route.id)
             const color = routeColor(routeIndex)

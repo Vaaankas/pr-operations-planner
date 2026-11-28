@@ -546,7 +546,7 @@ export const useUI = create<UIState & {
   setSelected: (id: string | null, kind: UIState['selectedKind']) => void
   setRightTab: (tab: UIState['rightTab']) => void
   setHoveredCp: (id: number | null, source?: 'map' | 'routes' | null) => void
-  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showLabels' | 'showDrawings' | 'showVehicleNames' | 'showVehiclePaths') => void
+  toggle: (key: 'showVehicles' | 'showEnemy' | 'showFlags' | 'showAssets' | 'showProtection' | 'showRestricted' | 'showLabels' | 'showDrawings' | 'showVehicleNames' | 'showVehiclePaths') => void
   toggleVehiclePath: (vehicleId: string) => void
   setExportOpen: (open: boolean) => void
   setHelpOpen: (open: boolean) => void
@@ -582,6 +582,8 @@ export const useUI = create<UIState & {
   showFlags: true,
   showAssets: true,
   showMarkers: true,
+  showProtection: true,
+  showRestricted: true,
   showLabels: true,
   showDrawings: true,
   showVehicleNames: true,

@@ -97,6 +97,19 @@ export interface LayerTickets {
   loss: number
 }
 
+export interface ProtectionArea {
+  x: number
+  z: number
+  radius: number
+  team: number
+}
+
+export interface RestrictedArea {
+  points: { x: number; z: number }[]
+  team: number
+  inverted: boolean
+}
+
 export interface LayerData {
   id: string
   levelId: string
@@ -113,6 +126,8 @@ export interface LayerData {
   tickets?: LayerTickets
   controlPoints: ControlPoint[]
   routes: Route[]
+  protectionAreas?: ProtectionArea[]
+  restrictedAreas?: RestrictedArea[]
   caches?: { x: number; z: number }[]
   vehicles: VehicleSpawn[]
   vehicleAtStart: number
@@ -215,6 +230,8 @@ export interface StageVisibility {
   showAssets: boolean
   showFlags: boolean
   showMarkers: boolean
+  showProtection: boolean
+  showRestricted: boolean
   showLabels: boolean
   showDrawings: boolean
   showVehicleNames: boolean
@@ -316,6 +333,8 @@ export interface UIState {
   showFlags: boolean
   showAssets: boolean
   showMarkers: boolean
+  showProtection: boolean
+  showRestricted: boolean
   showLabels: boolean
   showDrawings: boolean
   showVehicleNames: boolean
