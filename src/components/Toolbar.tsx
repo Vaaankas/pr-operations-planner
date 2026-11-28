@@ -44,6 +44,8 @@ const FRIENDLY_MARKERS = [
   { icon: 'friendly_sniper', label: 'SNIPER' },
   { icon: 'friendly_medic', label: 'MEDIC' },
   { icon: 'friendly_uav', label: 'UAV' },
+  { icon: 'friendly_reinforcements', label: 'REINFORCEMENTS' },
+  { icon: 'friendly_repaircrate', label: 'REPAIR CRATE' },
 ]
 
 const ENEMY_MARKER_GROUPS = [
