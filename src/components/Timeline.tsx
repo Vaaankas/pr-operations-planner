@@ -16,13 +16,13 @@ export function Timeline({ plan, stage }: { plan: Plan; stage: Stage }) {
 
   return (
     <div className="flex h-[60px] shrink-0 border-t border-white/10 bg-[#080d0a]">
-      <div className="flex w-[76px] shrink-0 flex-col justify-center border-r border-white/10 px-2">
+      <div className="flex w-[100px] shrink-0 flex-col justify-center border-r border-white/10 px-2">
         <div className="flex items-center justify-center gap-1">
-          <button onClick={() => go(-1)} disabled={index <= 0} className="flex h-[26px] w-[26px] items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Previous stage" aria-label="Previous stage">
-            <ChevronLeft className="h-3.5 w-3.5" />
+          <button onClick={() => go(-1)} disabled={index <= 0} className="flex h-10 w-10 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Previous stage" aria-label="Previous stage">
+            <ChevronLeft className="h-5 w-5" />
           </button>
-          <button onClick={() => go(1)} disabled={index >= stages.length - 1} className="flex h-[26px] w-[26px] items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Next stage" aria-label="Next stage">
-            <ChevronRight className="h-3.5 w-3.5" />
+          <button onClick={() => go(1)} disabled={index >= stages.length - 1} className="flex h-10 w-10 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-white/10 disabled:opacity-30" title="Next stage" aria-label="Next stage">
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </div>
