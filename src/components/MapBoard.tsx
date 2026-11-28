@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, Lock } from 'lucide-react'
+import { ArrowUp, Lock, Minus, Plus } from 'lucide-react'
 import { Stage, Layer, Image as KonvaImage, Line, Rect, Ellipse, Text, Group, Arrow, Circle, Transformer } from 'react-konva'
 import type Konva from 'konva'
 import type { KonvaEventObject } from 'konva/lib/Node'
@@ -2301,12 +2301,12 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
             {Math.round(view.scale * 100)}%
           </button>
           <button
-            className="flex h-8 w-8 items-center justify-center rounded text-[17px] font-light leading-none text-slate-300 transition hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded p-0 text-slate-300 transition hover:bg-white/10 hover:text-white"
             onClick={() => zoomBy(1.25)}
             title="Zoom in"
             aria-label="Zoom in"
           >
-            +
+            <Plus className="h-4 w-4" strokeWidth={2.25} />
           </button>
         </div>
       )}
