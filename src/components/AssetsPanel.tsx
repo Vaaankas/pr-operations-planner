@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Eye, EyeOff, RotateCcw, Search } from 'lucide-react'
 import type { LayerData, Plan, Stage } from '../types'
 import { usePlanner, useUI } from '../store'
-import { dataUrl, formatTime, isHiddenVehicle, isVehicleInBounds } from '../lib/utils'
+import { dataUrl, formatTime, isHiddenVehicle, isVehicleHiddenByBounds } from '../lib/utils'
 import { vehicleColor } from '../lib/render'
 import { factionFlag, useAssets, vehicleIconPath } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
@@ -35,7 +35,7 @@ export function AssetsPanel({ layer, plan, stage }: Props) {
     const q = query.trim().toLowerCase()
     return layer.vehicles
       .filter((v) => !isHiddenVehicle(v.template))
-      .filter((v) => isVehicleInBounds(v, layer.world))
+      .filter((v) => !isVehicleHiddenByBounds(v, layer.world))
       .filter((v) => (ui.startingOnly ? v.atStart : true))
       .filter((v) => (ui.showAssets ? true : !['asset', 'crate', 'emplacement'].includes(v.category)))
       .filter((v) => !q || `${v.label} ${v.template} ${v.category}`.toLowerCase().includes(q))

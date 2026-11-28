@@ -1,6 +1,6 @@
 import type { LayerData, MapMeta, Member, Plan, Squad, VehicleSpawn } from '../types'
 import { assignedKits, SPECIALIST_KITS, specialistKit, specialistLimit } from './kits'
-import { isHiddenVehicle, isVehicleInBounds, playerCount } from './utils'
+import { isHiddenVehicle, isVehicleHiddenByBounds, playerCount } from './utils'
 import { layerDisplayName } from './layerLabels'
 
 export interface RosterViewMember {
@@ -98,7 +98,7 @@ export function buildRosterView(plan: Plan, map: MapMeta, layer: LayerData): Ros
       .filter((vehicle) =>
         plan.claims[vehicle.id] === squad.id
         && !isHiddenVehicle(vehicle.template)
-        && isVehicleInBounds(vehicle, layer.world),
+        && !isVehicleHiddenByBounds(vehicle, layer.world),
       )
       .map((vehicle) => ({
         id: vehicle.id,

@@ -16,6 +16,7 @@ import io
 import json
 import os
 import re
+import struct
 import sys
 import zipfile
 from collections import Counter
@@ -28,6 +29,7 @@ PROJECT = HERE.parent.parent
 PR_ROOT = Path(os.environ.get("PR_ROOT", r"C:\Games\Project Reality BF2\mods\pr"))
 LEVELS_DIR = PR_ROOT / "levels"
 OUT_DIR = PROJECT / "public" / "data"
+CONTENT_ZIP = PR_ROOT / "content" / "objects_statics_server.zip"
 MAPS_DIR = OUT_DIR / "maps"
 THUMBS_DIR = OUT_DIR / "thumbs"
 LAYERS_DIR = OUT_DIR / "layers"
@@ -532,6 +534,96 @@ def layer_init_candidates(mode: str, players: int) -> list[str]:
 
 
 
+STATIC_SUFFIX = {
+    "aasinfantry": "aasinf",
+    "aasalternative": "aasalt",
+    "aasfullassets": "aasstd",
+    "aasstandard": "aasstd",
+    "aaslarge": "aaslrg",
+    "insurgency": "insurgency",
+    "skirmish": "skirmish",
+}
+
+
+def _convex_hull(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    points = sorted(set(points))
+    if len(points) <= 2:
+        return points
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    lower = []
+    for point in points:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], point) <= 0:
+            lower.pop()
+        lower.append(point)
+    upper = []
+    for point in reversed(points):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], point) <= 0:
+            upper.pop()
+        upper.append(point)
+    return lower[:-1] + upper[:-1]
+
+
+def protection_polygon(template: str) -> list[tuple[float, float]]:
+    if not template.startswith("base_protection") or not CONTENT_ZIP.exists():
+        return []
+    member = f"staticobjects/pr/misc/base_protection/{template}/meshes/{template}.collisionmesh"
+    with zipfile.ZipFile(CONTENT_ZIP) as content:
+        if member not in content.namelist():
+            return []
+        data = content.read(member)
+    if len(data) < 80:
+        return []
+    count = struct.unpack_from("<I", data, 4)[0]
+    points = []
+    for index in range(count):
+        offset = 80 + index * 12
+        if offset + 12 > len(data):
+            break
+        x, _y, z = struct.unpack_from("<fff", data, offset)
+        points.append((round(x, 2), round(z, 2)))
+    return _convex_hull(points)
+
+
+def parse_static_protection(server: zipfile.ZipFile, raw_type: str, mode: str, cps: list[dict]) -> list[dict]:
+    suffix = STATIC_SUFFIX.get((raw_type or "").lower(), mode.replace("gpm_", ""))
+    wanted = {"staticobjects.con", f"staticobjects_{suffix}.con"}
+    areas = []
+    seen = set()
+    for name in server.namelist():
+        base = Path(name).name
+        if not name.endswith(".con"):
+            continue
+        if base not in wanted and not base.startswith("baseprotection") and not base.startswith("staticobjects_baseprotection"):
+            continue
+        text = read_zip_text(server, name) or ""
+        for block in re.split(r"(?=Object\.create )", text):
+            match = re.match(r"Object\.create\s+(base_protection_\S+)", block)
+            if not match:
+                continue
+            template = match.group(1)
+            polygon = protection_polygon(template)
+            if len(polygon) < 3:
+                continue
+            pos = re.search(r"Object\.absolutePosition\s+([-\d.]+)/([-\d.]+)/([-\d.]+)", block)
+            if not pos:
+                continue
+            x, z = round(float(pos.group(1)), 2), round(float(pos.group(3)), 2)
+            key = (x, z, template)
+            if key in seen:
+                continue
+            seen.add(key)
+            bases = [cp for cp in cps if cp["team"] in (1, 2) and cp["radius"] == 0] or cps
+            nearest = min(bases, key=lambda cp: (cp["x"] - x) ** 2 + (cp["z"] - z) ** 2, default=None)
+            areas.append({
+                "points": [{"x": round(x + px, 2), "z": round(z + pz, 2)} for px, pz in polygon],
+                "team": int(nearest["team"]) if nearest else 0,
+            })
+    return areas
+
+
 def parse_combat_areas(text: str) -> list[dict]:
     areas = []
     for block in re.split(r"(?=CombatArea\.create )", text):
@@ -717,6 +809,8 @@ def build_layer(level: str, level_dir: Path, mode: str, players: int, maptype: d
         for area in combat_areas
         if area["inverted"] and area["team"] in (1, 2)
     ]
+    if not protection_areas:
+        protection_areas = parse_static_protection(server, (maptype or {}).get("type", ""), mode, cps)
     restricted_areas = [area for area in combat_areas if not area["inverted"]]
     counts = Counter(v["category"] for v in vehicles)
     raw_type = (maptype or {}).get("type", "")

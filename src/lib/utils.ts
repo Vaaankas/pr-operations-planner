@@ -11,6 +11,15 @@ export function isVehicleInBounds(vehicle: { x: number; z: number }, world: numb
   return Math.abs(vehicle.x) <= half && Math.abs(vehicle.z) <= half
 }
 
+const AIRBORNE_CATEGORIES = new Set(['jet', 'bomber', 'attack_heli', 'transport_heli'])
+
+export function isVehicleHiddenByBounds(
+  vehicle: { x: number; z: number; category: string },
+  world: number,
+): boolean {
+  return !isVehicleInBounds(vehicle, world) && !AIRBORNE_CATEGORIES.has(vehicle.category)
+}
+
 export function vehicleDelayRemaining(v: VehicleSpawn, stageTime: number): number {
   if (v.atStart) return 0
   return Math.max(0, (v.respawn ?? 0) - stageTime)
