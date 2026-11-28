@@ -54,7 +54,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             <h3 className="mb-1 flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.18em] text-amber-400/90"><Pencil className="h-3 w-3" /> Map symbology</h3>
             <p className="text-slate-400">
               Asset glyphs are the in-game vehicle silhouettes, tinted by team or claiming squad. Flags use the in-game capture-point flag sprites and real capture radii.
-              Attack lanes follow the layer's AASv4 SupplyGroupId order; toggle any combination of routes and flags.
+              Attack lanes follow the layer's AASv4 SupplyGroupId order; parallel flags connect by dashed spokes. Toggle any combination of routes and flags.
               The amber frame on the map sets the export crop; drag its edges or handles, or reset it with the crop button in the Stage panel.
               Delayed spawns are dimmed with their timer. Vehicle trails start at the previous stage's position and use the vehicle's colour.
               Player status cycles blank → green ✓ (confirmed) → amber ? (uncertain).
