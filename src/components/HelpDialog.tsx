@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { X, MousePointer2, Pencil, Clock, Download, ShieldCheck } from 'lucide-react'
+import { X, MousePointer2, Pencil, Clock, Download, ExternalLink, ShieldCheck } from 'lucide-react'
 
 export function HelpDialog({ onClose }: { onClose: () => void }) {
   useEffect(() => {
@@ -94,7 +94,7 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
             rel="noreferrer"
             className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-amber-300"
           >
-            <Github className="h-3.5 w-3.5" />
+            <ExternalLink className="h-3.5 w-3.5" />
             Source on GitHub
           </a>
           <button onClick={onClose} className="rounded bg-amber-400 px-4 py-2 text-xs font-bold text-black hover:bg-amber-300">Close</button>
