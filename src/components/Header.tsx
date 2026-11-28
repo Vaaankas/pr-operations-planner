@@ -58,7 +58,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
         <span className="h-14 w-px shrink-0 self-stretch bg-white/10" />
 
         <div
-          className="flex shrink-0 items-center gap-2 font-mono text-[11px] uppercase tracking-wider"
+          className="ml-1 flex shrink-0 items-center gap-2 font-mono text-[11px] uppercase tracking-wider"
           title={`${confirmed}/50 confirmed · ${playerCount(plan)} total players · ${members.filter((member) => member.unconfirmed).length} uncertain`}
         >
           {side && factionFlag(assets, side.key) ? (
