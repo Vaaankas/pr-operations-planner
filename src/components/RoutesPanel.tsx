@@ -70,14 +70,13 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                 {groupRoute(layer, r).map((group) => {
                   const multi = group.cps.length > 1
                   return (
-                    <div key={`${r.id}-${group.number}`} className={multi ? 'border border-white/10 bg-black/15' : ''}>
+                    <div key={`${r.id}-${group.number}`} className={multi ? 'bg-black/15 outline outline-1 outline-white/10' : ''}>
                       {multi && (
-                        <div className="flex items-center gap-2 border-b border-white/10 px-1.5 py-1 font-mono text-[8px] uppercase tracking-wider text-slate-500">
-                          <span>Order {group.number}</span>
-                          <span className="ml-auto border border-white/15 px-1 py-0.5 font-bold text-slate-300">{routeGroupLabel(group)}</span>
+                        <div className="border-b border-white/10 px-2 py-1 font-mono text-[8px] font-bold uppercase tracking-wider text-slate-400">
+                          {routeGroupLabel(group)}
                         </div>
                       )}
-                      <div className={multi ? 'space-y-0.5 p-1' : 'space-y-1'}>
+                      <div className={multi ? 'space-y-0.5 py-1' : 'space-y-1'}>
                         {group.cps.map((cp) => {
                           const id = cp.id
                           const shown = !ui.hiddenCps.includes(id)
@@ -86,7 +85,7 @@ export function RoutesPanel({ layer, plan }: { layer: LayerData; plan: Plan }) {
                           const flag = factionFlag(assets, faction?.key)
                           const capturable = isCapturable(cp)
                           return (
-                            <div key={`${r.id}-${id}-${group.number}`} className={`flex items-center gap-1.5 text-[11px] text-slate-400 ${multi ? 'pl-0.5' : 'pl-5'}`}>
+                            <div key={`${r.id}-${id}-${group.number}`} className="flex items-center gap-1.5 px-2 text-[11px] text-slate-400">
                               <button
                                 type="button"
                                 onClick={() => ui.toggleCp(id)}
