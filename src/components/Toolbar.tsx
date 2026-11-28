@@ -29,9 +29,7 @@ const COLORS = SQUAD_COLORS
 const FRIENDLY_MARKERS = [
   { icon: 'friendly_forwardoutpost', label: 'FORWARD OUTPOST' },
   { icon: 'friendly_buildfob', label: 'BUILD FOB' },
-  { icon: 'friendly_bunker', label: 'BUNKER' },
   { icon: 'friendly_rallypoint', label: 'RALLY POINT' },
-  { icon: 'friendly_rallyflag', label: 'RALLY FLAG' },
   { icon: 'friendly_antiairmissile', label: 'AA' },
   { icon: 'friendly_atgm', label: 'ATGM' },
   { icon: 'friendly_hmg', label: 'HMG' },
