@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  Download, HelpCircle, Map, Save, Upload, Users,
+  ChevronLeft, ChevronRight, Download, HelpCircle, Save, Upload, Users,
 } from 'lucide-react'
 import type { LayerData, MapMeta, Plan } from '../types'
 import { usePlanner, useUI } from '../store'
@@ -65,14 +65,26 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp, saveE
   return (
     <header className="relative z-30 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_422.4px] items-stretch border-b border-white/10 bg-[#080d0a]">
       <div className="relative flex min-w-0 items-center gap-2 pl-2 pr-3">
-        <button
-          onClick={onOpenPicker}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
-          title="Go back to map/layer selection"
-          aria-label="Select map and layer"
-        >
-          <Map className="h-4 w-4" />
-        </button>
+        <div className="flex h-8 shrink-0 items-stretch overflow-hidden rounded border border-white/15">
+          <button
+            onClick={onOpenPicker}
+            className="flex w-8 items-center justify-center text-slate-200 hover:bg-white/10 hover:text-amber-300"
+            title="Back to map selection"
+            aria-label="Back to map selection"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="my-1 w-px bg-white/10" />
+          <button
+            onClick={() => { ui.setView('plan'); ui.setMode('edit') }}
+            disabled={ui.view === 'plan' && ui.mode === 'edit'}
+            className="flex w-8 items-center justify-center text-slate-200 hover:bg-white/10 hover:text-amber-300 disabled:cursor-default disabled:text-slate-600 disabled:hover:bg-transparent"
+            title={ui.view === 'plan' && ui.mode === 'edit' ? 'Already in editor' : 'Back to editor'}
+            aria-label="Back to editor"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
 
         <span className="h-14 w-px shrink-0 self-stretch bg-white/10" />
 
