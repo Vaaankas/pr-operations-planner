@@ -7,6 +7,7 @@ import { GameIcon } from '../lib/gameIcons'
 import { formatTime } from '../lib/utils'
 import { layerDisplayName } from '../lib/layerLabels'
 import { stageSlideData } from '../lib/slide'
+import { buildRosterView, type RosterViewMember, type RosterViewSquad } from '../lib/rosterView'
 import { parseOrders } from '../lib/orders'
 import { getStagePreview, setStagePreview, stagePreviewKey } from '../lib/previewCache'
 import { captureStageDataUrl } from '../lib/konvaExport'
@@ -27,74 +28,122 @@ function slideTextColor(color: string): string {
   return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#0f172a' : '#f8fafc'
 }
 
-function RosterSlide({ plan, map, layer }: { plan: Plan; map: MapMeta; layer: LayerData }) {
-  const squads = plan.roster.squads.slice(0, 9)
-  const side = layer.factions[String(plan.side)]
-  const assignments = plan.roster.specialistAssignments ?? {}
-  const kitCounts = Object.values(assignments)
-    .flatMap((value) => (Array.isArray(value) ? value : [value as unknown as string]))
-    .reduce<Record<string, number>>((acc, kit) => {
-      acc[kit] = (acc[kit] ?? 0) + 1
-      return acc
-    }, {})
+function RosterMemberLine({ member }: { member: RosterViewMember }) {
+  const status = member.state === 'confirmed'
+    ? <span className="text-[9px] font-bold text-emerald-600">✓</span>
+    : member.state === 'uncertain'
+      ? <span className="text-[9px] font-bold text-amber-600">?</span>
+      : <span className="w-[8px]" />
   return (
-    <div className="relative h-full w-full">
+    <div className="flex min-w-0 items-center gap-1 border-t border-[#e2e8f0] px-1 py-[2px] text-[10px] leading-[1.3]">
+      <span className="flex w-[19px] shrink-0 justify-center border border-[#cbd5e1] font-mono text-[7px] font-bold text-[#475569]">
+        {member.role ?? ''}
+      </span>
+      <span className="min-w-0 flex-1 truncate font-medium text-[#0f172a]" title={member.name}>{member.name}</span>
+      {member.kit && <span className="shrink-0 border border-[#cbd5e1] px-0.5 font-mono text-[7px] font-bold text-[#475569]" title={member.kitName}>{member.kit}</span>}
+      {status}
+    </div>
+  )
+}
+
+function RosterSquadCard({ squad }: { squad: RosterViewSquad }) {
+  return (
+    <div className="flex min-h-0 flex-col overflow-hidden border border-[#cbd5e1] bg-white">
+      <div
+        className="flex items-center gap-1 px-1 py-1.5 font-mono text-[10px] font-bold"
+        style={{ background: squad.color, color: slideTextColor(squad.color) }}
+      >
+        <span className="flex h-4 w-4 shrink-0 items-center justify-center border border-current/40 text-[8px]">{squad.number}</span>
+        <span className="min-w-0 flex-1 truncate">{squad.name}</span>
+        {squad.kits.length > 0 && <span className="shrink-0 text-[7px] opacity-75">{squad.kits.join(" ")}</span>}
+        <span className="shrink-0 text-[8px] opacity-80">{squad.type}</span>
+        <span className={`shrink-0 text-[9px] ${squad.members.length > 8 ? 'text-amber-200' : 'opacity-80'}`}>
+          {squad.members.length}{squad.hiddenMembers ? `+${squad.hiddenMembers}` : ''}/8
+        </span>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {squad.members.map((member) => <RosterMemberLine key={member.id} member={member} />)}
+        {squad.members.length === 0 && <div className="px-1 py-1 text-[9px] italic text-[#94a3b8]">Empty squad</div>}
+        {squad.vehicles.slice(0, 2).map((vehicle) => (
+          <div key={vehicle.id} className="flex min-w-0 items-center gap-1 border-t border-[#e2e8f0] px-1 py-[1px] text-[7.5px] text-[#475569]">
+            <span className="shrink-0 font-bold">▣</span>
+            <span className="min-w-0 flex-1 truncate">{vehicle.label}</span>
+            {vehicle.crew.length > 0 && <span className="max-w-[42%] truncate text-[#64748b]">{vehicle.crew.join(', ')}</span>}
+          </div>
+        ))}
+        {squad.vehicles.length > 2 && <div className="px-1 text-[7.5px] text-[#64748b]">+{squad.vehicles.length - 2} more assets</div>}
+      </div>
+    </div>
+  )
+}
+
+function RosterSlide({ plan, map, layer }: { plan: Plan; map: MapMeta; layer: LayerData }) {
+  const view = buildRosterView(plan, map, layer)
+  const reserves = view.reserves.slice(0, 14)
+  return (
+    <div className="relative h-full w-full bg-white">
       <div className="absolute inset-x-0 top-0 h-[0.8%] bg-amber-400" />
-      <div className="absolute left-[3.4%] top-[3%]">
-        <div className="font-semibold leading-none text-[#0f172a]" style={{ fontSize: 'clamp(16px, 1.9vw, 26px)' }}>Roster</div>
-        <div className="mt-[3%] text-[#64748b]" style={{ fontSize: 'clamp(7px, 0.68vw, 10px)' }}>
-          {map.name} · {layerDisplayName(layer)} · {side?.name ?? `Team ${plan.side}`} · CMD {plan.roster.commander?.name ?? '—'}
+      <div className="absolute left-[3.4%] top-[3%] w-[64%]">
+        <div className="font-semibold leading-none text-[#0f172a]" style={{ fontSize: 'clamp(20px, 2.1vw, 30px)' }}>Roster</div>
+        <div className="mt-[2%] text-[#64748b]" style={{ fontSize: 'clamp(8px, 0.72vw, 10px)' }}>{view.meta}</div>
+      </div>
+      <div className="absolute right-[3.4%] top-[3.2%] text-right font-mono text-[#475569]" style={{ fontSize: 'clamp(8px, 0.72vw, 10px)' }}>
+        <div><span className="font-bold text-[#0f172a]">{view.total}</span>/50 players</div>
+        <div className="mt-0.5"><span className="font-bold text-emerald-600">{view.confirmed}</span> confirmed · <span className="font-bold text-amber-600">{view.uncertain}</span> uncertain</div>
+      </div>
+
+      <div className="absolute bottom-[6%] left-[3.4%] right-[30.5%] top-[16%] grid grid-cols-3 grid-rows-3 gap-1.5">
+        {view.squads.map((squad) => <RosterSquadCard key={squad.id} squad={squad} />)}
+      </div>
+
+      <div className="absolute bottom-[6%] left-[71%] right-[3.4%] top-[16%] flex flex-col gap-1.5">
+        <div className="shrink-0 border border-[#cbd5e1] bg-white">
+          <div className="bg-[#111827] px-1.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#fde68a]">Commander</div>
+          {view.commander ? (
+            <div className="px-1.5 py-1">
+              <div className="flex items-center gap-1 text-[12px] font-semibold text-[#0f172a]">
+                <span className="min-w-0 flex-1 truncate">{view.commander.name}</span>
+                {view.commander.kit && <span className="border border-[#cbd5e1] px-0.5 font-mono text-[7.5px] text-[#475569]">{view.commander.kit}</span>}
+                {view.commander.state === 'confirmed' && <span className="text-[9px] font-bold text-emerald-600">✓</span>}
+                {view.commander.state === 'uncertain' && <span className="text-[9px] font-bold text-amber-600">?</span>}
+              </div>
+              <div className="mt-0.5 font-mono text-[8px] text-[#64748b]">CMD</div>
+            </div>
+          ) : <div className="px-1.5 py-2 text-[9px] italic text-[#94a3b8]">Not assigned</div>}
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden border border-[#cbd5e1] bg-white">
+          <div className="shrink-0 bg-[#111827] px-1.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#fde68a]">Specialist kits</div>
+          <div className="min-h-0 flex-1 overflow-hidden px-1.5 py-1">
+            {view.kits.map((kit) => (
+              <div key={kit.id} className="flex items-center gap-1 border-b border-[#e2e8f0] py-[1.5px] font-mono text-[9px] text-[#334155]">
+                <span className="min-w-0 flex-1 truncate">{kit.name}</span>
+                <span className={kit.count > kit.limit ? 'font-bold text-rose-600' : kit.count ? 'font-bold text-amber-600' : 'text-[#94a3b8]'}>{kit.count}/{kit.limit}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden border border-[#cbd5e1] bg-white">
+          <div className="flex shrink-0 items-center bg-[#111827] px-1.5 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#fde68a]">
+            <span>Reserves</span><span className="ml-auto">{view.reserves.length}</span>
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden px-1.5 py-1">
+            {reserves.map((member) => (
+              <div key={member.id} className="flex items-center gap-1 border-b border-[#e2e8f0] py-[1.5px] text-[10px] text-[#334155]">
+                <span className="min-w-0 flex-1 truncate">{member.name}</span>
+                {member.kit && <span className="font-mono text-[8px] text-[#64748b]">{member.kit}</span>}
+              </div>
+            ))}
+            {view.reserves.length === 0 && <div className="py-1 text-[9px] italic text-[#94a3b8]">None</div>}
+            {view.reserves.length > reserves.length && <div className="pt-1 font-mono text-[7px] text-[#64748b]">+{view.reserves.length - reserves.length} more</div>}
+          </div>
         </div>
       </div>
 
-      <div className="absolute bottom-[6%] left-[3.4%] right-[3.4%] top-[16%] grid grid-cols-5 grid-rows-2 gap-1.5">
-        {Array.from({ length: 10 }).map((_, slot) => {
-          if (slot === 9) {
-            return (
-              <div key="specialists" className="flex min-h-0 flex-col overflow-hidden rounded border border-[#cbd5e1] bg-white">
-                <div className="bg-[#111827] px-1 py-0.5 font-mono text-[8px] font-bold uppercase text-[#fde68a]">Specialist kits</div>
-                <div className="flex min-h-0 flex-1 flex-col justify-center px-1 py-0.5">
-                  {Object.entries(kitCounts).map(([kit, count]) => (
-                    <div key={kit} className="flex justify-between font-mono text-[7px] text-[#334155]">
-                      <span className="truncate">{kit.toUpperCase()}</span>
-                      <span>{count}</span>
-                    </div>
-                  ))}
-                  {Object.keys(kitCounts).length === 0 && <span className="text-[7px] italic text-slate-400">None assigned</span>}
-                </div>
-              </div>
-            )
-          }
-          const squad = squads[slot]
-          if (!squad) return <div key={`empty-${slot}`} />
-          return (
-            <div key={squad.id} className="flex min-h-0 flex-col overflow-hidden rounded border border-[#cbd5e1] bg-white">
-              <div
-                className="flex items-center gap-1 px-1 py-0.5 font-mono text-[8px] font-bold"
-                style={{ background: squad.color, color: slideTextColor(squad.color) }}
-              >
-                <span className="truncate">{squad.name.toUpperCase()}</span>
-                <span className="ml-auto opacity-70">{squad.members.length}/8</span>
-              </div>
-              <div className="flex min-h-0 flex-1 flex-col px-1 py-0.5">
-                {squad.members.map((member, index) => (
-                  <div key={member.id} className="flex min-w-0 items-center gap-1 text-[7px] leading-[1.35] text-[#0f172a]">
-                    {(index === 0 || index === 1) && (
-                      <span className="shrink-0 rounded border border-[#cbd5e1] px-0.5 font-mono text-[6px] font-bold text-[#475569]">
-                        {index === 0 ? 'SL' : '2IC'}
-                      </span>
-                    )}
-                    <span className="truncate">{member.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="absolute bottom-[2%] left-[3.4%] font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>
-        {plan.operation} · roster
+      <div className="absolute bottom-[2%] left-[3.4%] right-[3.4%] flex items-center justify-between font-mono text-[#94a3b8]" style={{ fontSize: 'clamp(7px, 0.62vw, 9px)' }}>
+        <span>{plan.operation} · roster</span>
+        <span>{view.extraSquads ? `+${view.extraSquads} squads not shown` : 'PR Operations Planner'}</span>
       </div>
     </div>
   )
