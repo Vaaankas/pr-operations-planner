@@ -49,25 +49,28 @@ const FRIENDLY_MARKERS = [
 
 const ENEMY_MARKER_GROUPS = [
   {
-    label: 'INF / FORCES',
-    icons: ['spotted_enemyforces', 'spotted_sniper', 'spotted_spotter', 'spotted_saboteur'],
-  },
-  {
-    label: 'OBJECTIVES',
-    icons: ['spotted_objective', 'spotted_firebase', 'spotted_bunker', 'spotted_rally'],
+    label: 'INFANTRY',
+    icons: ['spotted_enemyforces', 'spotted_heavyat', 'spotted_sniper', 'spotted_spotter', 'spotted_saboteur'],
   },
   {
     label: 'VEHICLES',
     icons: [
-      'spotted_aav', 'spotted_apc', 'spotted_atgmvehicle', 'spotted_heavyaa',
-      'spotted_heavyat', 'spotted_ifv', 'spotted_jeep', 'spotted_tank', 'spotted_truck',
+      'spotted_aav', 'spotted_apc', 'spotted_atgmvehicle',
+      'spotted_ifv', 'spotted_jeep', 'spotted_tank', 'spotted_truck',
+    ],
+  },
+  {
+    label: 'EMPLACEMENTS',
+    icons: [
+      'spotted_firebase', 'spotted_bunker', 'spotted_rally', 'spotted_heavyaa',
+      'spotted_antiairmissile', 'spotted_hmg', 'spotted_atgm', 'spotted_mortar',
     ],
   },
   {
     label: 'MISC',
     icons: [
-      'spotted_antiairmissile', 'spotted_atgm', 'spotted_bridge', 'spotted_destroyedbridge',
-      'spotted_hmg', 'spotted_mortar', 'spotted_razorwire', 'spotted_supply',
+      'spotted_objective', 'spotted_mine', 'spotted_razorwire',
+      'spotted_bridge', 'spotted_destroyedbridge', 'spotted_supply',
     ],
   },
 ]
