@@ -114,12 +114,12 @@ export function ToolbarHistory() {
   const canUndo = usePlanner((state) => state.past.length > 0)
   const canRedo = usePlanner((state) => state.future.length > 0)
   return (
-    <div className="flex h-[72px] shrink-0 flex-col items-center justify-center gap-0.5 border-r border-t border-white/10 bg-[#080d0a]">
+    <div className="flex h-[60px] shrink-0 flex-col items-center justify-center gap-0 border-r border-t border-white/10 bg-[#080d0a]">
       <button
         onClick={() => planner.undo()}
         disabled={!canUndo}
         title="Undo (Ctrl+Z)"
-        className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 hover:text-slate-100 disabled:opacity-30"
+        className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-white/10 hover:text-slate-100 disabled:opacity-30"
       >
         <Undo2 className="h-4 w-4" />
       </button>
@@ -127,7 +127,7 @@ export function ToolbarHistory() {
         onClick={() => planner.redo()}
         disabled={!canRedo}
         title="Redo (Ctrl+Y)"
-        className="flex h-8 w-8 items-center justify-center rounded text-slate-400 hover:bg-white/10 hover:text-slate-100 disabled:opacity-30"
+        className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-white/10 hover:text-slate-100 disabled:opacity-30"
       >
         <Redo2 className="h-4 w-4" />
       </button>
