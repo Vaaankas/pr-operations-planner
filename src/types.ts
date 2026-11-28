@@ -98,9 +98,7 @@ export interface LayerTickets {
 }
 
 export interface ProtectionArea {
-  x: number
-  z: number
-  radius: number
+  points: { x: number; z: number }[]
   team: number
 }
 

@@ -1590,15 +1590,17 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
 
         <Layer listening={ui.tool === 'select'}>
           {ui.showProtection && (layer.protectionAreas ?? []).map((area, index) => {
-            const p = worldToDisplayNorm(area.x, area.z, layer.world)
-            const radius = (area.radius / layer.world) * mapW
+            if (area.points.length < 3) return null
+            const points = area.points.flatMap((point) => {
+              const p = worldToDisplayNorm(point.x, point.z, layer.world)
+              return [p.x * mapW, p.y * mapH]
+            })
             const color = area.team === 1 ? '#ef4444' : area.team === 2 ? '#38bdf8' : '#fbbf24'
             return (
-              <Circle
+              <Line
                 key={`protection-${index}`}
-                x={p.x * mapW}
-                y={p.y * mapH}
-                radius={radius}
+                points={points}
+                closed
                 fill={withAlpha(color, 0.07)}
                 stroke={withAlpha(color, 0.85)}
                 strokeWidth={1.5 * iconScale}
