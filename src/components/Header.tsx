@@ -46,7 +46,7 @@ export function Header({ plan, map, layer, onOpenPicker, onExport, onHelp }: Pro
 
   return (
     <header className="relative z-30 grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_422.4px] items-stretch border-b border-white/10 bg-[#080d0a]">
-      <div className="relative flex min-w-0 items-center gap-2 px-3">
+      <div className="relative flex min-w-0 items-center gap-2 pl-2 pr-3">
         <button
           onClick={onOpenPicker}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-white/15 text-slate-200 hover:border-amber-400/50 hover:text-amber-300"
