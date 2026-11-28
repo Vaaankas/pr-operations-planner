@@ -9,7 +9,7 @@ import { useAssets } from '../lib/assets'
 import { GameIcon } from '../lib/gameIcons'
 import { SQUAD_COLORS } from '../lib/utils'
 
-const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: string; group?: 'marker' }[] = [
+const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: string; group?: 'marker' | 'utility' }[] = [
   { tool: 'select', icon: MousePointer2, label: 'Select / move', key: 'V' },
   { tool: 'pen', icon: Pencil, label: 'Draw', key: 'P' },
   { tool: 'line', icon: Minus, label: 'Line', key: 'L' },
@@ -19,9 +19,9 @@ const TOOLS: { tool: Tool; icon: typeof MousePointer2; label: string; key: strin
   { tool: 'ellipse', icon: Circle, label: 'Ellipse', key: 'O' },
   { tool: 'polygon', icon: Pentagon, label: 'Polygon', key: 'G' },
   { tool: 'text', icon: Type, label: 'Label', key: 'T' },
-  { tool: 'erase', icon: Eraser, label: 'Erase', key: 'E' },
   { tool: 'marker_friendly', icon: MapPin, label: 'Marker', key: 'M', group: 'marker' },
   { tool: 'marker_enemy', icon: Swords, label: 'Enemy marker', key: 'N', group: 'marker' },
+  { tool: 'erase', icon: Eraser, label: 'Erase', key: 'E', group: 'utility' },
 ]
 
 const COLORS = SQUAD_COLORS
@@ -90,8 +90,8 @@ export function ToolbarRail() {
     <div className="flex min-h-0 w-12 shrink-0 flex-1 flex-col items-center gap-0.5 border-r border-white/10 bg-[#080d0a] py-2">
       {TOOLS.map(({ tool, icon: Icon, label, key, group }, index) => (
         <Fragment key={tool}>
-          {group === 'marker' && TOOLS[index - 1]?.group !== 'marker' && (
-            <div className="my-0.5 h-px w-6 shrink-0 bg-white/15" title="Markers" />
+          {group && group !== TOOLS[index - 1]?.group && (
+            <div className="my-0.5 h-px w-6 shrink-0 bg-white/15" title={group === 'marker' ? 'Markers' : 'Utility'} />
           )}
           <button
             onClick={() => ui.setTool(tool)}
