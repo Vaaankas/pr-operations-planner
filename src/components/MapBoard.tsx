@@ -1604,7 +1604,6 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                 fill={withAlpha(color, 0.07)}
                 stroke={withAlpha(color, 0.85)}
                 strokeWidth={1.5 * iconScale}
-                dash={[7 * iconScale, 5 * iconScale]}
                 listening={false}
               />
             )
