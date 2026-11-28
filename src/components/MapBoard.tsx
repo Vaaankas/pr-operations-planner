@@ -191,11 +191,31 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
   }, [])
 
   useEffect(() => {
-    const key = `${map.id}:${stage.id}:${box.w}x${box.h}:${preview ? 'preview' : 'edit'}`
+    const key = `${map.id}:${stage.id}:${box.w}x${box.h}:${preview ? 'preview' : 'edit'}:${layer.protectionAreas?.length ?? 0}`
     if (fitted.current === key) return
     fitted.current = key
-    setView(frameView(stage.frame ?? { x: 0, y: 0, size: 1 }))
-  }, [box, map.id, mapW, mapH, stage.id])
+    const frame = stage.frame ?? { x: 0, y: 0, size: 1 }
+    const isDefaultFrame = frame.x === 0 && frame.y === 0 && frame.size === 1
+    const protectionPoints = isDefaultFrame
+      ? (layer.protectionAreas ?? []).flatMap((area) => area.points)
+      : []
+    const normalized = protectionPoints.map((point) => worldToDisplayNorm(point.x, point.z, layer.world))
+    const outside = normalized.some((point) => point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1)
+    if (!outside) {
+      setView(frameView(frame))
+      return
+    }
+    const minX = Math.min(0, ...normalized.map((point) => point.x))
+    const maxX = Math.max(1, ...normalized.map((point) => point.x))
+    const minY = Math.min(0, ...normalized.map((point) => point.y))
+    const maxY = Math.max(1, ...normalized.map((point) => point.y))
+    const scale = Math.min(box.w / ((maxX - minX) * mapW), box.h / ((maxY - minY) * mapH))
+    setView({
+      scale,
+      x: box.w / 2 - ((minX + maxX) / 2) * mapW * scale,
+      y: box.h / 2 - ((minY + maxY) / 2) * mapH * scale,
+    })
+  }, [box, map.id, mapW, mapH, stage.id, preview, stage.frame, layer.protectionAreas])
 
   // Warm the game-icon cache used by this layer and plan.
   useEffect(() => {
