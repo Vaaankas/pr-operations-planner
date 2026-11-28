@@ -494,7 +494,7 @@ export async function renderStageCanvas(
       const img = iconPath ? tintedAssetImage(iconPath, color) : iconImage(glyphFor('vehicle', v.category), color)
       ctx.save()
       ctx.translate(x, y)
-      ctx.rotate((vehicleSpriteRotation(layer.id, pos.rotation) * Math.PI) / 180)
+      ctx.rotate((vehicleSpriteRotation(pos.rotation) * Math.PI) / 180)
       if (img.complete) ctx.drawImage(img, -s / 2, -s / 2, s, s)
       ctx.restore()
       const ready = vehicleReady(v, stage.time)

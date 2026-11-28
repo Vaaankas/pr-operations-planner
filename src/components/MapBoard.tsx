@@ -10,7 +10,7 @@ import { glyphFor, iconImage } from '../icons'
 import { vehicleColor } from '../lib/render'
 import { cpFlag, factionFlag, useAssets, vehicleIconPath } from '../lib/assets'
 import { captureTeam, isCapturable, teamName } from '../lib/flags'
-import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteOffset, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
+import { displayNormToWorld, mirrorNorm, unmirrorNorm, vehicleSpriteRotation, worldToDisplayNorm } from '../lib/coords'
 import { assetImage, GameIcon, preloadAsset, tintedAssetImage } from '../lib/gameIcons'
 import { routeColor } from './RoutesPanel'
 import { groupRoute } from '../lib/routes'
@@ -826,7 +826,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
     let delta = pointerAngle(clientX, clientY) - rotateStart.current.angle
     while (delta > 180) delta -= 360
     while (delta < -180) delta += 360
-    const rotation = (rotateStart.current.rotation - delta + 720) % 360
+    const rotation = (rotateStart.current.rotation + delta + 720) % 360
     setPreviewRotation(rotation)
     planner.moveVehicle(selectedVehicle.id, {
       x: selectedVehiclePos.x,
@@ -1898,7 +1898,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   id={nodeId}
                   x={p.x * mapW}
                   y={p.y * mapH}
-                  rotation={vehicleSpriteRotation(layer.id, pos.rotation)}
+                  rotation={vehicleSpriteRotation(pos.rotation)}
                   draggable={ui.tool === 'select' && ready}
                   listening={ui.tool === 'select' || ui.tool === 'erase'}
                   opacity={1}
@@ -1933,7 +1933,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
                   }}
                   onTransformEnd={(e) => {
                     const node = e.target
-                    const rotation = (180 + vehicleSpriteOffset(layer.id) - node.rotation() + 360) % 360
+                    const rotation = ((node.rotation() % 360) + 360) % 360
                     node.rotation(0)
                     node.scaleX(1)
                     node.scaleY(1)
@@ -2150,7 +2150,7 @@ export function MapBoard({ map, layer, plan, stage, preview = false, screenScale
           ? { x: dragVehicle.screenX, y: dragVehicle.screenY }
           : selectedScreen!
         const angle = selectedVehiclePos
-          ? vehicleSpriteRotation(layer.id, previewRotation ?? selectedVehiclePos.rotation)
+          ? vehicleSpriteRotation(previewRotation ?? selectedVehiclePos.rotation)
           : 0
         const rad = (angle * Math.PI) / 180
         const handleRadius = 42

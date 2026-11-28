@@ -25,21 +25,10 @@ export function displayNormToWorld(p: Point, world: number): { x: number; z: num
   return { x: point.x * world - world / 2, z: point.y * world - world / 2 }
 }
 
-/** Screen angle is mirrored too: up becomes down, left/right swap. */
-export function displayRotation(rotation: number): number {
-  return (180 - rotation + 360) % 360
-}
-
-// Most PR minimaps use the same north-up heading convention. Hades Peak is
-// authored 90 degrees differently; Ascheberg and Muttrah use the default.
-const VEHICLE_SPRITE_OFFSET: Record<string, number> = {
-  hades_peak: 0,
-}
-
-export function vehicleSpriteOffset(layerId: string): number {
-  return VEHICLE_SPRITE_OFFSET[layerId.split('__')[0]] ?? 90
-}
-
-export function vehicleSpriteRotation(layerId: string, rotation: number): number {
-  return (displayRotation(rotation) + vehicleSpriteOffset(layerId)) % 360
+/**
+ * Vehicle icons are authored nose-up, matching the game yaw convention.
+ * BF2 yaw is already in map-screen orientation; only normalize it.
+ */
+export function vehicleSpriteRotation(rotation: number): number {
+  return ((rotation % 360) + 360) % 360
 }
