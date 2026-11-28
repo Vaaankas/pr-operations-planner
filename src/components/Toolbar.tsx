@@ -28,27 +28,31 @@ const COLORS = SQUAD_COLORS
 
 const FRIENDLY_MARKER_GROUPS = [
   {
-    label: 'COMMANDS',
-    icons: ['friendly_chevron', 'friendly_mortarstrike'],
-  },
-  {
-    label: 'INFANTRY',
-    icons: ['friendly_recon', 'friendly_sniper', 'friendly_medic'],
-  },
-  {
-    label: 'EMPLACEMENTS',
+    label: 'YELLOW',
     icons: [
-      'friendly_forwardoutpost', 'friendly_buildfob', 'friendly_mortarplacement',
-      'friendly_repairdepot', 'friendly_antiairmissile', 'friendly_atgm',
-      'friendly_hmg', 'friendly_mortar',
+      'friendly_chevron', 'friendly_mortarstrike', 'friendly_demolish',
+      'friendly_recon', 'friendly_sniper', 'friendly_medic',
+      'friendly_reinforcements', 'friendly_repaircrate',
     ],
   },
   {
-    label: 'MISC',
+    label: 'PURPLE',
+    icons: ['friendly_buildfob', 'friendly_minefield', 'friendly_mortarplacement'],
+  },
+  {
+    label: 'BLUE',
     icons: [
-      'friendly_minefield', 'friendly_supply', 'friendly_demolish',
-      'friendly_uav', 'friendly_reinforcements', 'friendly_repaircrate',
+      'friendly_antiairmissile', 'friendly_atgm', 'friendly_hmg',
+      'friendly_mortar', 'friendly_supply',
     ],
+  },
+  {
+    label: 'GREEN',
+    icons: ['friendly_forwardoutpost'],
+  },
+  {
+    label: 'WHITE',
+    icons: ['friendly_repairdepot', 'friendly_uav'],
   },
 ]
 
