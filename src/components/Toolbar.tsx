@@ -32,11 +32,18 @@ const FRIENDLY_MARKERS = [
   { icon: 'friendly_minefield', label: 'MINEFIELD' },
   { icon: 'friendly_mortarplacement', label: 'MORTAR EMPL.' },
   { icon: 'friendly_repairdepot', label: 'REPAIR DEPOT' },
+  { icon: 'friendly_foxhole', label: 'FOXHOLE' },
+  { icon: 'friendly_wire', label: 'WIRE' },
   { icon: 'friendly_antiairmissile', label: 'AA' },
   { icon: 'friendly_atgm', label: 'ATGM' },
   { icon: 'friendly_hmg', label: 'HMG' },
   { icon: 'friendly_mortar', label: 'MORTAR' },
   { icon: 'friendly_supply', label: 'SUPPLY' },
+  { icon: 'friendly_demolish', label: 'DEMOLISH' },
+  { icon: 'friendly_recon', label: 'RECON' },
+  { icon: 'friendly_sniper', label: 'SNIPER' },
+  { icon: 'friendly_medic', label: 'MEDIC' },
+  { icon: 'friendly_uav', label: 'UAV' },
 ]
 
 const ENEMY_MARKER_GROUPS = [
